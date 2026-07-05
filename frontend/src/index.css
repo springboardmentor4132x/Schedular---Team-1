@@ -1,0 +1,16 @@
+/* Global styles */
+body {
+  margin: 0;
+  font-family: sans-serif;
+}
+
+/* ─── SocialPilot brand logo — shared across Login, Register, Dashboard ───── */
+.brand-logo {
+  height: 38px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+  image-rendering: -webkit-optimize-contrast; /* crisp on retina */
+  flex-shrink: 0;
+}
+
