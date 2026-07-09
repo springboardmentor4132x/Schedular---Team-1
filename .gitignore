@@ -4,3 +4,8 @@ dist/
 frontend_backup/
 frontend/node_modules/
 frontend/dist/
+venv/
+__pycache__/
+*.pyc
+.env
+*.db
