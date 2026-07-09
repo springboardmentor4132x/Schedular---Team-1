@@ -12,7 +12,10 @@ import {
 import { FaXTwitter } from "react-icons/fa6";
 import { SiThreads } from "react-icons/si";
 
+import { useNavigate } from "react-router-dom";
+
 function LandingPage() {
+  const navigate = useNavigate();
   return (
     <>
       {/* Navbar */}
@@ -34,8 +37,8 @@ function LandingPage() {
         </ul>
 
         <div className="nav-buttons">
-          <button className="login-btn">Sign In</button>
-          <button className="signup-btn">Sign Up</button>
+          <button className="login-btn" onClick={() => navigate('/login')}>Sign In</button>
+          <button className="signup-btn" onClick={() => navigate('/register')}>Sign Up</button>
         </div>
       </nav>
 
@@ -52,7 +55,7 @@ function LandingPage() {
           </p>
 
           <div className="hero-buttons">
-            <button className="primary-btn">Get Started</button>
+            <button className="primary-btn" onClick={() => navigate('/register')}>Get Started</button>
             <button className="secondary-btn">Learn More</button>
           </div>
         </div>
@@ -191,7 +194,7 @@ function LandingPage() {
     from one simple platform.
   </p>
 
-  <button>Get Started</button>
+  <button onClick={() => navigate('/register')}>Get Started</button>
 </section>
 {/* Footer Section */}
 <footer className="footer">
