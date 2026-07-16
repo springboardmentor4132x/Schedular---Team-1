@@ -1,0 +1,163 @@
+/* ============================================================
+   AppSidebar.css — Slide-in sidebar (Notion / Linear style)
+   ============================================================ */
+
+/* ── Backdrop (click-away to close) ─────────────────────────── */
+.sp-sidebar-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0);
+  z-index: 199;
+  pointer-events: none;
+  transition: background 0.25s ease;
+}
+.sp-sidebar-backdrop--visible {
+  background: rgba(0, 0, 0, 0.22);
+  pointer-events: auto;
+}
+
+/* ── Sidebar panel ─────────────────────────────────────────── */
+.sp-sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 260px;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-right: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 0 16px 16px 0;
+  box-shadow: 4px 0 32px rgba(0, 0, 0, 0.1);
+  transform: translateX(-100%);
+  transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+  outline: none;
+}
+.sp-sidebar--open {
+  transform: translateX(0);
+}
+
+/* ── Brand ─────────────────────────────────────────────────── */
+.sp-sidebar__brand {
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+.sp-sidebar__logo-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  transition: opacity 0.15s;
+}
+.sp-sidebar__logo-link:hover { opacity: 0.8; }
+.sp-sidebar__logo-img {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  object-fit: cover;
+}
+.sp-sidebar__logo-text {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #1a1a2e;
+  letter-spacing: -0.01em;
+}
+
+/* ── User pill ─────────────────────────────────────────────── */
+.sp-sidebar__user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 20px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+.sp-sidebar__avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6c5ce7, #00b4d8);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.sp-sidebar__user-info { overflow: hidden; }
+.sp-sidebar__user-name {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #111827;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin: 0;
+}
+.sp-sidebar__user-email {
+  font-size: 0.72rem;
+  color: #6b7280;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin: 0;
+}
+
+/* ── Nav ───────────────────────────────────────────────────── */
+.sp-sidebar__nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 10px;
+  flex: 1;
+}
+.sp-sidebar__item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+  text-decoration: none;
+  transition: background 0.15s, color 0.15s;
+}
+.sp-sidebar__item:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: #111827;
+}
+.sp-sidebar__item--active {
+  background: rgba(108, 92, 231, 0.1);
+  color: #6c5ce7;
+  font-weight: 600;
+}
+.sp-sidebar__item--active:hover {
+  background: rgba(108, 92, 231, 0.14);
+}
+.sp-sidebar__item-icon {
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* ── Logout ────────────────────────────────────────────────── */
+.sp-sidebar__logout {
+  margin: 0 10px 16px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #dc2626;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s;
+}
+.sp-sidebar__logout:hover { background: rgba(220, 38, 38, 0.06); }

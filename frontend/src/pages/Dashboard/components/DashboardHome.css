@@ -1,0 +1,206 @@
+/* ============================================================
+   DashboardHome.css
+   ============================================================ */
+
+/* ── Welcome card ───────────────────────────────────────────── */
+.sp-dash-welcome {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: linear-gradient(135deg, rgba(108,92,231,0.08) 0%, rgba(0,180,216,0.06) 100%);
+  border: 1px solid rgba(108,92,231,0.12);
+  border-radius: 14px;
+  padding: 20px 24px;
+  margin-bottom: 24px;
+}
+.sp-dash-welcome__avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6c5ce7, #00b4d8);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.sp-dash-welcome__title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 3px;
+}
+.sp-dash-welcome__meta {
+  font-size: 0.82rem;
+  color: #6b7280;
+  margin: 0 0 3px;
+  text-transform: capitalize;
+}
+.sp-dash-welcome__last-login {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  margin: 0;
+}
+
+/* ── Dashboard grid ─────────────────────────────────────────── */
+.sp-dash-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+/* ── Card base ──────────────────────────────────────────────── */
+.sp-dash-card {
+  background: #fff;
+  border: 1px solid rgba(0,0,0,0.07);
+  border-radius: 14px;
+  padding: 20px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+}
+.sp-dash-card--wide { grid-column: 1 / -1; }
+
+.sp-dash-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.sp-dash-card__title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+.sp-dash-card__action {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #6c5ce7;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.12s;
+}
+.sp-dash-card__action:hover { color: #5a4ad1; }
+.sp-dash-card__icon { font-size: 1.2rem; color: #9ca3af; }
+
+/* ── Platforms ───────────────────────────────────────────────── */
+.sp-platforms-list { display: flex; flex-direction: column; gap: 8px; }
+.sp-platform-row {
+  display: grid;
+  grid-template-columns: 28px 100px 1fr auto auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: rgba(0,0,0,0.02);
+  font-size: 0.83rem;
+}
+.sp-platform-row__icon { font-size: 1.1rem; display: flex; align-items: center; }
+.sp-platform-row__name { font-weight: 600; color: #111827; }
+.sp-platform-row__account { color: #6b7280; }
+.sp-platform-row__sync { font-size: 0.75rem; color: #9ca3af; }
+
+.sp-platform-badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+.sp-platform-badge--connected    { background: #d1fae5; color: #065f46; }
+.sp-platform-badge--disconnected { background: #f3f4f6; color: #6b7280; }
+.sp-platform-badge--syncing      { background: #dbeafe; color: #1e40af; }
+.sp-platform-badge--error        { background: #fee2e2; color: #991b1b; }
+
+/* ── Sync list ───────────────────────────────────────────────── */
+.sp-sync-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.sp-sync-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.82rem;
+  color: #6b7280;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+  padding-bottom: 10px;
+}
+.sp-sync-item:last-child { border: none; padding-bottom: 0; }
+.sp-sync-item strong { color: #111827; font-weight: 600; }
+
+.sp-health        { text-transform: capitalize; }
+.sp-health--healthy   { color: #059669; }
+.sp-health--degraded  { color: #d97706; }
+.sp-health--down      { color: #dc2626; }
+.sp-health--unknown   { color: #6b7280; }
+
+
+/* ── Activity ────────────────────────────────────────────────── */
+.sp-activity-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.sp-activity-item { display: flex; gap: 10px; align-items: flex-start; }
+.sp-activity-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #6c5ce7;
+  margin-top: 4px;
+  flex-shrink: 0;
+}
+.sp-activity-text { font-size: 0.82rem; color: #374151; margin: 0; }
+.sp-activity-time { font-size: 0.72rem; color: #9ca3af; margin: 0; }
+.sp-activity-empty { font-size: 0.82rem; color: #9ca3af; }
+
+/* ── Empty state ─────────────────────────────────────────────── */
+.sp-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 24px 0;
+  text-align: center;
+}
+.sp-empty-state__icon { font-size: 2rem; color: #d1d5db; }
+.sp-empty-state__text { font-size: 0.9rem; font-weight: 600; color: #374151; margin: 0; }
+.sp-empty-state__sub  { font-size: 0.8rem; color: #9ca3af; margin: 0; }
+.sp-empty-state__btn {
+  margin-top: 4px;
+  padding: 8px 20px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #374151;
+  background: rgba(0,0,0,0.05);
+  border: 1px solid rgba(0,0,0,0.08);
+  cursor: not-allowed;
+  font-family: inherit;
+  opacity: 0.5;
+}
+
+/* ── Skeletons ───────────────────────────────────────────────── */
+.sp-dash-skeleton {
+  height: 36px;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+  background-size: 200% 100%;
+  animation: sp-shimmer 1.4s infinite;
+}
+.sp-dash-skeleton-row { display: flex; gap: 8px; }
+.sp-dash-skeleton-col { display: flex; flex-direction: column; gap: 8px; }
+
+@keyframes sp-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ── Responsive ─────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .sp-dash-grid { grid-template-columns: 1fr; }
+  .sp-dash-card--wide { grid-column: 1; }
+}
+@media (max-width: 640px) {
+  .sp-platform-row { grid-template-columns: 24px 1fr auto; }
+  .sp-platform-row__account,
+  .sp-platform-row__sync { display: none; }
+  .sp-dash-welcome { flex-direction: column; align-items: flex-start; }
+}
