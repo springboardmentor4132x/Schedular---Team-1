@@ -43,13 +43,18 @@ const Register = () => {
       });
       navigate('/login');
     } catch (err) {
-      if (err.message === 'EMAIL_EXISTS') {
-        setServerError('Email already registered. Please use a different email or log in.');
-      } else if (err.message === 'PHONE_EXISTS') {
-        setServerError('Phone number already registered. Please use a different number.');
+      console.log("FULL ERROR 👉", err);
+
+      if (err.message?.includes('EMAIL')) {
+        setServerError('Email already registered');
+      } else if (err.message?.includes('PHONE')) {
+        setServerError('Phone already exists');
+      } else if (err.message?.includes('fetch')) {
+        setServerError('Server not running ⚠️');
       } else {
-        setServerError('Something went wrong. Please try again.');
+        setServerError(err.message || 'Unknown error');
       }
+
       setIsLoading(false);
     }
   };

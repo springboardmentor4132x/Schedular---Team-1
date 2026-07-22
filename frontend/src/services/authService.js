@@ -31,17 +31,24 @@ async function registerUser({ fullName, email, phone, country, orgName, role, pa
       role: data.user.role,
     };
   } catch (error) {
-    if (error.response && error.response.status === 400) {
-      const detail = error.response.data.detail;
-      if (detail && detail.includes('Email')) {
+    console.log("BACKEND ERROR 👉", error.response); // debug
+
+    if (error.response) {
+      const detail = error.response.data?.detail || "";
+
+      if (detail.includes('Email')) {
         throw new Error('EMAIL_EXISTS');
-      } else if (detail && detail.includes('Phone')) {
+      } else if (detail.includes('Phone')) {
         throw new Error('PHONE_EXISTS');
+      } else {
+        throw new Error(detail); // 🔥 IMPORTANT (real message)
       }
     }
-    throw new Error('REGISTRATION_FAILED');
+
+    throw new Error(error.message || 'SERVER_ERROR'); // network issue
   }
 }
+
 
 // ─── Login ────────────────────────────────────────────────────────────────────
 async function loginUser(email, password) {

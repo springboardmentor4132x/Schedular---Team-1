@@ -61,6 +61,16 @@ html, body {
   background: transparent; /* sky shows through from body */
   min-height: 100vh;
 }
+/* ── ✈️ GLOBAL PLANE ───────────────────────────── */
+.sp-plane {
+  position: fixed;
+  top: 20%;
+  left: -150px;
+  width: 110px;
+  z-index: 60; /* above sections, below navbar */
+  pointer-events: none;
+  animation: sp-plane-fly 18s linear infinite;
+}
 
 /* ── CSS Cloud Layer ────────────────────────────────────────── */
 .sp-cloud-layer {
@@ -320,10 +330,11 @@ html, body {
   display: flex;
   flex-direction: column;
   /* Centre vertically so the copy shares the viewport with the plane */
-  justify-content: center;
+  justify-content: center; 
   padding: var(--sp-section-pad);
   /* Push below navbar (72px) + comfortable breathing room */
   padding-top: 7rem;
+
 }
 
 .sp-hero__copy {
@@ -395,7 +406,12 @@ html, body {
 
 /* ── Features Section ───────────────────────────────────────── */
 .sp-features {
-  justify-content: flex-end;
+  display: flex;
+  justify-content: center;   /* horizontal center */
+  align-items: center;       /* vertical center */
+  flex-direction: column;
+  text-align: center;
+  min-height: 100vh;
 }
 
 .sp-features__content {

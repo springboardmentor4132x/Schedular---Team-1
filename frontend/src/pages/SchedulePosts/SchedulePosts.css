@@ -1,0 +1,16 @@
+.scheduled-posts {
+  padding: 30px;
+}
+
+.post-card {
+  background: white;
+  padding: 20px;
+  margin-top: 20px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.1);
+}
+
+.post-card button {
+  margin-right: 10px;
+  padding: 8px 16px;
+}

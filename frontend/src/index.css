@@ -1,21 +1,4 @@
-<<<<<<< HEAD
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
 
-body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  background: #f5f5f5;
-}
-
-#root {
-  width: 100%;
-  min-height: 100vh;
-}
-=======
 /* ============================================================
    index.css — Global styles
    Merged: Sweeti (CSS variables, typography) + Sourav (auth styles)
@@ -136,4 +119,3 @@ code {
   image-rendering: -webkit-optimize-contrast; /* crisp on retina */
   flex-shrink: 0;
 }
->>>>>>> 42d1446971e4caf31013165bf3cd38862cfc70b5
