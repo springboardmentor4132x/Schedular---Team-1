@@ -5,12 +5,12 @@
  * Also shows currently assigned marketing team.
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { MdSearch, MdPeople, MdStar, MdCheckCircle, MdOutlineHourglassEmpty } from 'react-icons/md';
 import Avatar from '../../../components/Avatar/Avatar';
 import PageContainer from '../../../components/PageContainer/PageContainer';
 import SectionTitle from '../../../components/SectionTitle/SectionTitle';
-import { INITIAL_MY_TEAM, INITIAL_AVAILABLE_TEAMS } from './mockData';
+import { discoverMarketingTeams, sendCollaborationRequest } from '../../../../../services/teamService';
 import './MarketingTeamsPage.css';
 
 const PLATFORM_CHARS = {
@@ -32,8 +32,25 @@ const PLATFORM_COLORS = {
 };
 
 export default function MarketingTeamsPage() {
-  const myTeam = INITIAL_MY_TEAM;
-  const availableTeams = INITIAL_AVAILABLE_TEAMS;
+  const [myTeam, setMyTeam] = useState(null);
+  const [availableTeams, setAvailableTeams] = useState([]);
+
+  useEffect(() => {
+    discoverMarketingTeams().then(data => {
+      setAvailableTeams(data.map(team => ({
+        id: team.id,
+        name: team.name,
+        profileImage: '',
+        rating: 5.0,
+        experience: '2+ years',
+        description: 'Marketing agency',
+        specialties: ['Social Media Management'],
+        supportedPlatforms: ['facebook', 'instagram', 'linkedin', 'x'],
+        activeClientCount: 1,
+        availabilityStatus: 'accepting_requests'
+      })));
+    }).catch(() => setAvailableTeams([]));
+  }, []);
   const [searchVal, setSearchVal] = useState('');
   const [filterExpertise, setFilterExpertise] = useState('All');
   const [filterPlatform, setFilterPlatform] = useState('All');
@@ -52,8 +69,13 @@ export default function MarketingTeamsPage() {
     setShowConfirmModal(true);
   };
 
-  const handleConfirmRequest = () => {
-    setSentRequests(prev => ({ ...prev, [requestedTeamId]: true }));
+  const handleConfirmRequest = async () => {
+    try {
+      await sendCollaborationRequest({ teamId: requestedTeamId, message: "Let's collaborate" });
+      setSentRequests(prev => ({ ...prev, [requestedTeamId]: true }));
+    } catch (err) {
+      console.error(err);
+    }
     setShowConfirmModal(false);
     setRequestedTeamId(null);
   };

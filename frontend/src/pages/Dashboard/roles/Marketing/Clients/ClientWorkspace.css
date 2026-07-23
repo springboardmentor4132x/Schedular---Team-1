@@ -5,8 +5,8 @@
    ============================================================ */
 
 .cw-header-panel {
-  background: #fff;
-  border: 1px solid #e5e7eb;
+  background: var(--bg);
+  border: 1px solid var(--border);
   border-radius: 14px;
   padding: 20px;
   margin-bottom: 24px;
@@ -22,8 +22,8 @@
   gap: 6px;
   font-size: 13px;
   font-weight: 600;
-  color: #4b5563;
-  background: #f3f4f6;
+  color: var(--text-h);
+  background: var(--code-bg);
   border: none;
   border-radius: 6px;
   padding: 6px 12px;
@@ -33,7 +33,7 @@
 }
 
 .cw-back-btn:hover {
-  background: #e5e7eb;
+  background: var(--border);
 }
 
 .cw-header-panel__content {
@@ -58,7 +58,7 @@
 .cw-header-panel__name {
   font-size: 20px;
   font-weight: 800;
-  color: #111827;
+  color: var(--text-h);
   margin: 0;
 }
 
@@ -87,7 +87,7 @@
 
 .cw-header-panel__meta {
   font-size: 13px;
-  color: #4b5563;
+  color: var(--text-h);
   margin: 0;
 }
 
@@ -138,8 +138,8 @@
 
 /* ── Card Styles ── */
 .cw-card {
-  background: #fff;
-  border: 1px solid #e5e7eb;
+  background: var(--bg);
+  border: 1px solid var(--border);
   border-radius: 14px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   overflow: hidden;
@@ -153,14 +153,14 @@
 .cw-card__title {
   font-size: 15px;
   font-weight: 700;
-  color: #111827;
+  color: var(--text-h);
   margin: 0;
 }
 
 .cw-empty-msg {
   padding: 24px;
   text-align: center;
-  color: #9ca3af;
+  color: var(--text);
   font-size: 13.5px;
 }
 
@@ -194,12 +194,12 @@
 .cw-campaign-row__name {
   font-size: 14px;
   font-weight: 700;
-  color: #111827;
+  color: var(--text-h);
 }
 
 .cw-campaign-row__dates {
   font-size: 11px;
-  color: #9ca3af;
+  color: var(--text);
 }
 
 .cw-campaign-row__progress {
@@ -213,7 +213,7 @@
 .cw-progress-bar {
   flex: 1;
   height: 6px;
-  background: #f3f4f6;
+  background: var(--code-bg);
   border-radius: 3px;
   overflow: hidden;
 }
@@ -227,7 +227,7 @@
 .cw-progress-pct {
   font-size: 12px;
   font-weight: 700;
-  color: #374151;
+  color: var(--text-h);
   min-width: 32px;
 }
 
@@ -241,12 +241,12 @@
 
 .cw-campaign-row__btn {
   padding: 6px 12px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--border);
   border-radius: 6px;
   font-size: 12px;
   font-weight: 600;
-  color: #4b5563;
-  background: #fff;
+  color: var(--text-h);
+  background: var(--bg);
   cursor: pointer;
   transition: all 0.12s;
   display: flex;
@@ -255,9 +255,9 @@
 }
 
 .cw-campaign-row__btn:hover {
-  background: #f9fafb;
+  background: var(--code-bg);
   border-color: #cbd5e1;
-  color: #111827;
+  color: var(--text-h);
 }
 
 /* ── Scheduled Posts ── */
@@ -301,7 +301,7 @@
 
 .cw-post-row__caption {
   font-size: 13px;
-  color: #374151;
+  color: var(--text-h);
   margin: 0;
   white-space: nowrap;
   overflow: hidden;
@@ -310,7 +310,7 @@
 
 .cw-post-row__time {
   font-size: 11px;
-  color: #9ca3af;
+  color: var(--text);
 }
 
 .cw-post-row__campaign {
@@ -326,17 +326,17 @@
 .cw-post-row__btn {
   padding: 4px 10px;
   border-radius: 6px;
-  border: 1px solid #e5e7eb;
-  background: #fff;
+  border: 1px solid var(--border);
+  background: var(--bg);
   font-size: 11px;
   font-weight: 600;
-  color: #4b5563;
+  color: var(--text-h);
   cursor: pointer;
   transition: background 0.12s;
 }
 
 .cw-post-row__btn:hover {
-  background: #f9fafb;
+  background: var(--code-bg);
 }
 
 /* ── Published Posts ── */
@@ -380,7 +380,7 @@
 
 .cw-pub-row__content {
   font-size: 13px;
-  color: #374151;
+  color: var(--text-h);
   margin: 0;
   white-space: nowrap;
   overflow: hidden;
@@ -389,7 +389,7 @@
 
 .cw-pub-row__time {
   font-size: 11px;
-  color: #9ca3af;
+  color: var(--text);
 }
 
 .cw-pub-row__metrics {
@@ -406,12 +406,12 @@
 .cw-pub-metric__val {
   font-size: 13px;
   font-weight: 700;
-  color: #111827;
+  color: var(--text-h);
 }
 
 .cw-pub-metric__lbl {
   font-size: 9px;
-  color: #9ca3af;
+  color: var(--text);
   text-transform: uppercase;
 }
 
@@ -428,7 +428,7 @@
   align-items: flex-end;
   gap: 6px;
   height: 80px;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--border);
   padding-bottom: 4px;
 }
 
@@ -444,7 +444,7 @@
   display: flex;
   justify-content: space-between;
   font-size: 9px;
-  color: #9ca3af;
+  color: var(--text);
 }
 
 /* ── Timeline Widget ── */
@@ -468,7 +468,7 @@
   top: 14px;
   bottom: 0;
   width: 2px;
-  background: #e5e7eb;
+  background: var(--border);
 }
 
 .cw-timeline-dot {
@@ -489,20 +489,20 @@
 
 .cw-timeline-text {
   font-size: 12.5px;
-  color: #374151;
+  color: var(--text-h);
   margin: 0;
   line-height: 1.4;
 }
 
 .cw-timeline-time {
   font-size: 11px;
-  color: #9ca3af;
+  color: var(--text);
 }
 
 /* ── Placeholders ── */
 .cw-placeholder-card {
-  background: #fff;
-  border: 1px solid #e5e7eb;
+  background: var(--bg);
+  border: 1px solid var(--border);
   border-radius: 14px;
   padding: 24px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
@@ -511,7 +511,7 @@
 .cw-empty {
   text-align: center;
   padding: 48px;
-  background: #fff;
-  border: 1px solid #e5e7eb;
+  background: var(--bg);
+  border: 1px solid var(--border);
   border-radius: 14px;
 }

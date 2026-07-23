@@ -5,7 +5,7 @@
 .sp-dash-layout {
   display: flex;
   min-height: 100vh;
-  background: #f9fafb;
+  background: var(--code-bg);
   font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
 }
 

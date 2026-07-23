@@ -39,7 +39,12 @@ export default function SettingsPage() {
   const [pwBusy, setPwBusy]   = useState(false);
 
   useEffect(() => {
-    getSettings().then((data) => { setSettings(data); setLoading(false); });
+    getSettings()
+      .then((data) => { setSettings(data); setLoading(false); })
+      .catch((err) => {
+        showToast('Failed to load settings from server.');
+        setLoading(false);
+      });
   }, []);
 
   const showToast = (msg) => {
@@ -49,7 +54,11 @@ export default function SettingsPage() {
 
   const save = async (section, values) => {
     const result = await updateSettings(section, values);
-    if (result?.success !== false) showToast(result?.message ?? 'Saved.');
+    if (result?.success === false) {
+      showToast(`Error: ${result.message}`);
+    } else {
+      showToast(result?.message ?? 'Saved.');
+    }
   };
 
   const handleGeneralChange = async (field, value) => {
@@ -95,12 +104,20 @@ export default function SettingsPage() {
 
   const handleLogoutOthers = async () => {
     const result = await logoutOtherDevices();
-    showToast(result?.message ?? 'Done.');
+    if (result?.success === false) {
+      showToast(`Error: ${result.message}`);
+    } else {
+      showToast(result?.message ?? 'Done.');
+    }
   };
 
   const handleExport = async () => {
     const result = await exportData();
-    showToast(result?.message ?? 'Export initiated.');
+    if (result?.success === false) {
+      showToast(`Error: ${result.message}`);
+    } else {
+      showToast(result?.message ?? 'Export initiated.');
+    }
   };
 
   const handleDelete = async () => {
@@ -108,7 +125,11 @@ export default function SettingsPage() {
       'This will permanently delete your account and all data. Are you absolutely sure?'
     )) return;
     const result = await deleteAccount();
-    showToast(result?.message ?? 'Request received.');
+    if (result?.success === false) {
+      showToast(`Error: ${result.message}`);
+    } else {
+      showToast(result?.message ?? 'Request received.');
+    }
   };
 
   if (loading) {
@@ -142,7 +163,7 @@ export default function SettingsPage() {
       </div>
 
       {/* ── General ──────────────────────────────────────────── */}
-      {activeTab === 'General' && (
+      {activeTab === 'General' && settings?.general && (
         <section className="sp-st-section">
           <h2 className="sp-st-section-title">General</h2>
           <div className="sp-st-field-row">
@@ -215,7 +236,7 @@ export default function SettingsPage() {
 
           <h2 className="sp-st-section-title">Sessions</h2>
           <div className="sp-st-sessions">
-            {settings.sessions?.map((s) => (
+            {settings?.sessions?.map((s) => (
               <div key={s.id} className="sp-st-session-row">
                 <div className="sp-st-session-info">
                   <p className="sp-st-session-device">{s.device} · {s.browser}</p>
@@ -256,8 +277,8 @@ export default function SettingsPage() {
               </div>
               <button
                 role="switch"
-                aria-checked={settings.notifications[key]}
-                className={`sp-st-toggle${settings.notifications[key] ? ' sp-st-toggle--on' : ''}`}
+                aria-checked={settings?.notifications?.[key] ?? false}
+                className={`sp-st-toggle${settings?.notifications?.[key] ? ' sp-st-toggle--on' : ''}`}
                 onClick={() => handleNotifToggle(key)}
               >
                 <span className="sp-st-toggle__thumb" />

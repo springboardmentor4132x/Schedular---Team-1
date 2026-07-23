@@ -20,8 +20,8 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  background: #fff;
-  border: 1px solid #e5e7eb;
+  background: var(--bg);
+  border: 1px solid var(--border);
   border-radius: 12px;
   padding: 16px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
@@ -52,19 +52,19 @@
 .mc-request-item__name {
   font-size: 15px;
   font-weight: 700;
-  color: #111827;
+  color: var(--text-h);
   margin: 0;
 }
 
 .mc-request-item__details {
   font-size: 13px;
-  color: #4b5563;
+  color: var(--text-h);
   margin: 0;
 }
 
 .mc-request-item__time {
   font-size: 11px;
-  color: #9ca3af;
+  color: var(--text);
 }
 
 .mc-request-item__actions {
@@ -107,8 +107,8 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  background: #fff;
-  border: 1px solid #e5e7eb;
+  background: var(--bg);
+  border: 1px solid var(--border);
   border-radius: 12px;
   padding: 12px 16px;
   margin-bottom: 24px;
@@ -126,8 +126,8 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
+  background: var(--code-bg);
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 8px 12px;
   width: 100%;
@@ -141,7 +141,7 @@
 
 .mc-toolbar__search-icon {
   font-size: 18px;
-  color: #9ca3af;
+  color: var(--text);
 }
 
 .mc-toolbar__search-input {
@@ -149,7 +149,7 @@
   background: transparent;
   outline: none;
   font-size: 14px;
-  color: #111827;
+  color: var(--text-h);
   width: 100%;
 }
 
@@ -191,8 +191,8 @@
 }
 
 .mc-client-card {
-  background: #fff;
-  border: 1px solid #e5e7eb;
+  background: var(--bg);
+  border: 1px solid var(--border);
   border-radius: 14px;
   padding: 20px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
@@ -223,13 +223,13 @@
 .mc-client-card__name {
   font-size: 15px;
   font-weight: 700;
-  color: #111827;
+  color: var(--text-h);
   margin: 0;
 }
 
 .mc-client-card__industry {
   font-size: 12px;
-  color: #9ca3af;
+  color: var(--text);
 }
 
 .mc-client-card__status {
@@ -257,7 +257,7 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 8px;
-  background: #f9fafb;
+  background: var(--code-bg);
   border-radius: 8px;
   padding: 8px;
   text-align: center;
@@ -272,12 +272,12 @@
 .mc-client-card__stat-val {
   font-size: 14px;
   font-weight: 700;
-  color: #111827;
+  color: var(--text-h);
 }
 
 .mc-client-card__stat-lbl {
   font-size: 10px;
-  color: #9ca3af;
+  color: var(--text);
   text-transform: uppercase;
 }
 
@@ -300,7 +300,7 @@
 
 .mc-client-card__activity {
   font-size: 12px;
-  color: #4b5563;
+  color: var(--text-h);
   margin: 0;
   white-space: nowrap;
   overflow: hidden;
@@ -332,8 +332,8 @@
 .mc-empty-state {
   text-align: center;
   padding: 48px;
-  background: #fff;
-  border: 1px solid #e5e7eb;
+  background: var(--bg);
+  border: 1px solid var(--border);
   border-radius: 12px;
 }
 

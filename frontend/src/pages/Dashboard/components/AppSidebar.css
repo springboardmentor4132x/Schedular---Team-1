@@ -92,7 +92,7 @@
 .sp-sidebar__user-name {
   font-size: 0.82rem;
   font-weight: 700;
-  color: #111827;
+  color: var(--text-h);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -100,7 +100,7 @@
 }
 .sp-sidebar__user-email {
   font-size: 0.72rem;
-  color: #6b7280;
+  color: var(--text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -123,13 +123,13 @@
   border-radius: 8px;
   font-size: 0.875rem;
   font-weight: 500;
-  color: #374151;
+  color: var(--text-h);
   text-decoration: none;
   transition: background 0.15s, color 0.15s;
 }
 .sp-sidebar__item:hover {
   background: rgba(0, 0, 0, 0.05);
-  color: #111827;
+  color: var(--text-h);
 }
 .sp-sidebar__item--active {
   background: rgba(108, 92, 231, 0.1);

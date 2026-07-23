@@ -10,8 +10,8 @@
 
 /* ── My Assigned Team Card ───────────────────────────────── */
 .bt-my-team-card {
-  background: #fff;
-  border: 1px solid #e5e7eb;
+  background: var(--bg);
+  border: 1px solid var(--border);
   border-radius: 14px;
   padding: 24px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
@@ -50,7 +50,7 @@
 .bt-my-team-card__name {
   font-size: 18px;
   font-weight: 800;
-  color: #111827;
+  color: var(--text-h);
   margin: 0;
 }
 
@@ -69,7 +69,7 @@
 
 .bt-my-team-card__meta {
   font-size: 13px;
-  color: #6b7280;
+  color: var(--text);
   margin: 0;
 }
 
@@ -83,8 +83,8 @@
 .bt-my-team-card__spec {
   font-size: 11px;
   font-weight: 600;
-  background: #f3f4f6;
-  color: #4b5563;
+  background: var(--code-bg);
+  color: var(--text-h);
   padding: 2px 8px;
   border-radius: 6px;
 }
@@ -115,21 +115,21 @@
 .bt-my-team-stat__val {
   font-size: 18px;
   font-weight: 700;
-  color: #111827;
+  color: var(--text-h);
 }
 
 .bt-my-team-stat__lbl {
   font-size: 11px;
-  color: #9ca3af;
+  color: var(--text);
   text-transform: uppercase;
 }
 
 .bt-my-team-card__action-btn {
   padding: 8px 16px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--border);
   border-radius: 8px;
-  background: #fff;
-  color: #374151;
+  background: var(--bg);
+  color: var(--text-h);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -138,7 +138,7 @@
 }
 
 .bt-my-team-card__action-btn:hover {
-  background: #f9fafb;
+  background: var(--code-bg);
 }
 
 /* ── Discovery Toolbar ───────────────────────────────────── */
@@ -146,8 +146,8 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-  background: #fff;
-  border: 1px solid #e5e7eb;
+  background: var(--bg);
+  border: 1px solid var(--border);
   border-radius: 12px;
   padding: 16px;
   margin-bottom: 24px;
@@ -165,8 +165,8 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
+  background: var(--code-bg);
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 8px 12px;
   width: 100%;
@@ -180,7 +180,7 @@
 
 .bt-toolbar__search-icon {
   font-size: 18px;
-  color: #9ca3af;
+  color: var(--text);
 }
 
 .bt-toolbar__search-input {
@@ -188,7 +188,7 @@
   background: transparent;
   outline: none;
   font-size: 14px;
-  color: #111827;
+  color: var(--text-h);
   width: 100%;
 }
 
@@ -216,17 +216,17 @@
   font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
-  color: #9ca3af;
+  color: var(--text);
   letter-spacing: 0.04em;
 }
 
 .bt-filter-select {
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 6px 12px;
-  background: #fff;
+  background: var(--bg);
   font-size: 13px;
-  color: #374151;
+  color: var(--text-h);
   outline: none;
   cursor: pointer;
 }
@@ -239,8 +239,8 @@
 }
 
 .bt-team-card {
-  background: #fff;
-  border: 1px solid #e5e7eb;
+  background: var(--bg);
+  border: 1px solid var(--border);
   border-radius: 14px;
   padding: 20px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
@@ -270,7 +270,7 @@
 .bt-team-card__name {
   font-size: 15px;
   font-weight: 700;
-  color: #111827;
+  color: var(--text-h);
   margin: 0;
 }
 
@@ -279,7 +279,7 @@
   align-items: center;
   gap: 4px;
   font-size: 12px;
-  color: #4b5563;
+  color: var(--text-h);
 }
 
 .bt-team-card__star-icon {
@@ -288,7 +288,7 @@
 
 .bt-team-card__desc {
   font-size: 13px;
-  color: #4b5563;
+  color: var(--text-h);
   margin: 0;
   line-height: 1.5;
 }
@@ -302,7 +302,7 @@
 .bt-team-card__spec-chip {
   font-size: 10px;
   font-weight: 600;
-  background: #f3f4f6;
+  background: var(--code-bg);
   color: #475569;
   padding: 2px 8px;
   border-radius: 4px;
@@ -337,7 +337,7 @@
 
 .bt-team-card__client-count {
   font-size: 11px;
-  color: #6b7280;
+  color: var(--text);
 }
 
 .bt-team-card__btn {
@@ -360,8 +360,8 @@
 }
 
 .bt-team-card__btn--requested {
-  background: #f3f4f6;
-  color: #9ca3af;
+  background: var(--code-bg);
+  color: var(--text);
   cursor: not-allowed;
   display: flex;
   align-items: center;
@@ -378,8 +378,8 @@
 .bt-empty-state {
   text-align: center;
   padding: 48px;
-  background: #fff;
-  border: 1px solid #e5e7eb;
+  background: var(--bg);
+  border: 1px solid var(--border);
   border-radius: 12px;
 }
 
@@ -400,7 +400,7 @@
 }
 
 .bt-modal {
-  background: #fff;
+  background: var(--bg);
   border-radius: 14px;
   padding: 24px;
   width: 90%;

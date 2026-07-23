@@ -1,41 +1,11 @@
-/**
- * settingsService.js
- *
-
- */
-
 import api from './api';
 
 /**
  * GET /settings
  */
 export async function getSettings() {
-  try {
-    const { data } = await api.get('/settings');
-    return data;
-  } catch {
-    return {
-      general: { language: 'en', timezone: 'Asia/Kolkata', country: 'IN' },
-      notifications: {
-        emailNotifications: true,
-        pushNotifications: false,
-        publishingAlerts: true,
-        campaignAlerts: true,
-        securityAlerts: true,
-      },
-      appearance: { theme: localStorage.getItem('sp_theme') || 'light' },
-      sessions: [
-        {
-          id: 1,
-          device: 'MacBook',
-          browser: 'Chrome',
-          ipAddress: '—',
-          lastActive: new Date().toISOString(),
-          isCurrent: true,
-        },
-      ],
-    };
-  }
+  const { data } = await api.get('/settings');
+  return data;
 }
 
 /**
@@ -46,9 +16,9 @@ export async function getSettings() {
 export async function updateSettings(section, values) {
   try {
     const { data } = await api.put('/settings', { section, ...values });
-    return data;
-  } catch {
-    return { success: true, message: 'Settings saved.' };
+    return { success: true, message: 'Settings saved.', data };
+  } catch (err) {
+    return { success: false, message: err.response?.data?.detail || 'Failed to save settings.' };
   }
 }
 
@@ -58,12 +28,12 @@ export async function updateSettings(section, values) {
 export async function changePassword(currentPassword, newPassword) {
   try {
     const { data } = await api.post('/auth/change-password', {
-      currentPassword,
-      newPassword,
+      current_password: currentPassword,
+      new_password: newPassword,
     });
-    return data;
-  } catch {
-    return { success: true, message: 'Password changed successfully.' };
+    return { success: true, message: data.message || 'Password changed successfully.' };
+  } catch (err) {
+    return { success: false, message: err.response?.data?.detail || 'Failed to change password.' };
   }
 }
 
@@ -74,9 +44,9 @@ export async function changePassword(currentPassword, newPassword) {
 export async function logoutOtherDevices() {
   try {
     const { data } = await api.post('/auth/logout-all');
-    return data;
-  } catch {
-    return { success: true, message: 'All other sessions have been terminated.' };
+    return { success: true, message: data.message || 'All other sessions have been terminated.' };
+  } catch (err) {
+    return { success: false, message: err.response?.data?.detail || 'Failed to logout other devices.' };
   }
 }
 
@@ -86,12 +56,9 @@ export async function logoutOtherDevices() {
 export async function exportData() {
   try {
     const { data } = await api.post('/account/export');
-    return data;
-  } catch {
-    return {
-      success: true,
-      message: 'Export request submitted. You will receive an email with your data shortly.',
-    };
+    return { success: true, message: data.message || 'Export request submitted. You will receive an email shortly.' };
+  } catch (err) {
+    return { success: false, message: err.response?.data?.detail || 'Failed to initiate export.' };
   }
 }
 
@@ -101,11 +68,8 @@ export async function exportData() {
 export async function deleteAccount() {
   try {
     const { data } = await api.delete('/account');
-    return data;
-  } catch {
-    return {
-      success: false,
-      message: 'Account deletion requires backend implementation.',
-    };
+    return { success: true, message: data.message || 'Account successfully deleted.' };
+  } catch (err) {
+    return { success: false, message: err.response?.data?.detail || 'Failed to delete account.' };
   }
 }

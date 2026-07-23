@@ -35,16 +35,16 @@ import { getNotifications, markNotificationRead, markAllRead } from '../../../..
 import analyticsService from '../../../../services/analyticsService';
 import { getDashboardSummary } from '../../../../services/dashboardService';
 
-const MOCK_MKT_STATS = [];
-const MOCK_CLIENTS = [];
-const MOCK_TODAY_SCHEDULE = [];
-const MOCK_MKT_CAMPAIGNS = [];
-const MOCK_DRAFTS = [];
-const MOCK_QUEUE = [];
-const MOCK_MKT_NOTIFICATIONS = [];
-const MOCK_WEEKLY_POSTS = [];
-const MOCK_MKT_PLATFORM_DIST = [];
-const MOCK_MKT_ENGAGEMENT = [];
+const FALLBACK_MKT_STATS = [];
+const FALLBACK_CLIENTS = [];
+const FALLBACK_TODAY_SCHEDULE = [];
+const FALLBACK_MKT_CAMPAIGNS = [];
+const FALLBACK_DRAFTS = [];
+const FALLBACK_QUEUE = [];
+const FALLBACK_MKT_NOTIFICATIONS = [];
+const FALLBACK_WEEKLY_POSTS = [];
+const FALLBACK_MKT_PLATFORM_DIST = [];
+const FALLBACK_MKT_ENGAGEMENT = [];
 
 import './MarketingDashboard.css';
 
@@ -121,9 +121,9 @@ function WelcomeBanner({ user }) {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
   });
 
-  const totalClients  = MOCK_MKT_STATS.find((s) => s.id === 'clients')?.value ?? '0';
-  const todayQueue    = MOCK_MKT_STATS.find((s) => s.id === 'queue')?.value ?? '0';
-  const runCampaigns  = MOCK_MKT_STATS.find((s) => s.id === 'campaigns')?.value ?? '0';
+  const totalClients  = FALLBACK_MKT_STATS.find((s) => s.id === 'clients')?.value ?? '0';
+  const todayQueue    = FALLBACK_MKT_STATS.find((s) => s.id === 'queue')?.value ?? '0';
+  const runCampaigns  = FALLBACK_MKT_STATS.find((s) => s.id === 'campaigns')?.value ?? '0';
 
   return (
     <div className="md-welcome">
@@ -150,7 +150,7 @@ function WelcomeBanner({ user }) {
           </div>
           <div className="md-welcome__stat">
             <span className="md-welcome__stat-value">
-              {MOCK_MKT_NOTIFICATIONS.filter((n) => !n.isRead).length}
+              {FALLBACK_MKT_NOTIFICATIONS.filter((n) => !n.isRead).length}
             </span>
             <span className="md-welcome__stat-label">Unread Alerts</span>
           </div>
@@ -185,14 +185,14 @@ function MyClients() {
       <div className="md-card__header">
         <div className="md-card__title-group">
           <h2 className="md-card__title">My Clients</h2>
-          <p className="md-card__subtitle">{MOCK_CLIENTS.length} active accounts</p>
+          <p className="md-card__subtitle">{FALLBACK_CLIENTS.length} active accounts</p>
         </div>
         <button className="md-card__action md-card__action--primary">
           <MdAdd size={15} /> Add Client
         </button>
       </div>
       <div className="md-clients-grid">
-        {MOCK_CLIENTS.map((client) => (
+        {FALLBACK_CLIENTS.map((client) => (
           <div
             key={client.id}
             className="md-client-card"
@@ -269,7 +269,7 @@ function MyClients() {
 // Section 4 — Today's Schedule Timeline
 // ─────────────────────────────────────────────────────────────────────────────
 function TodaySchedule() {
-  const [schedule, setSchedule] = useState(MOCK_TODAY_SCHEDULE);
+  const [schedule, setSchedule] = useState(FALLBACK_TODAY_SCHEDULE);
   useEffect(() => {
     postService.getPosts().then(data => {
       if (data) {
@@ -355,7 +355,7 @@ function TodaySchedule() {
 // Section 5 — Running Campaigns Table
 // ─────────────────────────────────────────────────────────────────────────────
 function RunningCampaigns() {
-  const [campaigns, setCampaigns] = useState(MOCK_MKT_CAMPAIGNS);
+  const [campaigns, setCampaigns] = useState(FALLBACK_MKT_CAMPAIGNS);
 
   useEffect(() => {
     campaignService.getCampaigns().then(data => {
@@ -473,7 +473,7 @@ function RunningCampaigns() {
 // ─────────────────────────────────────────────────────────────────────────────
 function DraftContent() {
   const draftEmoji = { instagram: '📸', facebook: '📘', linkedin: '💼', youtube: '🎬', x: '🐦' };
-  const [drafts, setDrafts] = useState(MOCK_DRAFTS);
+  const [drafts, setDrafts] = useState(FALLBACK_DRAFTS);
 
   useEffect(() => {
     postService.getPosts().then(data => {
@@ -571,7 +571,7 @@ function DraftContent() {
 // Section 7 — Publishing Queue
 // ─────────────────────────────────────────────────────────────────────────────
 function PublishingQueue() {
-  const [queue, setQueue] = useState(MOCK_QUEUE);
+  const [queue, setQueue] = useState(FALLBACK_QUEUE);
   useEffect(() => {
     postService.getPosts().then(data => {
       if (data) {
@@ -710,7 +710,7 @@ function TeamNotifications() {
 // ─────────────────────────────────────────────────────────────────────────────
 function PerformanceSnapshot() {
   const [metrics, setMetrics] = useState({ reach: 0, impressions: 0, reactions: 0, comments: 0, shares: 0 });
-  const [platforms, setPlatforms] = useState(MOCK_MKT_PLATFORM_DIST);
+  const [platforms, setPlatforms] = useState(FALLBACK_MKT_PLATFORM_DIST);
 
   useEffect(() => {
     analyticsService.getMetrics().then(data => {
@@ -728,7 +728,7 @@ function PerformanceSnapshot() {
   }, []);
 
   const totalDist = Math.max(platforms.reduce((s, d) => s + d.value, 0), 1);
-  const maxWeeklyPosts = Math.max(...MOCK_WEEKLY_POSTS.map((d) => d.value), 1);
+  const maxWeeklyPosts = Math.max(...FALLBACK_WEEKLY_POSTS.map((d) => d.value), 1);
   const maxEngagement  = Math.max(metrics.reach, metrics.impressions, metrics.reactions, 1);
 
   return (
@@ -737,7 +737,7 @@ function PerformanceSnapshot() {
       <div className="md-chart-card">
         <h3 className="md-chart-card__title">📅 Posts Published This Week</h3>
         <div className="md-line-chart">
-          {MOCK_WEEKLY_POSTS.map((d) => (
+          {FALLBACK_WEEKLY_POSTS.map((d) => (
             <div key={d.label} className="md-line-col">
               <div
                 className="md-line-bar"
@@ -798,12 +798,12 @@ function PerformanceSnapshot() {
       <div className="md-chart-card">
         <h3 className="md-chart-card__title">📈 Weekly Engagement</h3>
         <div className="md-line-chart">
-          {MOCK_MKT_ENGAGEMENT.map((d) => (
+          {FALLBACK_MKT_ENGAGEMENT.map((d) => (
             <div key={d.label} className="md-line-col">
               <div
                 className="md-line-bar"
                 style={{
-                  height: `${(d.value / Math.max(...MOCK_MKT_ENGAGEMENT.map(e => e.value), 1)) * 68}px`,
+                  height: `${(d.value / Math.max(...FALLBACK_MKT_ENGAGEMENT.map(e => e.value), 1)) * 68}px`,
                   background: 'linear-gradient(180deg, #10b981, #6ee7b7)',
                 }}
               />
@@ -888,7 +888,7 @@ function QuickActions() {
 // ─────────────────────────────────────────────────────────────────────────────
 export default function MarketingDashboard() {
   const { user } = useApp();
-  const [stats, setStats] = useState(MOCK_MKT_STATS);
+  const [stats, setStats] = useState(FALLBACK_MKT_STATS);
 
   useEffect(() => {
     getDashboardSummary().then(data => {

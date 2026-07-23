@@ -22,8 +22,8 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  background: #fff;
-  border: 1px solid #e5e7eb;
+  background: var(--bg);
+  border: 1px solid var(--border);
   border-radius: 12px;
   padding: 12px 16px;
   margin-bottom: 8px;
@@ -41,8 +41,8 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
+  background: var(--code-bg);
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 8px 12px;
   width: 100%;
@@ -56,7 +56,7 @@
 
 .cm-toolbar__search-icon {
   font-size: 18px;
-  color: #9ca3af;
+  color: var(--text);
 }
 
 .cm-toolbar__search-input {
@@ -156,8 +156,8 @@
 }
 
 .cm-empty-wrap {
-  background: #fff;
-  border: 1px solid #e5e7eb;
+  background: var(--bg);
+  border: 1px solid var(--border);
   border-radius: 14px;
   padding: 40px 20px;
 }
@@ -174,7 +174,7 @@
 }
 
 .cm-modal {
-  background: #fff;
+  background: var(--bg);
   border-radius: 14px;
   padding: 24px;
   width: 90%;

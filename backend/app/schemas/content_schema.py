@@ -15,6 +15,7 @@ class PostWrite(BaseModel):
     scheduled_for: datetime | None = None
     timezone: str = Field(default="UTC", max_length=100)
     client_id: int | None = None
+    recurrence_interval: str | None = Field(default=None, pattern="^(daily|weekly|monthly)$")
 
     @model_validator(mode="after")
     def validate_content(self):
@@ -34,6 +35,7 @@ class PostUpdate(BaseModel):
     platforms: list[str] | None = Field(default=None, max_length=6)
     timezone: str | None = Field(default=None, max_length=100)
     client_id: int | None = None
+    recurrence_interval: str | None = Field(default=None, pattern="^(daily|weekly|monthly)$")
 
     @field_validator("platforms")
     @classmethod

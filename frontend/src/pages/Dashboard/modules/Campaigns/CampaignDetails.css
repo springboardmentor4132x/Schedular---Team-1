@@ -26,8 +26,8 @@
 }
 
 .cm-details-header {
-  background: #fff;
-  border: 1px solid #e5e7eb;
+  background: var(--bg);
+  border: 1px solid var(--border);
   border-radius: 12px;
   padding: 20px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
@@ -57,7 +57,7 @@
 
 .cm-details-header__desc {
   font-size: 13.5px;
-  color: #4b5563;
+  color: var(--text-h);
   margin: 8px 0 12px 0;
   line-height: 1.5;
 }
@@ -111,8 +111,8 @@
 }
 
 .cm-details-card {
-  background: #fff;
-  border: 1px solid #e5e7eb;
+  background: var(--bg);
+  border: 1px solid var(--border);
   border-radius: 12px;
   padding: 20px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
@@ -337,7 +337,7 @@
   height: 90px;
   border-radius: 50%;
   border: 6px solid #f1f5f9;
-  background: #fff;
+  background: var(--bg);
 }
 
 .cm-details-progress__val {
@@ -377,7 +377,7 @@
   display: flex;
   justify-content: space-between;
   font-size: 13px;
-  color: #4b5563;
+  color: var(--text-h);
 }
 
 .cm-details-stat-row strong {

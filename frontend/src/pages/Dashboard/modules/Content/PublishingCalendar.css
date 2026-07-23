@@ -8,8 +8,8 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-  background: #fff;
-  border: 1px solid #e5e7eb;
+  background: var(--bg);
+  border: 1px solid var(--border);
   border-radius: 12px;
   padding: 16px 20px;
   margin-bottom: 16px;
@@ -35,7 +35,7 @@
   padding: 8px 12px;
   font-size: 13px;
   color: #475569;
-  background: #fff;
+  background: var(--bg);
   outline: none;
   min-width: 140px;
 }
@@ -49,8 +49,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #fff;
-  border: 1px solid #e5e7eb;
+  background: var(--bg);
+  border: 1px solid var(--border);
   border-radius: 12px;
   padding: 12px 20px;
   margin-bottom: 20px;
@@ -73,7 +73,7 @@
   padding: 6px 12px;
   border-radius: 6px;
   border: 1px solid #cbd5e1;
-  background: #fff;
+  background: var(--bg);
   color: #475569;
   font-size: 13px;
   font-weight: 600;
@@ -101,8 +101,8 @@
 /* Desktop Grid View */
 .pc-grid-wrap {
   display: none;
-  background: #fff;
-  border: 1px solid #e5e7eb;
+  background: var(--bg);
+  border: 1px solid var(--border);
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
@@ -144,7 +144,7 @@
   flex-direction: column;
   gap: 6px;
   position: relative;
-  background: #fff;
+  background: var(--bg);
 }
 
 .pc-grid-cell:nth-child(7n) {
@@ -178,7 +178,7 @@
   border-radius: 4px;
   font-size: 10.5px;
   font-weight: 600;
-  color: #374151;
+  color: var(--text-h);
   cursor: pointer;
   transition: transform 0.12s;
   overflow: hidden;
@@ -247,8 +247,8 @@
 }
 
 .pc-agenda-day {
-  background: #fff;
-  border: 1px solid #e5e7eb;
+  background: var(--bg);
+  border: 1px solid var(--border);
   border-radius: 10px;
   overflow: hidden;
 }
@@ -310,8 +310,8 @@
 }
 
 .pc-empty-month {
-  background: #fff;
-  border: 1px solid #e5e7eb;
+  background: var(--bg);
+  border: 1px solid var(--border);
   border-radius: 12px;
   padding: 32px 16px;
 }

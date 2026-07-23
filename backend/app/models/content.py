@@ -35,6 +35,7 @@ class Post(Base):
         nullable=True,
         index=True,
     )
+    recurrence_interval = Column(String(20), nullable=True)
     created_at = Column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

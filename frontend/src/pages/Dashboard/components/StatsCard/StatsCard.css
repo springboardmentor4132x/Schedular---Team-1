@@ -1,8 +1,8 @@
 /* ── StatsCard ───────────────────────────────────────────────────────── */
 
 .sp-stats-card {
-  background: #fff;
-  border: 1px solid #e5e7eb;
+  background: var(--bg);
+  border: 1px solid var(--border);
   border-radius: 12px;
   padding: 20px 24px;
   display: flex;
@@ -26,20 +26,20 @@
 .sp-stats-card__title {
   font-size: 13px;
   font-weight: 500;
-  color: #6b7280;
+  color: var(--text);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
 
 .sp-stats-card__icon {
   font-size: 20px;
-  color: #9ca3af;
+  color: var(--text);
 }
 
 .sp-stats-card__value {
   font-size: 32px;
   font-weight: 700;
-  color: #111827;
+  color: var(--text-h);
   line-height: 1;
 }
 
@@ -48,12 +48,12 @@
   align-items: center;
   gap: 4px;
   font-size: 13px;
-  color: #6b7280;
+  color: var(--text);
 }
 
 .sp-stats-card__trend { font-size: 12px; font-weight: 700; }
 .sp-stats-card__trend--up      { color: #10b981; }
 .sp-stats-card__trend--down    { color: #ef4444; }
-.sp-stats-card__trend--neutral { color: #9ca3af; }
+.sp-stats-card__trend--neutral { color: var(--text); }
 
 .sp-stats-card--loading { pointer-events: none; }

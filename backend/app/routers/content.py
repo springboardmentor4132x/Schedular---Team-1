@@ -56,6 +56,7 @@ def _post_payload(post: Post):
         "status": post.status,
         "scheduledFor": post.scheduled_for,
         "timezone": post.timezone,
+        "recurrenceInterval": post.recurrence_interval,
         "queuePosition": post.queue_position,
         "campaignId": post.campaign_id,
         "createdAt": post.created_at,
@@ -297,6 +298,7 @@ def create_post(
         media_urls=json.dumps(payload.media_urls),
         platforms=json.dumps(payload.platforms),
         timezone=payload.timezone,
+        recurrence_interval=payload.recurrence_interval,
     )
     db.add(post)
     db.add(ActivityLog(user_id=user.id, activity="Created draft"))
@@ -328,6 +330,7 @@ def update_post(
         "platforms": json.dumps(payload.platforms),
         "timezone": payload.timezone,
         "client_id": payload.client_id,
+        "recurrence_interval": payload.recurrence_interval,
     }.items():
         setattr(post, name, value)
     db.commit()

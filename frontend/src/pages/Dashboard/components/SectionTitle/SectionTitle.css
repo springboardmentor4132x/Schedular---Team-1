@@ -13,13 +13,13 @@
 .sp-section-title__heading {
   font-size: 18px;
   font-weight: 600;
-  color: #111827;
+  color: var(--text-h);
   margin: 0;
 }
 
 .sp-section-title__desc {
   font-size: 14px;
-  color: #6b7280;
+  color: var(--text);
   margin: 0;
 }
 

@@ -5,8 +5,8 @@
    ============================================================ */
 
 .cm-card-item {
-  background: #fff;
-  border: 1px solid #e5e7eb;
+  background: var(--bg);
+  border: 1px solid var(--border);
   border-radius: 12px;
   padding: 16px 20px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
@@ -57,7 +57,7 @@
 
 .cm-card-item__desc {
   font-size: 12.5px;
-  color: #4b5563;
+  color: var(--text-h);
   margin: 0;
   line-height: 1.5;
   display: -webkit-box;
@@ -141,7 +141,7 @@
   padding: 5px 10px;
   border-radius: 6px;
   border: 1px solid #cbd5e1;
-  background: #fff;
+  background: var(--bg);
   font-size: 11.5px;
   font-weight: 600;
   color: #475569;

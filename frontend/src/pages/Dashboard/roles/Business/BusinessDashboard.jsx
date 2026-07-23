@@ -34,14 +34,14 @@ import PageContainer   from '../../components/PageContainer/PageContainer';
 import StatsCard       from '../../components/StatsCard/StatsCard';
 import Avatar          from '../../components/Avatar/Avatar';
 import SectionTitle    from '../../components/SectionTitle/SectionTitle';
-const MOCK_PLATFORMS = [];
-const MOCK_CAMPAIGN_PERF = [];
-const MOCK_PLATFORM_DIST = [];
-const MOCK_WEEKLY_ENG = [];
-const MOCK_FOLLOWERS = [];
-const MOCK_REPORTS = [];
-const MOCK_ACTIVITY = [];
-const MOCK_INSIGHTS = [];
+const FALLBACK_PLATFORMS = [];
+const FALLBACK_CAMPAIGN_PERF = [];
+const FALLBACK_PLATFORM_DIST = [];
+const FALLBACK_WEEKLY_ENG = [];
+const FALLBACK_FOLLOWERS = [];
+const FALLBACK_REPORTS = [];
+const FALLBACK_ACTIVITY = [];
+const FALLBACK_INSIGHTS = [];
 import './BusinessDashboard.css';
 
 // ── Icon registry for platform logos ─────────────────────────────────────────
@@ -226,7 +226,7 @@ function CampaignTable() {
 // ─────────────────────────────────────────────────────────────────────────────
 function ConnectedPlatforms({ liveAccounts }) {
   // Merge mock data with live data (real connection status from the backend)
-  const merged = MOCK_PLATFORMS.map((mp) => {
+  const merged = FALLBACK_PLATFORMS.map((mp) => {
     const live = liveAccounts.find((a) => a.platform === mp.id);
     if (live) {
       return {
@@ -423,10 +423,10 @@ function BarChart({ data, maxValue }) {
 }
 
 function PlatformDistribution() {
-  const total = MOCK_PLATFORM_DIST.reduce((s, d) => s + d.value, 0);
+  const total = FALLBACK_PLATFORM_DIST.reduce((s, d) => s + d.value, 0);
   return (
     <div className="bd-donut-list">
-      {MOCK_PLATFORM_DIST.map((item) => (
+      {FALLBACK_PLATFORM_DIST.map((item) => (
         <div key={item.label} className="bd-donut-item">
           <div className="bd-donut-dot" style={{ background: item.color }} />
           <span className="bd-donut-label">{item.label}</span>
@@ -444,10 +444,10 @@ function PlatformDistribution() {
 }
 
 function WeeklyEngagement() {
-  const max = Math.max(...MOCK_WEEKLY_ENG.map((d) => d.value), 1);
+  const max = Math.max(...FALLBACK_WEEKLY_ENG.map((d) => d.value), 1);
   return (
     <div className="bd-line-chart">
-      {MOCK_WEEKLY_ENG.map((d) => (
+      {FALLBACK_WEEKLY_ENG.map((d) => (
         <div key={d.label} className="bd-line-col">
           <div
             className="bd-line-bar"
@@ -461,10 +461,10 @@ function WeeklyEngagement() {
 }
 
 function FollowersGrowth() {
-  const max = Math.max(...MOCK_FOLLOWERS.map((d) => d.value), 1);
+  const max = Math.max(...FALLBACK_FOLLOWERS.map((d) => d.value), 1);
   return (
     <div className="bd-line-chart">
-      {MOCK_FOLLOWERS.map((d) => (
+      {FALLBACK_FOLLOWERS.map((d) => (
         <div key={d.label} className="bd-line-col">
           <div
             className="bd-line-bar"
@@ -485,7 +485,7 @@ function AnalyticsOverview() {
     <div className="bd-analytics-grid">
       <div className="bd-chart-card">
         <h3 className="bd-chart-card__title">📊 Campaign Performance</h3>
-        <BarChart data={MOCK_CAMPAIGN_PERF} maxValue={100} />
+        <BarChart data={FALLBACK_CAMPAIGN_PERF} maxValue={100} />
       </div>
       <div className="bd-chart-card">
         <h3 className="bd-chart-card__title">🌐 Platform Distribution</h3>
@@ -513,13 +513,13 @@ function ReportsSection() {
         <div>
           <h2 className="bd-section-card__title">Reports</h2>
           <p className="bd-section-card__subtitle">
-            {MOCK_REPORTS.filter((r) => r.type === 'campaign' || r.type === 'monthly').length} reports available
+            {FALLBACK_REPORTS.filter((r) => r.type === 'campaign' || r.type === 'monthly').length} reports available
           </p>
         </div>
         <button className="bd-section-card__action">View All Reports →</button>
       </div>
       <div className="bd-reports-list">
-        {MOCK_REPORTS.map((report) => (
+        {FALLBACK_REPORTS.map((report) => (
           <div key={report.id} className="bd-report-row">
             <div className="bd-report-icon">{report.icon}</div>
             <div className="bd-report-info">
@@ -550,7 +550,7 @@ function ActivityTimeline() {
         </div>
       </div>
       <div className="bd-timeline">
-        {MOCK_ACTIVITY.map((item) => (
+        {FALLBACK_ACTIVITY.map((item) => (
           <div key={item.id} className="bd-timeline-item">
             <div className="bd-timeline-icon">{item.icon}</div>
             <div className="bd-timeline-content">
@@ -577,7 +577,7 @@ function QuickInsights() {
         </div>
       </div>
       <div className="bd-insights-grid">
-        {MOCK_INSIGHTS.map((insight) => (
+        {FALLBACK_INSIGHTS.map((insight) => (
           <div key={insight.id} className={`bd-insight-card bd-insight-card--${insight.type}`}>
             <span className="bd-insight-icon">{insight.icon}</span>
             <div className="bd-insight-body">

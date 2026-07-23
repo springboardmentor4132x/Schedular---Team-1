@@ -12,20 +12,20 @@
 
 .sp-empty-state__illustration {
   font-size: 56px;
-  color: #d1d5db;
+  color: var(--border);
   margin-bottom: 4px;
 }
 
 .sp-empty-state__title {
   font-size: 18px;
   font-weight: 600;
-  color: #111827;
+  color: var(--text-h);
   margin: 0;
 }
 
 .sp-empty-state__desc {
   font-size: 14px;
-  color: #6b7280;
+  color: var(--text);
   max-width: 360px;
   margin: 0;
   line-height: 1.6;

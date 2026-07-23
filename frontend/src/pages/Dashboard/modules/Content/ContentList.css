@@ -22,8 +22,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #fff;
-  border: 1px solid #e5e7eb;
+  background: var(--bg);
+  border: 1px solid var(--border);
   border-radius: 12px;
   padding: 16px 20px;
 }
@@ -70,8 +70,8 @@
 }
 
 .cs-empty-box {
-  background: #fff;
-  border: 1px solid #e5e7eb;
+  background: var(--bg);
+  border: 1px solid var(--border);
   border-radius: 12px;
   padding: 32px 16px;
 }
@@ -86,8 +86,8 @@
 .cs-post-card {
   display: flex;
   align-items: center;
-  background: #fff;
-  border: 1px solid #e5e7eb;
+  background: var(--bg);
+  border: 1px solid var(--border);
   border-radius: 12px;
   padding: 14px 20px;
   gap: 16px;
@@ -182,7 +182,7 @@
 }
 
 .cs-post-card__campaign-tag--none {
-  background: #fff;
+  background: var(--bg);
   border-style: dashed;
   color: #94a3b8;
 }
@@ -202,7 +202,7 @@
   padding: 6px;
   border-radius: 6px;
   border: 1px solid #cbd5e1;
-  background: #fff;
+  background: var(--bg);
   color: #475569;
   font-size: 14px;
   cursor: pointer;
@@ -242,7 +242,7 @@
 }
 
 .cs-composer-modal {
-  background: #fff;
+  background: var(--bg);
   border-radius: 14px;
   width: 95%;
   max-width: 960px;
@@ -253,7 +253,7 @@
 
 /* Assign Campaign Popup Frame */
 .cs-assign-modal {
-  background: #fff;
+  background: var(--bg);
   border-radius: 12px;
   padding: 20px;
   width: 90%;
