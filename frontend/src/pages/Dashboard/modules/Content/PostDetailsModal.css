@@ -1,0 +1,345 @@
+/* ============================================================
+   PostDetailsModal.css
+   SocialPilot Post Details Modal Styles
+   Prefix: cs-
+   ============================================================ */
+
+.cs-details-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.cs-details-modal {
+  background: #fff;
+  border-radius: 14px;
+  width: 95%;
+  max-width: 800px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  animation: cs-modal-slide 0.2s ease-out;
+  overflow: hidden;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.cs-details-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.cs-details-modal__meta-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cs-details-modal__title {
+  font-size: 15px;
+  font-weight: 750;
+  color: #0f172a;
+  margin: 0;
+}
+
+.cs-details-modal__sub {
+  font-size: 11px;
+  color: #94a3b8;
+  display: block;
+}
+
+.cs-details-modal__close-btn {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: #94a3b8;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: color 0.12s;
+}
+
+.cs-details-modal__close-btn:hover {
+  color: #475569;
+}
+
+.cs-details-modal__body {
+  padding: 24px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+@media (min-width: 768px) {
+  .cs-details-modal__body {
+    grid-template-columns: 1.2fr 1fr;
+  }
+}
+
+.cs-details-modal__content-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.cs-details-modal__caption-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 12px 16px;
+}
+
+.cs-details-modal__caption {
+  font-size: 13.5px;
+  color: #334155;
+  margin: 0;
+  white-space: pre-wrap;
+  line-height: 1.5;
+}
+
+.cs-details-modal__media-grid {
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  background: #f1f5f9;
+}
+
+.cs-details-modal__media-item img, .cs-details-modal__media-item video {
+  width: 100%;
+  max-height: 280px;
+  object-fit: contain;
+  display: block;
+}
+
+.cs-details-modal__no-media {
+  border: 1px dashed #cbd5e1;
+  border-radius: 8px;
+  padding: 40px;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 12.5px;
+}
+
+/* Info side column */
+.cs-details-modal__info-section {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.cs-details-modal__row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cs-details-modal__label {
+  font-size: 11px;
+  font-weight: 750;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.cs-details-modal__status {
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 12px;
+  align-self: flex-start;
+}
+
+.cs-details-modal__platforms {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.cs-details-modal__platform-chip {
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.cs-details-modal__campaign-tag {
+  font-size: 12px;
+  background: #f1f5f9;
+  color: #334155;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  align-self: flex-start;
+  font-weight: 600;
+}
+
+.cs-details-modal__campaign-tag--none {
+  border-style: dashed;
+  color: #94a3b8;
+}
+
+.cs-details-modal__timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cs-details-modal__time-item {
+  font-size: 12px;
+  color: #4b5563;
+}
+
+/* Metrics widgets styling */
+.cs-details-modal__metrics-card {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.cs-details-modal__metrics-title {
+  font-size: 11.5px;
+  font-weight: 750;
+  color: #166534;
+  text-transform: uppercase;
+  margin: 0 0 10px 0;
+}
+
+.cs-details-modal__metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.cs-details-modal__metric-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.cs-details-modal__metric-val {
+  font-size: 15px;
+  font-weight: 800;
+  color: #14532d;
+}
+
+.cs-details-modal__metric-lbl {
+  font-size: 9px;
+  color: #166534;
+  text-transform: uppercase;
+}
+
+/* Error widget */
+.cs-details-modal__error-box {
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 11.5px;
+  color: #991b1b;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cs-details-modal__error-box p {
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Footer buttons */
+.cs-details-modal__footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  border-top: 1px solid #f1f5f9;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.cs-details-modal__left-actions, .cs-details-modal__right-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.cs-details-btn {
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.12s;
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cs-details-btn--cancel {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.cs-details-btn--cancel:hover {
+  background: #e2e8f0;
+}
+
+.cs-details-btn--secondary {
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+}
+
+.cs-details-btn--secondary:hover {
+  background: #f8fafc;
+}
+
+.cs-details-btn--danger {
+  background: #fee2e2;
+  color: #ef4444;
+}
+
+.cs-details-btn--danger:hover {
+  background: #fca5a5;
+  color: #b91c1c;
+}
+
+.cs-details-btn--campaign {
+  background: #eef2ff;
+  color: #4f46e5;
+}
+
+.cs-details-btn--campaign:hover {
+  background: #e0e7ff;
+}
+
+.cs-details-btn--submit {
+  background: #4f46e5;
+  color: #fff;
+}
+
+.cs-details-btn--submit:hover {
+  background: #4338ca;
+}
+
+.cs-details-btn--retry {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.cs-details-btn--retry:hover {
+  background: #fde68a;
+}

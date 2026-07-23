@@ -1,0 +1,171 @@
+/* ============================================================
+   CampaignCard.css
+   Reusable Campaign Card Styles
+   Prefix: cm-
+   ============================================================ */
+
+.cm-card-item {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 16px 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.cm-card-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.cm-card-item__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.cm-card-item__name {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+}
+
+.cm-card-item__status {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 12px;
+  white-space: nowrap;
+}
+
+/* Statuses matching Part K */
+.cm-status-badge--draft { background: #f1f5f9; color: #475569; }
+.cm-status-badge--scheduled { background: #dbeafe; color: #1e40af; }
+.cm-status-badge--active { background: #d1fae5; color: #065f46; }
+.cm-status-badge--paused { background: #fef3c7; color: #b45309; }
+.cm-status-badge--completed { background: #e0f2fe; color: #0369a1; }
+
+.cm-card-item__desc {
+  font-size: 12.5px;
+  color: #4b5563;
+  margin: 0;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 38px;
+}
+
+/* Progress bar */
+.cm-card-item__progress-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cm-card-item__progress-bar {
+  flex: 1;
+  height: 6px;
+  background: #f1f5f9;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.cm-card-item__progress-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #4f46e5, #6366f1);
+}
+
+.cm-card-item__progress-pct {
+  font-size: 11.5px;
+  font-weight: 750;
+  color: #334155;
+}
+
+/* Meta description dates */
+.cm-card-item__meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11.5px;
+  color: #94a3b8;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 8px;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.cm-card-item__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 8px;
+  border-top: 1px solid #f1f5f9;
+  margin-top: 2px;
+}
+
+.cm-card-item__platforms {
+  display: flex;
+  gap: 4px;
+}
+
+.cm-card-item__platform {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  font-size: 9px;
+  font-weight: 700;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cm-card-item__actions {
+  display: flex;
+  gap: 6px;
+}
+
+.cm-card-item__btn {
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.12s;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.cm-card-item__btn:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+  color: #1e293b;
+}
+
+.cm-card-item__btn--primary {
+  background: #4f46e5;
+  border-color: #4f46e5;
+  color: #fff;
+}
+
+.cm-card-item__btn--primary:hover {
+  background: #4338ca;
+  border-color: #4338ca;
+  color: #fff;
+}

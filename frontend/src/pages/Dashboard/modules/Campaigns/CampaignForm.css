@@ -1,0 +1,180 @@
+/* ============================================================
+   CampaignForm.css
+   Reusable Campaign Form Styles
+   Prefix: cm-
+   ============================================================ */
+
+.cm-form {
+  background: #fff;
+  border-radius: 12px;
+  padding: 8px 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.cm-form__title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 4px 0;
+}
+
+.cm-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cm-form__row-2col {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+@media (min-width: 640px) {
+  .cm-form__row-2col {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.cm-form__label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.cm-form__input {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13.5px;
+  color: #1e293b;
+  outline: none;
+  background: #fff;
+  transition: border-color 0.15s;
+}
+
+.cm-form__input:focus {
+  border-color: #4f46e5;
+}
+
+.cm-form__input--error {
+  border-color: #ef4444;
+  background: #fef2f2;
+}
+
+.cm-form__textarea {
+  resize: vertical;
+  min-height: 70px;
+}
+
+.cm-form__error-text {
+  font-size: 11px;
+  font-weight: 600;
+  color: #ef4444;
+  margin-top: 2px;
+}
+
+/* Platform chips layout */
+.cm-form__platforms-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cm-form__platform-chip {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  color: #475569;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.cm-form__platform-chip:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+}
+
+.cm-form__platform-chip--active {
+  background: #f5f3ff;
+  border-color: #4f46e5;
+  color: #4f46e5;
+}
+
+/* Goals checkboxes grid */
+.cm-form__goals-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  max-height: 120px;
+  overflow-y: auto;
+  border: 1px solid #e2e8f0;
+  padding: 10px;
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+@media (min-width: 480px) {
+  .cm-form__goals-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.cm-form__checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #334155;
+  cursor: pointer;
+}
+
+.cm-form__checkbox {
+  width: 15px;
+  height: 15px;
+  accent-color: #4f46e5;
+  cursor: pointer;
+}
+
+/* Actions footer */
+.cm-form__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.cm-form__btn {
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.12s;
+  border: none;
+}
+
+.cm-form__btn--cancel {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.cm-form__btn--cancel:hover {
+  background: #e2e8f0;
+}
+
+.cm-form__btn--submit {
+  background: #4f46e5;
+  color: #fff;
+}
+
+.cm-form__btn--submit:hover {
+  background: #4338ca;
+}

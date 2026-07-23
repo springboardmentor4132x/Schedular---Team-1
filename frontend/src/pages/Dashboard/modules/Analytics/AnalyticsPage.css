@@ -1,0 +1,391 @@
+/* ============================================================
+   AnalyticsPage.css
+   SocialPilot Analytics Dashboard Styles
+   Prefix: an-
+   ============================================================ */
+
+.an-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+}
+
+@media (min-width: 768px) {
+  .an-toolbar {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.an-toolbar__filters {
+  display: flex;
+  background: #f1f5f9;
+  border-radius: 8px;
+  padding: 4px;
+}
+
+.an-time-btn {
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #475569;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+
+.an-time-btn--active {
+  background: #fff;
+  color: #1e293b;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Stats Cards Grid */
+.an-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+/* Trend Chart */
+.an-chart-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.an-chart-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.an-chart-card__title {
+  font-size: 14px;
+  font-weight: 750;
+  color: #0f172a;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.an-chart-card__selectors {
+  display: flex;
+  background: #f8fafc;
+  border-radius: 6px;
+  padding: 2px;
+  border: 1px solid #cbd5e1;
+}
+
+.an-metric-selector {
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 650;
+  color: #64748b;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: all 0.1s;
+}
+
+.an-metric-selector--active {
+  background: #4f46e5;
+  color: #fff;
+}
+
+.an-chart-container {
+  position: relative;
+  width: 100%;
+}
+
+.an-svg-chart {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.an-chart-empty {
+  padding: 60px;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+/* Split panel columns */
+.an-split-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+@media (min-width: 768px) {
+  .an-split-grid {
+    grid-template-columns: 1.2fr 1fr;
+  }
+}
+
+.an-panel {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.an-panel__title {
+  font-size: 13.5px;
+  font-weight: 750;
+  color: #334155;
+  margin: 0 0 4px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.an-platform-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.an-platform-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.an-platform-row__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12.5px;
+}
+
+.an-platform-row__name {
+  font-weight: 750;
+}
+
+.an-platform-row__val {
+  color: #64748b;
+}
+
+.an-platform-progress {
+  height: 6px;
+  background: #f1f5f9;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.an-platform-progress__fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s ease-out;
+}
+
+/* Consistency summary */
+.an-metrics-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.an-metrics-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  color: #475569;
+}
+
+.an-metrics-badge {
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.an-metrics-badge--success { background: #d1fae5; color: #065f46; }
+.an-metrics-badge--info { background: #e0f2fe; color: #075985; }
+.an-metrics-badge--danger { background: #fee2e2; color: #991b1b; }
+
+/* Campaigns performance section */
+.an-campaign-table-wrap {
+  overflow-x: auto;
+}
+
+.an-campaign-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.an-campaign-table th {
+  padding: 10px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  border-bottom: 1px solid #cbd5e1;
+}
+
+.an-campaign-table td {
+  padding: 12px;
+  font-size: 13px;
+  color: #334155;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.an-camp-name {
+  font-weight: 600;
+}
+
+.an-camp-status {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.an-camp-status--active { background: #d1fae5; color: #065f46; }
+.an-camp-status--paused { background: #fee2e2; color: #991b1b; }
+.an-camp-status--completed { background: #e0f2fe; color: #075985; }
+
+.an-camp-btn {
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 600;
+  color: #475569;
+  transition: all 0.12s;
+}
+
+.an-camp-btn:hover {
+  background: #f8fafc;
+  color: #1e293b;
+}
+
+/* Top content post cards */
+.an-top-posts {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.an-post-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border: 1px solid #f1f5f9;
+  border-radius: 8px;
+}
+
+.an-post-card__media {
+  width: 44px;
+  height: 44px;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  flex-shrink: 0;
+}
+
+.an-post-card__media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.an-post-card__placeholder {
+  width: 100%;
+  height: 100%;
+  background: #f1f5f9;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.an-post-card__info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.an-post-card__caption {
+  font-size: 12.5px;
+  color: #1e293b;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.an-post-card__channels {
+  display: flex;
+  gap: 4px;
+}
+
+.an-post-card__channel-badge {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  font-size: 7px;
+  font-weight: 750;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.an-post-card__metrics {
+  display: flex;
+  gap: 12px;
+  text-align: right;
+}
+
+.an-post-card__metric {
+  display: flex;
+  flex-direction: column;
+}
+
+.an-post-card__metric-val {
+  font-size: 13.5px;
+  font-weight: 750;
+  color: #1e293b;
+}
+
+.an-post-card__metric-lbl {
+  font-size: 8.5px;
+  color: #94a3b8;
+  text-transform: uppercase;
+}
+
+.an-platform-empty, .an-campaign-empty, .an-posts-empty {
+  padding: 20px;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 12px;
+}

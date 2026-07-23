@@ -1,15 +1,26 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AppProvider, useApp } from './context/AppContext';
 
-import LandingPage    from './pages/LandingPage/LandingPage';
-import Login          from './pages/Login/Login';
-import Register       from './pages/Register/Register';
+// ── Public pages ──────────────────────────────────────────────────────────────
+import LandingPage   from './pages/LandingPage/LandingPage';
+import Login         from './pages/Login/Login';
+import Register      from './pages/Register/Register';
 
-import AppLayout      from './pages/Dashboard/AppLayout';
-import DashboardHome  from './pages/Dashboard/components/DashboardHome';
-import ProfilePage    from './pages/Profile/ProfilePage';
+// ── Legacy layout (shared pages: profile, connect-apps, settings) ─────────────
+import ProfilePage   from './pages/Profile/ProfilePage';
 import ConnectAppsPage from './pages/ConnectApps/ConnectAppsPage';
-import SettingsPage   from './pages/Settings/SettingsPage';
+import SettingsPage  from './pages/Settings/SettingsPage';
+
+// ── New role-based layout ─────────────────────────────────────────────────────
+import DashboardLayout from './pages/Dashboard/DashboardLayout';
+import RoleRedirect    from './pages/Dashboard/RoleRedirect';
+
+// ── Role page bundles (lazy-loaded via standard import is fine for now) ────────
+import BusinessPages   from './pages/Dashboard/roles/Business/index';
+import MarketingPages  from './pages/Dashboard/roles/Marketing/index';
+import CreatorPages    from './pages/Dashboard/roles/Creator/index';
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 /** Redirects unauthenticated users to /login. */
 function ProtectedRoute({ children }) {
@@ -28,20 +39,32 @@ function GuestRoute({ children }) {
 function AppRoutes() {
   return (
     <Routes>
-      {/* ── Public ────────────────────────────────────────── */}
+      {/* ── Public ──────────────────────────────────────────────────── */}
       <Route path="/" element={<LandingPage />} />
       <Route path="/login"    element={<GuestRoute><Login /></GuestRoute>} />
       <Route path="/register" element={<GuestRoute><Register /></GuestRoute>} />
 
-      {/* ── Authenticated (shared layout) ─────────────────── */}
+      {/* ── New role-based dashboard (DashboardLayout) ──────────────── */}
       <Route
         element={
           <ProtectedRoute>
-            <AppLayout />
+            <DashboardLayout />
           </ProtectedRoute>
         }
       >
-        <Route path="/dashboard"    element={<DashboardHome />} />
+        {/* /dashboard → redirect to role-specific home */}
+        <Route path="/dashboard" element={<RoleRedirect />} />
+
+        {/* Business routes */}
+        <Route path="/business/*" element={<BusinessPages />} />
+
+        {/* Marketing routes */}
+        <Route path="/marketing/*" element={<MarketingPages />} />
+
+        {/* Creator routes */}
+        <Route path="/creator/*" element={<CreatorPages />} />
+
+        {/* Shared pages — still inside DashboardLayout so Sidebar/Navbar render */}
         <Route path="/profile"      element={<ProfilePage />} />
         <Route path="/connect-apps" element={<ConnectAppsPage />} />
         <Route path="/settings"     element={<SettingsPage />} />

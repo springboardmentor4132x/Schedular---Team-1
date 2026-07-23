@@ -1,0 +1,58 @@
+/* ── PageContainer ───────────────────────────────────────────────────── */
+
+.sp-page-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.sp-page-header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 28px;
+}
+
+/* Breadcrumb */
+.sp-page-breadcrumb {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.sp-page-breadcrumb__item { display: flex; align-items: center; gap: 4px; }
+.sp-page-breadcrumb__sep  { color: #d1d5db; }
+.sp-page-breadcrumb__link {
+  color: #6b7280;
+  cursor: pointer;
+  transition: color 0.1s;
+}
+.sp-page-breadcrumb__link:hover { color: #4f46e5; }
+.sp-page-breadcrumb__current { color: #374151; font-weight: 500; }
+
+/* Title */
+.sp-page-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+/* Description */
+.sp-page-desc {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0;
+  line-height: 1.6;
+}
+
+/* Body */
+.sp-page-body {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}

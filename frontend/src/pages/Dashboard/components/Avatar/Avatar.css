@@ -1,0 +1,32 @@
+/* ── Avatar ─────────────────────────────────────────────────────────── */
+
+.sp-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-weight: 600;
+  line-height: 1;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+/* Size variants */
+.sp-avatar--xs  { width: 24px; height: 24px; font-size: 10px; }
+.sp-avatar--sm  { width: 32px; height: 32px; font-size: 12px; }
+.sp-avatar--md  { width: 40px; height: 40px; font-size: 15px; }
+.sp-avatar--lg  { width: 52px; height: 52px; font-size: 20px; }
+.sp-avatar--xl  { width: 72px; height: 72px; font-size: 28px; }
+
+/* Initials avatar */
+.sp-avatar--initials {
+  background: #4f46e5;
+  color: #fff;
+  letter-spacing: 0.02em;
+}
+
+/* Image avatar */
+.sp-avatar--img {
+  object-fit: cover;
+  background: #e5e7eb;
+}

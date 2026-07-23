@@ -1,0 +1,61 @@
+/* ── LoadingSkeleton ─────────────────────────────────────────────────── */
+
+@keyframes sp-shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position: 400px  0; }
+}
+
+.sp-skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%);
+  background-size: 800px 100%;
+  animation: sp-shimmer 1.4s ease-in-out infinite;
+  border-radius: 4px;
+}
+
+.sp-skeleton--line   { display: block; }
+.sp-skeleton--circle { width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0; }
+
+/* ── Cards ── */
+.sp-skeleton-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.sp-skeleton-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ── Table ── */
+.sp-skeleton-table { display: flex; flex-direction: column; gap: 12px; }
+
+.sp-skeleton-table-row {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 14px 16px;
+}
+
+/* ── List ── */
+.sp-skeleton-list { display: flex; flex-direction: column; gap: 12px; }
+
+.sp-skeleton-list-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 12px 16px;
+}
+
+.sp-skeleton-list-text { flex: 1; display: flex; flex-direction: column; gap: 6px; }

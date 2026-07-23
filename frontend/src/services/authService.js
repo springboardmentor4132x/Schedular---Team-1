@@ -34,12 +34,12 @@ async function registerUser({ fullName, email, phone, country, orgName, role, pa
     if (error.response && error.response.status === 400) {
       const detail = error.response.data.detail;
       if (detail && detail.includes('Email')) {
-        throw new Error('EMAIL_EXISTS');
+        throw new Error('EMAIL_EXISTS', { cause: error });
       } else if (detail && detail.includes('Phone')) {
-        throw new Error('PHONE_EXISTS');
+        throw new Error('PHONE_EXISTS', { cause: error });
       }
     }
-    throw new Error('REGISTRATION_FAILED');
+    throw new Error('REGISTRATION_FAILED', { cause: error });
   }
 }
 
@@ -63,7 +63,7 @@ async function loginUser(email, password) {
       orgName: data.user.organization,
       role: data.user.role,
     };
-  } catch (error) {
+  } catch {
     // If invalid credentials or bad request, return null to match original loginUser behavior
     return null;
   }

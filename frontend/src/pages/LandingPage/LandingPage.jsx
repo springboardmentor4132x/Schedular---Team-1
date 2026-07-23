@@ -5,36 +5,30 @@
  *   CSS sky gradient  (html/body background)
  *   CloudLayer        position:fixed, z-index: 2  — CSS clouds
  *   .sp-section       z-index: 10                 — HTML content
- *   FixedScene canvas position:fixed, z-index: 50 — plane + trail (transparent bg)
+ *   HeroPlane canvas  position:absolute (inside hero, z-index: 0)
  *   .sp-navbar        position:fixed, z-index: 100
+ *
+ * The airplane only exists inside the Hero section. Lenis provides
+ * smooth scrolling for the entire page.
  */
 
-import { useRef, Suspense } from 'react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import Lenis from 'lenis';
 
 import './LandingPage.css';
 
-import { useScrollDriver }   from './hooks/useScrollDriver';
-import FixedScene            from './scene/FixedScene';
-
-import HeroSection           from './sections/HeroSection';
-import FeaturesSection       from './sections/FeaturesSection';
-import PlatformsSection      from './sections/PlatformsSection';
-import TimelineSection       from './sections/TimelineSection';
-import PricingSection        from './sections/PricingSection';
-import CTASection            from './sections/CTASection';
-import FooterSection         from './sections/FooterSection';
+import HeroSection     from './sections/HeroSection';
+import FeaturesSection from './sections/FeaturesSection';
+import PlatformsSection from './sections/PlatformsSection';
+import TimelineSection from './sections/TimelineSection';
+import PricingSection  from './sections/PricingSection';
+import CTASection      from './sections/CTASection';
+import FooterSection   from './sections/FooterSection';
 
 import logo from '../../assets/logo.jpeg';
 
 // ── CSS Cloud Layer ──────────────────────────────────────────────
-// Fixed behind everything. No Three.js needed — pure CSS shapes.
-//
-// layer: 'bg'  — blurred, faint, slow  → distant clouds (far plane)
-// layer: 'mid' — default appearance     → middle distance
-// layer: 'fg'  — sharp, more opaque    → close clouds (near plane)
-//
-// The sp-cloud--bg / sp-cloud--fg CSS classes handle the visual depth.
 const CLOUDS = [
   // ── Background (far) — blurred & slow ────────────────────────
   { id: 1,  layer: 'bg',  top: '6%',   left: '-5%',  w: 280, spd: '110s', delay: '0s',    op: 0.6  },
@@ -78,25 +72,28 @@ function CloudLayer() {
 export default function LandingPage() {
   const navigate = useNavigate();
 
-  const planeState = useRef({
-    position: [0, 0, 0],
-    rotation: [0.04, 0.0, 0.0],
-    scale:    1.0,
-    progress: 0,
-  });
+  // Smooth scrolling for the entire page
+  useEffect(() => {
+    const lenis = new Lenis({ lerp: 0.08, smoothWheel: true });
 
-  useScrollDriver(planeState);
+    let rafId;
+    function raf(time) {
+      lenis.raf(time);
+      rafId = requestAnimationFrame(raf);
+    }
+    rafId = requestAnimationFrame(raf);
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      lenis.destroy();
+    };
+  }, []);
 
   return (
     <div className="sp-landing">
 
       {/* ── Layer 2: CSS Cloud Layer ──────────────────────────── */}
       <CloudLayer />
-
-      {/* ── Layer 50: Fixed 3D Canvas (plane + trail) ─────────── */}
-      <Suspense fallback={null}>
-        <FixedScene planeState={planeState} />
-      </Suspense>
 
       {/* ── Layer 100: Fixed Navbar ──────────────────────────── */}
       <nav className="sp-navbar">
@@ -114,7 +111,7 @@ export default function LandingPage() {
         </div>
       </nav>
 
-      {/* ── Layer 10: Scrollable Story ────────────────────────── */}
+      {/* ── Scrollable Story ─────────────────────────────────── */}
       <HeroSection />
       <FeaturesSection />
       <PlatformsSection />
