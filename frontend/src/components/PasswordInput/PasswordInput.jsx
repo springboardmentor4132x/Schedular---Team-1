@@ -1,4 +1,4 @@
-import React, { useState, forwardRef } from 'react';
+import { useState, forwardRef } from 'react';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import './PasswordInput.css';
 

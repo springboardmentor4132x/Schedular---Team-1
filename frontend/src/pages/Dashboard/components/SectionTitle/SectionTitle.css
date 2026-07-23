@@ -1,0 +1,26 @@
+/* ── SectionTitle ────────────────────────────────────────────────────── */
+
+.sp-section-title {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.sp-section-title__text { display: flex; flex-direction: column; gap: 4px; }
+
+.sp-section-title__heading {
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+}
+
+.sp-section-title__desc {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0;
+}
+
+.sp-section-title__action { flex-shrink: 0; }

@@ -7,18 +7,15 @@
 import {
   FaInstagram, FaFacebookF, FaLinkedinIn, FaPinterestP, FaYoutube,
 } from 'react-icons/fa';
-import { FaXTwitter, FaTiktok } from 'react-icons/fa6';
-import { SiThreads } from 'react-icons/si';
+import { FaXTwitter } from 'react-icons/fa6';
 
 const PLATFORMS = [
   { icon: <FaInstagram />,  name: 'Instagram', color: '#e1306c' },
   { icon: <FaFacebookF />,  name: 'Facebook',  color: '#1877f2' },
   { icon: <FaLinkedinIn />, name: 'LinkedIn',  color: '#0a66c2' },
-  { icon: <FaXTwitter />,   name: 'X',         color: '#14171a' },
-  { icon: <SiThreads />,    name: 'Threads',   color: '#1c1c1c' },
+  { icon: <FaXTwitter />,   name: 'Twitter',   color: '#14171a' },
   { icon: <FaPinterestP />, name: 'Pinterest', color: '#e60023' },
   { icon: <FaYoutube />,    name: 'YouTube',   color: '#ff0000' },
-  { icon: <FaTiktok />,     name: 'TikTok',    color: '#010101' },
 ];
 
 export default function PlatformsSection() {

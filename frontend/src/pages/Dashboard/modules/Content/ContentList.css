@@ -1,0 +1,320 @@
+/* ============================================================
+   ContentList.css
+   SocialPilot Content List Styles
+   Prefix: cs-
+   ============================================================ */
+
+.cs-list-view {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.cs-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+/* Actions toolbar */
+.cs-actions-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 16px 20px;
+}
+
+.cs-actions-toolbar__title {
+  font-size: 15px;
+  font-weight: 750;
+  color: #0f172a;
+  margin: 0;
+}
+
+.cs-actions-toolbar__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  background: #4f46e5;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.12s;
+  border: none;
+}
+
+.cs-actions-toolbar__btn:hover {
+  background: #4338ca;
+}
+
+/* Section rows */
+.cs-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.cs-section__title {
+  font-size: 14px;
+  font-weight: 750;
+  color: #475569;
+  margin: 0 0 4px 0;
+}
+
+.cs-empty-box {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 32px 16px;
+}
+
+/* Grid posts listing */
+.cs-posts-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cs-post-card {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 14px 20px;
+  gap: 16px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: box-shadow 0.15s;
+}
+
+.cs-post-card:hover {
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+}
+
+.cs-post-card--scheduled {
+  border-left: 4px solid #4f46e5;
+}
+
+.cs-post-card__media-area {
+  width: 48px;
+  height: 48px;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid #cbd5e1;
+  flex-shrink: 0;
+}
+
+.cs-post-card__thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cs-post-card__thumb-placeholder {
+  width: 100%;
+  height: 100%;
+  background: #f1f5f9;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.cs-post-card__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cs-post-card__caption {
+  font-size: 13.5px;
+  color: #1e293b;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cs-post-card__meta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.cs-post-card__platforms {
+  display: flex;
+  gap: 3px;
+}
+
+.cs-post-card__plat {
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  font-size: 8.5px;
+  font-weight: 700;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cs-post-card__campaign-tag {
+  font-size: 10.5px;
+  background: #f1f5f9;
+  color: #475569;
+  padding: 1px 6px;
+  border-radius: 4px;
+  border: 1px solid #e2e8f0;
+}
+
+.cs-post-card__campaign-tag--none {
+  background: #fff;
+  border-style: dashed;
+  color: #94a3b8;
+}
+
+.cs-post-card__time {
+  font-size: 11px;
+  color: #64748b;
+}
+
+/* Actions list */
+.cs-post-card__actions {
+  display: flex;
+  gap: 6px;
+}
+
+.cs-post-action-btn {
+  padding: 6px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  color: #475569;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.12s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cs-post-action-btn:hover {
+  background: #f8fafc;
+  color: #1e293b;
+  border-color: #94a3b8;
+}
+
+.cs-post-action-btn--delete:hover {
+  background: #fef2f2;
+  color: #ef4444;
+  border-color: #fca5a5;
+}
+
+.cs-post-action-btn--campaign:hover {
+  background: #eef2ff;
+  color: #4f46e5;
+  border-color: #a5b4fc;
+}
+
+/* Modals overlays */
+.cs-composer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.cs-composer-modal {
+  background: #fff;
+  border-radius: 14px;
+  width: 95%;
+  max-width: 960px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  animation: cs-modal-slide 0.2s ease-out;
+  overflow: hidden;
+}
+
+/* Assign Campaign Popup Frame */
+.cs-assign-modal {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  width: 90%;
+  max-width: 320px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  animation: cs-modal-slide 0.15s ease-out;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cs-assign-modal__title {
+  font-size: 15px;
+  font-weight: 750;
+  color: #0f172a;
+  margin: 0;
+}
+
+.cs-assign-modal__desc {
+  font-size: 11.5px;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.cs-assign-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+.cs-assign-option {
+  text-align: left;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+
+.cs-assign-option:hover {
+  background: #eef2ff;
+  border-color: #a5b4fc;
+  color: #4f46e5;
+}
+
+.cs-assign-modal__footer {
+  display: flex;
+  justify-content: flex-end;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 10px;
+  margin-top: 4px;
+}
+
+@keyframes cs-modal-slide {
+  from { transform: translateY(8px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}

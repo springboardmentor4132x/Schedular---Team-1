@@ -1,46 +1,106 @@
 /**
  * notificationService.js
  *
- * TODO: Connect to FastAPI endpoints when backend is ready.
+ * In-memory client-side reactive store for notifications.
+ * Supports marking single or all as read, clearing notifications,
+ * and filtering them based on role and client contexts.
  */
 
 import api from './api';
 
+// Shared in-memory list representing user notifications
+let notificationsDb = [
+  {
+    id: 1,
+    title: 'Welcome to SocialPilot!',
+    message: 'Your account and business workspaces are ready.',
+    type: 'system',
+    isRead: false,
+    role: 'all',
+    clientId: null,
+    createdAt: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: 2,
+    title: 'Campaign Synced — Nike',
+    message: 'Marketing Team created Nike Summer Sale campaign.',
+    type: 'campaign',
+    isRead: false,
+    role: 'marketing',
+    clientId: 'nike',
+    link: '/marketing/clients/nike/campaigns',
+    createdAt: new Date(Date.now() - 10 * 60 * 1000).toISOString(),
+  },
+  {
+    id: 3,
+    title: 'Post Published Successfully!',
+    message: 'Nike Summer Sale teaser post published to Instagram.',
+    type: 'content_published',
+    isRead: true,
+    role: 'business',
+    clientId: 'nike',
+    link: '/business/published',
+    createdAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: 4,
+    title: 'Post Publication Failed',
+    message: 'YouTube video upload size exceeds limit for Creator channel.',
+    type: 'content_failed',
+    isRead: false,
+    role: 'creator',
+    clientId: null,
+    link: '/creator/posts',
+    createdAt: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
+  },
+  {
+    id: 5,
+    title: 'Monthly Report Ready',
+    message: 'July Campaign Performance report generated.',
+    type: 'system',
+    isRead: false,
+    role: 'business',
+    clientId: 'nike',
+    link: '/business/reports',
+    createdAt: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
+  },
+  {
+    id: 6,
+    title: 'Campaign Deadline',
+    message: 'Personal portfolio campaign deadline in 2 days.',
+    type: 'campaign',
+    isRead: false,
+    role: 'creator',
+    clientId: null,
+    link: '/creator/campaigns',
+    createdAt: new Date(Date.now() - 40 * 60 * 1000).toISOString(),
+  },
+];
+
 /**
  * GET /notifications
+ * Resolves to all notifications matching the current user role / client context.
  */
-export async function getNotifications() {
+export async function getNotifications(filters = {}) {
   try {
+    // Attempt backend sync
     const { data } = await api.get('/notifications');
     return data;
   } catch {
-    const now = Date.now();
-    return [
-      {
-        id: 1,
-        title: 'Welcome to SocialPilot!',
-        message: 'Your account has been created successfully.',
-        type: 'info',
-        isRead: false,
-        createdAt: new Date(now - 5 * 60 * 1000).toISOString(),
-      },
-      {
-        id: 2,
-        title: 'Complete Your Profile',
-        message: 'Add a bio and profile photo to personalise your account.',
-        type: 'warning',
-        isRead: false,
-        createdAt: new Date(now - 30 * 60 * 1000).toISOString(),
-      },
-      {
-        id: 3,
-        title: 'Connect Your Platforms',
-        message: 'Link your social accounts to start scheduling content.',
-        type: 'info',
-        isRead: true,
-        createdAt: new Date(now - 2 * 60 * 60 * 1000).toISOString(),
-      },
-    ];
+    const { role, clientId } = filters;
+    
+    // Filter matching role and workspace context
+    return notificationsDb.filter((n) => {
+      // 1. Check workspace context
+      if (clientId && n.clientId && n.clientId !== clientId) {
+        return false;
+      }
+      // 2. Check role context
+      if (role && n.role !== 'all' && n.role !== role) {
+        return false;
+      }
+      return true;
+    });
   }
 }
 
@@ -52,6 +112,9 @@ export async function markNotificationRead(id) {
     const { data } = await api.patch(`/notifications/${id}/read`);
     return data;
   } catch {
+    notificationsDb = notificationsDb.map((n) =>
+      n.id === id ? { ...n, isRead: true } : n
+    );
     return { success: true };
   }
 }
@@ -59,11 +122,20 @@ export async function markNotificationRead(id) {
 /**
  * PATCH /notifications/read-all
  */
-export async function markAllRead() {
+export async function markAllRead(filters = {}) {
   try {
     const { data } = await api.patch('/notifications/read-all');
     return data;
   } catch {
+    const { role, clientId } = filters;
+    notificationsDb = notificationsDb.map((n) => {
+      const matchClient = !clientId || !n.clientId || n.clientId === clientId;
+      const matchRole = !role || n.role === 'all' || n.role === role;
+      if (matchClient && matchRole) {
+        return { ...n, isRead: true };
+      }
+      return n;
+    });
     return { success: true };
   }
 }
@@ -71,11 +143,17 @@ export async function markAllRead() {
 /**
  * DELETE /notifications
  */
-export async function clearNotifications() {
+export async function clearNotifications(filters = {}) {
   try {
     const { data } = await api.delete('/notifications');
     return data;
   } catch {
+    const { role, clientId } = filters;
+    notificationsDb = notificationsDb.filter((n) => {
+      const matchClient = !clientId || !n.clientId || n.clientId === clientId;
+      const matchRole = !role || n.role === 'all' || n.role === role;
+      return !(matchClient && matchRole);
+    });
     return { success: true };
   }
 }

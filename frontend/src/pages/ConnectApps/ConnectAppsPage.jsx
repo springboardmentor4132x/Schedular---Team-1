@@ -6,6 +6,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   FaInstagram, FaFacebookF, FaLinkedinIn,
   FaPinterestP, FaYoutube,
@@ -45,6 +46,7 @@ function formatTime(iso) {
 }
 
 export default function ConnectAppsPage() {
+  const [searchParams]          = useSearchParams();
   const [accounts, setAccounts] = useState([]);
   const [loading, setLoading]   = useState(true);
   const [busy, setBusy]         = useState({}); // platform -> action string
@@ -59,9 +61,39 @@ export default function ConnectAppsPage() {
   }, []);
 
   const showToast = (msg) => {
-    setToast(msg);
-    setTimeout(() => setToast(''), 3500);
+    setTimeout(() => {
+      setToast(msg);
+      setTimeout(() => setToast(''), 4000);
+    }, 0);
   };
+
+  useEffect(() => {
+    const connected = searchParams.get('connected');
+    const oauthError = searchParams.get('oauth_error');
+    const reason = searchParams.get('reason');
+
+    if (connected) {
+      const label = PLATFORM_META[connected]?.label || connected;
+      showToast(`${label} account connected successfully!`);
+      window.history.replaceState({}, '', window.location.pathname);
+    } else if (oauthError) {
+      const label = PLATFORM_META[oauthError]?.label || oauthError;
+      let msg = `${label} connection failed.`;
+      if (reason === 'invalid_scope') {
+        msg = `${label} connection failed because requested permissions are not available on the developer app.`;
+      } else if (reason === 'user_denied') {
+        msg = `${label} connection authorization was cancelled.`;
+      } else if (reason === 'invalid_state') {
+        msg = `${label} connection timed out or security state was invalid.`;
+      } else if (reason === 'token_exchange_failed') {
+        msg = `Could not complete ${label} token exchange.`;
+      } else if (reason === 'unsupported_provider') {
+        msg = `${label} integration is not configured or unsupported.`;
+      }
+      showToast(msg);
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, [searchParams]);
 
   const setBusyFor = (platform, action) =>
     setBusy((b) => ({ ...b, [platform]: action }));
@@ -86,8 +118,9 @@ export default function ConnectAppsPage() {
       } else {
         showToast(result?.message ?? 'Action failed.');
       }
-    } catch {
-      showToast('Something went wrong. Please try again.');
+    } catch (err) {
+      const msg = err?.response?.data?.detail || 'Something went wrong. Please try again.';
+      showToast(msg);
     } finally {
       clearBusy(platform);
     }

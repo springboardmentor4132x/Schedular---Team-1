@@ -13,6 +13,7 @@ import { z } from 'zod';
 import { MdCameraAlt, MdDeleteOutline } from 'react-icons/md';
 import { getProfile, updateProfile, uploadAvatar, removeAvatar }
   from '../../services/profileService';
+import { useApp } from '../../context/AppContext';
 import './ProfilePage.css';
 
 const schema = z.object({
@@ -42,6 +43,7 @@ const LANGUAGES = [
 ];
 
 export default function ProfilePage() {
+  const { user, setUser } = useApp();
   const [avatarUrl, setAvatarUrl] = useState(null);
   const [saveStatus, setSaveStatus] = useState(''); // 'saving' | 'saved' | 'error' | ''
   const [loadError, setLoadError] = useState('');
@@ -83,6 +85,25 @@ export default function ProfilePage() {
     setSaveStatus('saving');
     try {
       await updateProfile(values);
+      // Sync changes to active User session storage and context state
+      const updatedUser = {
+        ...user,
+        fullName: `${values.firstName} ${values.lastName}`.trim(),
+        email: values.email,
+        phone: values.phone,
+        country: values.country,
+        orgName: values.organization,
+      };
+
+      const isLocal = !!localStorage.getItem('socialpilot_current_user');
+      const key = 'socialpilot_current_user';
+      if (isLocal) {
+        localStorage.setItem(key, JSON.stringify(updatedUser));
+      } else {
+        sessionStorage.setItem(key, JSON.stringify(updatedUser));
+      }
+      setUser(updatedUser);
+
       setSaveStatus('saved');
       reset(values); // clear dirty state
       setTimeout(() => setSaveStatus(''), 2500);
@@ -95,13 +116,39 @@ export default function ProfilePage() {
     const file = e.target.files?.[0];
     if (!file) return;
     const result = await uploadAvatar(file);
-    if (result?.avatarUrl) setAvatarUrl(result.avatarUrl);
+    if (result?.avatarUrl) {
+      setAvatarUrl(result.avatarUrl);
+      const updatedUser = {
+        ...user,
+        profileImage: result.avatarUrl,
+      };
+      const isLocal = !!localStorage.getItem('socialpilot_current_user');
+      const key = 'socialpilot_current_user';
+      if (isLocal) {
+        localStorage.setItem(key, JSON.stringify(updatedUser));
+      } else {
+        sessionStorage.setItem(key, JSON.stringify(updatedUser));
+      }
+      setUser(updatedUser);
+    }
     e.target.value = '';
   };
 
   const handleRemoveAvatar = async () => {
     await removeAvatar();
     setAvatarUrl(null);
+    const updatedUser = {
+      ...user,
+      profileImage: null,
+    };
+    const isLocal = !!localStorage.getItem('socialpilot_current_user');
+    const key = 'socialpilot_current_user';
+    if (isLocal) {
+      localStorage.setItem(key, JSON.stringify(updatedUser));
+    } else {
+      sessionStorage.setItem(key, JSON.stringify(updatedUser));
+    }
+    setUser(updatedUser);
   };
 
   return (

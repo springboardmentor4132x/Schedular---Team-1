@@ -152,8 +152,9 @@ html, body {
 .sp-section-sub {
   font-size: clamp(0.95rem, 1.4vw, 1.1rem);
   color: var(--sp-text-body);
-  max-width: 480px;    /* slightly wider for comfortable line length */
+  max-width: 480px;
   line-height: 1.78;
+  margin: 0 auto;      /* centres within flex/text-align:center containers */
 }
 
 .sp-accent {
@@ -315,21 +316,40 @@ html, body {
 }
 
 /* ── Hero Section ───────────────────────────────────────────── */
+
+/*
+ * 200vh scroll container — gives the pinned hero section 100vh of
+ * "scroll space" so the plane animation plays before the next section
+ * appears. No JS needed; pure CSS sticky.
+ */
+.sp-hero-scroll-container {
+  height: 200vh;
+  position: relative;
+}
+
+/* Make the hero sticky inside its container */
+.sp-hero-scroll-container .sp-hero {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  min-height: 100vh;
+  overflow: hidden;   /* clip canvas to section bounds */
+}
+
 .sp-hero {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  /* Centre vertically so the copy shares the viewport with the plane */
   justify-content: center;
   padding: var(--sp-section-pad);
-  /* Push below navbar (72px) + comfortable breathing room */
   padding-top: 7rem;
 }
 
+/* ── Hero copy / scroll-hint sit above embedded plane canvas ── */
 .sp-hero__copy {
   max-width: 520px;
-  /* No bottom margin — vertical centering handles spacing */
-  margin-bottom: 0;
+  position: relative;
+  z-index: 1;
 }
 
 .sp-hero__eyebrow {
@@ -379,6 +399,7 @@ html, body {
   letter-spacing: 0.14em;
   text-transform: uppercase;
   opacity: 0.7;
+  z-index: 1;   /* above plane canvas */
 }
 
 .sp-hero__scroll-arrow {
@@ -395,18 +416,21 @@ html, body {
 
 /* ── Features Section ───────────────────────────────────────── */
 .sp-features {
-  justify-content: flex-end;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
 }
 
 .sp-features__content {
   width: 100%;
-  max-width: 620px;
-  margin-left: auto;
+  max-width: 960px;
+  text-align: center;
 }
 
 .sp-features__grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 1.1rem;
   margin-top: 2.5rem;
 }
@@ -451,17 +475,21 @@ html, body {
 
 /* ── Platforms Section ──────────────────────────────────────── */
 .sp-platforms {
-  justify-content: flex-start;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
 }
 
 .sp-platforms__content {
-  max-width: 560px;
+  max-width: 700px;
+  text-align: center;
 }
 
 .sp-platforms__grid {
-  /* Always 4-column grid → 8 icons land in 2 clean rows */
+  /* Always 3-column grid → 6 icons land in 2 clean rows */
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 1.2rem 1.4rem;
   margin-top: 2.2rem;
 }
@@ -540,12 +568,14 @@ html, body {
 
 /* ── Timeline / How It Works ────────────────────────────────── */
 .sp-timeline {
-  justify-content: flex-end;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
 .sp-timeline__content {
-  max-width: 520px;
-  margin-left: auto;
+  max-width: 680px;
+  text-align: center;
 }
 
 .sp-timeline__steps {
@@ -553,6 +583,7 @@ html, body {
   display: flex;
   flex-direction: column;
   gap: 2.2rem;
+  text-align: left;   /* step card content stays left-aligned */
 }
 
 .sp-timeline__step {
@@ -827,12 +858,8 @@ html, body {
 
 /* ── Responsive ─────────────────────────────────────────────── */
 @media (max-width: 768px) {
-  .sp-features { justify-content: flex-start; }
-  .sp-features__content { margin-left: 0; }
-  .sp-features__grid { grid-template-columns: 1fr; }
-
-  .sp-timeline { justify-content: flex-start; }
-  .sp-timeline__content { margin-left: 0; }
+  /* Features: 3-col → 2-col on tablet */
+  .sp-features__grid { grid-template-columns: repeat(2, 1fr); }
 
   .sp-pricing__grid {
     grid-template-columns: 1fr;
@@ -855,7 +882,7 @@ html, body {
     height: 40px;
   }
 
-  /* Hero: ensure content doesn't overlap the large plane */
+  /* Hero: ensure content doesn't overlap the plane */
   .sp-hero__copy { max-width: 100%; }
 }
 
@@ -864,6 +891,9 @@ html, body {
   .sp-hero__headline { font-size: 2.2rem; }
   .sp-hero__actions  { flex-direction: column; }
   .sp-btn--large     { width: 100%; }
+
+  /* Features: 2-col → 1-col on small mobile */
+  .sp-features__grid { grid-template-columns: 1fr; }
 
   /* On small mobile: 2-column platform grid */
   .sp-platforms__grid {

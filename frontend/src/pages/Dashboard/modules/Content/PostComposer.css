@@ -1,0 +1,519 @@
+/* ============================================================
+   PostComposer.css
+   SocialPilot Content Composer Styles
+   Prefix: cs-
+   ============================================================ */
+
+.cs-composer {
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  width: 100%;
+  max-height: 95vh;
+  overflow: hidden;
+}
+
+.cs-composer__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.cs-composer__title {
+  font-size: 16.5px;
+  font-weight: 750;
+  color: #0f172a;
+  margin: 0;
+}
+
+.cs-composer__close-btn {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: #94a3b8;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: color 0.12s;
+}
+
+.cs-composer__close-btn:hover {
+  color: #475569;
+}
+
+.cs-composer__body {
+  display: grid;
+  grid-template-columns: 1fr;
+  padding: 24px;
+  gap: 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+@media (min-width: 1024px) {
+  .cs-composer__body {
+    grid-template-columns: 1.2fr 1fr;
+  }
+}
+
+.cs-composer__form-col, .cs-composer__preview-col {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.cs-composer__section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cs-composer__section-lbl {
+  font-size: 11px;
+  font-weight: 750;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 0;
+}
+
+/* Uploader styling */
+.cs-uploader-box {
+  position: relative;
+  border: 2px dashed #cbd5e1;
+  border-radius: 8px;
+  background: #f8fafc;
+  padding: 20px;
+  text-align: center;
+  transition: border-color 0.15s;
+}
+
+.cs-uploader-box:hover {
+  border-color: #4f46e5;
+}
+
+.cs-uploader-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.cs-uploader-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #475569;
+  cursor: pointer;
+}
+
+.cs-uploader-tip {
+  font-size: 10.5px;
+  color: #94a3b8;
+}
+
+.cs-media-previews {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.cs-media-item {
+  position: relative;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  overflow: hidden;
+  aspect-ratio: 1;
+  background: #f1f5f9;
+}
+
+.cs-media-item__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cs-media-item__meta {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: 8px;
+  padding: 2px 4px;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cs-media-item__remove {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  cursor: pointer;
+  transition: background 0.12s;
+  z-index: 3;
+}
+
+.cs-media-item__remove:hover {
+  background: rgba(239, 68, 68, 0.8);
+}
+
+/* Fields formatting */
+.cs-composer__textarea {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 13.5px;
+  color: #1e293b;
+  outline: none;
+  resize: vertical;
+}
+
+.cs-composer__textarea:focus {
+  border-color: #4f46e5;
+}
+
+.cs-composer__textarea--error {
+  border-color: #ef4444;
+  background: #fef2f2;
+}
+
+.cs-composer__char-counter {
+  text-align: right;
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.cs-composer__err-text {
+  font-size: 11px;
+  font-weight: 600;
+  color: #ef4444;
+}
+
+/* Platforms listing */
+.cs-platforms-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cs-platform-btn {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  color: #475569;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  min-width: 90px;
+  gap: 2px;
+}
+
+.cs-platform-btn:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+}
+
+.cs-platform-btn--active {
+  background: #f5f3ff;
+  border-color: #4f46e5;
+  color: #4f46e5;
+}
+
+.cs-platform-btn--disabled {
+  background: #f8fafc;
+  opacity: 0.6;
+}
+
+.cs-platform-btn__badge {
+  font-size: 8.5px;
+  background: #fee2e2;
+  color: #991b1b;
+  padding: 1px 4px;
+  border-radius: 4px;
+  font-weight: 700;
+}
+
+.cs-composer__guide-note {
+  font-size: 11.5px;
+  color: #475569;
+  background: #f8fafc;
+  border-left: 3px solid #64748b;
+  padding: 6px 10px;
+  margin: 0;
+}
+
+/* Datetime pickers */
+.cs-schedule-modes {
+  display: flex;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #f8fafc;
+  padding: 2px;
+  gap: 2px;
+}
+
+.cs-schedule-mode-btn {
+  flex: 1;
+  padding: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #64748b;
+  background: none;
+  border: none;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.12s;
+}
+
+.cs-schedule-mode-btn--active {
+  background: #fff;
+  color: #4f46e5;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.cs-datetime-pickers {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.cs-composer__input {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13.5px;
+  color: #1e293b;
+  outline: none;
+  background: #fff;
+  width: 100%;
+}
+
+.cs-composer__input:focus {
+  border-color: #4f46e5;
+}
+
+.cs-schedule-preview {
+  font-size: 12px;
+  color: #4b5563;
+  margin-top: 4px;
+}
+
+.cs-composer__campaign-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cs-composer__shortcut-btn {
+  font-size: 11px;
+  font-weight: 600;
+  color: #4f46e5;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+/* Live Preview Mockup Box */
+.cs-preview-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.cs-preview-tabs {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  border-bottom: 1px solid #cbd5e1;
+  padding-bottom: 8px;
+}
+
+.cs-preview-tabs__placeholder {
+  font-size: 11.5px;
+  color: #94a3b8;
+  padding: 4px 0;
+}
+
+.cs-preview-tab-btn {
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  text-transform: capitalize;
+}
+
+.cs-preview-tab-btn--active {
+  background: #4f46e5;
+  border-color: #4f46e5;
+  color: #fff;
+}
+
+.cs-preview-frame {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.cs-preview-frame__header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.cs-preview-frame__brand {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.cs-preview-frame__meta {
+  font-size: 10.5px;
+  color: #94a3b8;
+}
+
+.cs-preview-frame__body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cs-preview-frame__caption {
+  font-size: 13px;
+  color: #334155;
+  margin: 0;
+  white-space: pre-wrap;
+  line-height: 1.5;
+}
+
+.cs-preview-frame__media-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  background: #f1f5f9;
+}
+
+.cs-preview-frame__media-item img, .cs-preview-frame__media-item video {
+  width: 100%;
+  max-height: 240px;
+  object-fit: contain;
+  display: block;
+}
+
+.cs-preview-frame__no-media {
+  border: 1px dashed #cbd5e1;
+  border-radius: 8px;
+  padding: 30px;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.cs-preview-frame__footer {
+  display: flex;
+  justify-content: space-between;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 10px;
+  margin-top: 12px;
+  font-size: 10.5px;
+  color: #94a3b8;
+}
+
+.cs-preview-campaign-badge {
+  font-size: 11.5px;
+  background: #eef2ff;
+  color: #4f46e5;
+  padding: 4px 10px;
+  border-radius: 20px;
+  align-self: flex-start;
+  border: 1px solid #c7d2fe;
+}
+
+/* Footer controls */
+.cs-composer__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 24px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.cs-composer__btn {
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.12s;
+  border: none;
+}
+
+.cs-composer__btn--cancel {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.cs-composer__btn--cancel:hover {
+  background: #e2e8f0;
+}
+
+.cs-composer__btn--draft {
+  background: #eef2ff;
+  color: #4f46e5;
+}
+
+.cs-composer__btn--draft:hover {
+  background: #e0e7ff;
+}
+
+.cs-composer__btn--submit {
+  background: #4f46e5;
+  color: #fff;
+}
+
+.cs-composer__btn--submit:hover {
+  background: #4338ca;
+}
