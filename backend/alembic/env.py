@@ -8,7 +8,7 @@ from app.config import settings
 from app.database import Base
 
 # Import all models here
-from app.models import ActivityLog, Notification, SocialAccount, User, UserProfile, UserSettings, Team, TeamMember, RefreshToken, ClientAssignment, Post, Campaign, CampaignPost, MediaAsset
+from app.models import ActivityLog, AnalyticsMetric, CollaborationRequest, Notification, PublishingLog, Report, SocialAccount, User, UserProfile, UserSettings, Team, TeamMember, RefreshToken, ClientAssignment, Post, Campaign, CampaignPost, MediaAsset
 
 config = context.config
 

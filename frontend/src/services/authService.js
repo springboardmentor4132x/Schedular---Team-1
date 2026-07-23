@@ -29,6 +29,7 @@ async function registerUser({ fullName, email, phone, country, orgName, role, pa
       country: data.user.country,
       orgName: data.user.organization,
       role: data.user.role,
+      profileImage: data.user.avatarUrl ?? null,
     };
   } catch (error) {
     if (error.response && error.response.status === 400) {
@@ -62,6 +63,7 @@ async function loginUser(email, password) {
       country: data.user.country,
       orgName: data.user.organization,
       role: data.user.role,
+      profileImage: data.user.avatarUrl ?? null,
     };
   } catch {
     // If invalid credentials or bad request, return null to match original loginUser behavior

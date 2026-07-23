@@ -8,10 +8,11 @@ from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, 
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models.content import Campaign, CampaignPost, MediaAsset, Post
+from app.models.content import Campaign, CampaignPost, MediaAsset, Post, PublishingLog
 from app.models.user import ActivityLog, ClientAssignment, SocialAccount, Team, User
-from app.schemas.content_schema import AssignPosts, CampaignWrite, PostWrite, QueueReorder, ScheduleWrite
+from app.schemas.content_schema import AssignPosts, CampaignAssignment, CampaignUpdate, CampaignWrite, PostUpdate, PostWrite, QueueReorder, ScheduleWrite
 from app.services.auth_service import get_current_user
+from app.services.publishing_service import process_pending_publications
 
 router = APIRouter(tags=["Content & Campaigns"])
 MANAGERS = {"Administrator", "Marketing Team", "Content Creator"}
@@ -32,8 +33,12 @@ def _post_payload(post: Post):
 
 
 def _client_is_available(client_id: int | None, user: User, db: Session) -> bool:
+    if user.role == "Content Creator":
+        return client_id is None
+    if user.role == "Marketing Team" and client_id is None:
+        return False
     if client_id is None:
-        return True
+        return user.role == "Administrator"
     if user.role == "Administrator":
         return db.query(User).filter(User.id == client_id, User.role == "Business User").first() is not None
     return db.query(ClientAssignment).join(Team, Team.id == ClientAssignment.team_id).filter(
@@ -68,6 +73,18 @@ def _owned_post(post_id: int, user: User, db: Session) -> Post:
     return post
 
 
+def _validate_media_references(media_urls: list[str], user: User, db: Session) -> None:
+    """Reject ephemeral browser URLs and prevent one user attaching another's upload."""
+    for media_url in media_urls:
+        if media_url.startswith(("blob:", "file:")):
+            raise HTTPException(status_code=422, detail="Media must be uploaded before it can be attached to content.")
+        if media_url.startswith("/uploads/"):
+            storage_key = media_url.removeprefix("/uploads/")
+            asset = db.query(MediaAsset).filter(MediaAsset.storage_key == storage_key).first()
+            if asset is None or (asset.owner_id != user.id and user.role != "Administrator"):
+                raise HTTPException(status_code=422, detail="One or more media assets are unavailable.")
+
+
 @router.post("/media", status_code=status.HTTP_201_CREATED)
 async def upload_media(file: UploadFile = File(...), user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     _require_content_access(user)
@@ -89,8 +106,19 @@ async def upload_media(file: UploadFile = File(...), user: User = Depends(get_cu
 
 
 @router.get("/posts")
-def list_posts(status_filter: str | None = Query(None, alias="status"), search: str | None = None, start: datetime | None = None, end: datetime | None = None, skip: int = Query(0, ge=0), limit: int = Query(50, ge=1, le=100), user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+def list_posts(status_filter: str | None = Query(None, alias="status"), search: str | None = None, start: datetime | None = None, end: datetime | None = None, client_id: int | None = None, campaign_id: int | None = None, platform: str | None = None, skip: int = Query(0, ge=0), limit: int = Query(50, ge=1, le=100), user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     query = db.query(Post).filter(_post_scope(user, db))
+    if client_id is not None:
+        if user.role == "Business User" and client_id != user.id:
+            raise HTTPException(status_code=404, detail="Post not found.")
+        if user.role == "Marketing Team" and not _client_is_available(client_id, user, db):
+            raise HTTPException(status_code=404, detail="Post not found.")
+        query = query.filter(Post.client_id == client_id)
+    if campaign_id is not None: query = query.filter(Post.campaign_id == campaign_id)
+    if platform:
+        if platform not in {"facebook", "instagram", "linkedin", "pinterest", "youtube", "x"}:
+            raise HTTPException(status_code=422, detail="Unsupported platform selected.")
+        query = query.filter(Post.platforms.like(f'%"{platform}"%'))
     if status_filter: query = query.filter(Post.status == status_filter)
     if search: query = query.filter(Post.caption.ilike(f"%{search}%"))
     if start: query = query.filter(Post.scheduled_for >= start)
@@ -99,11 +127,22 @@ def list_posts(status_filter: str | None = Query(None, alias="status"), search: 
     return {"items": [_post_payload(p) for p in posts], "total": total, "skip": skip, "limit": limit}
 
 
+@router.get("/posts/{post_id}")
+def get_post(post_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if user.role == "Business User":
+        post = db.query(Post).filter(Post.id == post_id, Post.client_id == user.id).first()
+        if post is None:
+            raise HTTPException(status_code=404, detail="Post not found.")
+        return _post_payload(post)
+    return _post_payload(_owned_post(post_id, user, db))
+
+
 @router.post("/posts", status_code=status.HTTP_201_CREATED)
 def create_post(payload: PostWrite, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     _require_content_access(user)
     if not _client_is_available(payload.client_id, user, db):
         raise HTTPException(status_code=403, detail="Choose a client assigned to your marketing team.")
+    _validate_media_references(payload.media_urls, user, db)
     post = Post(owner_id=user.id, client_id=payload.client_id, caption=payload.caption, content_type=payload.content_type, media_urls=json.dumps(payload.media_urls), platforms=json.dumps(payload.platforms), timezone=payload.timezone)
     db.add(post); db.add(ActivityLog(user_id=user.id, activity="Created draft")); db.commit(); db.refresh(post)
     return _post_payload(post)
@@ -113,7 +152,29 @@ def create_post(payload: PostWrite, user: User = Depends(get_current_user), db: 
 def update_post(post_id: int, payload: PostWrite, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     _require_content_access(user); post = _owned_post(post_id, user, db)
     if post.status == "published": raise HTTPException(status_code=409, detail="Published posts cannot be edited.")
+    if not _client_is_available(payload.client_id, user, db):
+        raise HTTPException(status_code=403, detail="Choose a client assigned to your marketing team.")
+    _validate_media_references(payload.media_urls, user, db)
     for name, value in {"caption": payload.caption, "content_type": payload.content_type, "media_urls": json.dumps(payload.media_urls), "platforms": json.dumps(payload.platforms), "timezone": payload.timezone, "client_id": payload.client_id}.items(): setattr(post, name, value)
+    db.commit(); db.refresh(post); return _post_payload(post)
+
+
+@router.patch("/posts/{post_id}")
+def patch_post(post_id: int, payload: PostUpdate, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    _require_content_access(user); post = _owned_post(post_id, user, db)
+    if post.status == "published":
+        raise HTTPException(status_code=409, detail="Published posts cannot be edited.")
+    changes = payload.model_dump(exclude_unset=True)
+    if "client_id" in changes and not _client_is_available(changes["client_id"], user, db):
+        raise HTTPException(status_code=403, detail="Choose a client assigned to your marketing team.")
+    if "media_urls" in changes:
+        _validate_media_references(changes["media_urls"], user, db)
+    for name, value in changes.items():
+        setattr(post, name, json.dumps(value) if name in {"media_urls", "platforms"} else value)
+    content_type = changes.get("content_type", post.content_type)
+    media_urls = changes.get("media_urls", json.loads(post.media_urls))
+    if content_type != "text" and not media_urls:
+        raise HTTPException(status_code=422, detail="Media is required for this content type.")
     db.commit(); db.refresh(post); return _post_payload(post)
 
 
@@ -138,9 +199,45 @@ def schedule_post(post_id: int, payload: ScheduleWrite, user: User = Depends(get
 
 
 @router.post("/posts/{post_id}/cancel")
+@router.post("/posts/{post_id}/cancel-schedule")
 def cancel_schedule(post_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     _require_content_access(user); post = _owned_post(post_id, user, db)
-    post.status, post.scheduled_for, post.queue_position = "cancelled", None, None; db.commit(); return _post_payload(post)
+    if post.status != "scheduled":
+        raise HTTPException(status_code=409, detail="Only scheduled posts can be cancelled.")
+    post.status, post.scheduled_for, post.queue_position = "draft", None, None
+    db.add(ActivityLog(user_id=user.id, activity="Cancelled post schedule")); db.commit(); db.refresh(post)
+    return _post_payload(post)
+
+
+@router.post("/posts/{post_id}/publish", status_code=status.HTTP_202_ACCEPTED)
+def request_publish_now(post_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    _require_content_access(user)
+    post = _owned_post(post_id, user, db)
+    if post.status in {"published", "publishing"}:
+        raise HTTPException(status_code=409, detail="This post is already being published or has been published.")
+    if not json.loads(post.platforms):
+        raise HTTPException(status_code=422, detail="Select at least one platform before publishing.")
+    post.status = "publishing"
+    db.add(ActivityLog(user_id=user.id, activity="Requested immediate publication"))
+    db.commit(); db.refresh(post)
+    return {"post": _post_payload(post), "mode": "mock", "message": "Publication was queued for the development adapter."}
+
+
+@router.post("/publishing/run-due")
+def run_due_publications(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Development worker entry point. Deploy this behavior in a real background worker."""
+    if user.role != "Administrator":
+        raise HTTPException(status_code=403, detail="Only administrators can run publishing workers.")
+    return {"processed": process_pending_publications(db), "mode": "mock"}
+
+
+@router.get("/posts/{post_id}/publishing-logs")
+def list_publishing_logs(post_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    post = _owned_post(post_id, user, db) if user.role != "Business User" else db.query(Post).filter(Post.id == post_id, Post.client_id == user.id).first()
+    if post is None:
+        raise HTTPException(status_code=404, detail="Post not found.")
+    rows = db.query(PublishingLog).filter(PublishingLog.post_id == post_id).order_by(PublishingLog.attempted_at.desc()).all()
+    return [{"id": row.id, "platform": row.platform, "status": row.status, "externalPostId": row.external_post_id, "error": row.error_message, "attemptedAt": row.attempted_at} for row in rows]
 
 
 @router.get("/queue")
@@ -161,8 +258,14 @@ def reorder_queue(payload: QueueReorder, user: User = Depends(get_current_user),
 
 
 @router.get("/campaigns")
-def list_campaigns(search: str | None = None, status_filter: str | None = Query(None, alias="status"), user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+def list_campaigns(search: str | None = None, status_filter: str | None = Query(None, alias="status"), client_id: int | None = None, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     query = db.query(Campaign).filter(_campaign_scope(user))
+    if client_id is not None:
+        if user.role == "Business User" and client_id != user.id:
+            raise HTTPException(status_code=404, detail="Campaign not found.")
+        if user.role == "Marketing Team" and not _client_is_available(client_id, user, db):
+            raise HTTPException(status_code=404, detail="Campaign not found.")
+        query = query.filter(Campaign.client_id == client_id)
     if search: query = query.filter(Campaign.name.ilike(f"%{search}%"))
     if status_filter: query = query.filter(Campaign.status == status_filter)
     return [_campaign_payload(c, db) for c in query.order_by(Campaign.start_date.desc()).all()]
@@ -188,11 +291,34 @@ def get_campaign(campaign_id: int, user: User = Depends(get_current_user), db: S
     campaign = _owned_campaign(campaign_id, user, db); result = _campaign_payload(campaign, db); result["posts"] = [_post_payload(p) for p in db.query(Post).filter(Post.campaign_id == campaign.id).all()]; return result
 
 
+@router.get("/campaigns/{campaign_id}/posts")
+def list_campaign_posts(campaign_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    campaign = _owned_campaign(campaign_id, user, db)
+    return [_post_payload(post) for post in db.query(Post).filter(Post.campaign_id == campaign.id).order_by(Post.created_at.desc()).all()]
+
+
 @router.put("/campaigns/{campaign_id}")
 def update_campaign(campaign_id: int, payload: CampaignWrite, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     _require_content_access(user); campaign = _owned_campaign(campaign_id, user, db)
+    if not _client_is_available(payload.client_id, user, db):
+        raise HTTPException(status_code=403, detail="Choose a client assigned to your marketing team.")
     for name, value in payload.model_dump(exclude={"platforms"}).items(): setattr(campaign, name, value)
     campaign.platforms = json.dumps(payload.platforms); db.commit(); return _campaign_payload(campaign, db)
+
+
+@router.patch("/campaigns/{campaign_id}")
+def patch_campaign(campaign_id: int, payload: CampaignUpdate, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    _require_content_access(user); campaign = _owned_campaign(campaign_id, user, db)
+    changes = payload.model_dump(exclude_unset=True)
+    if "client_id" in changes and not _client_is_available(changes["client_id"], user, db):
+        raise HTTPException(status_code=403, detail="Choose a client assigned to your marketing team.")
+    start_date = changes.get("start_date", campaign.start_date)
+    end_date = changes.get("end_date", campaign.end_date)
+    if end_date < start_date:
+        raise HTTPException(status_code=422, detail="End date must be on or after start date.")
+    for name, value in changes.items():
+        setattr(campaign, name, json.dumps(value) if name == "platforms" else value)
+    db.commit(); db.refresh(campaign); return _campaign_payload(campaign, db)
 
 
 @router.delete("/campaigns/{campaign_id}", status_code=204)
@@ -206,6 +332,8 @@ def assign_campaign_posts(campaign_id: int, payload: AssignPosts, user: User = D
     posts = db.query(Post).filter(Post.id.in_(payload.post_ids), Post.owner_id == user.id).all()
     if len(posts) != len(set(payload.post_ids)): raise HTTPException(status_code=422, detail="Posts must belong to you.")
     for post in posts:
+        if post.client_id != campaign.client_id:
+            raise HTTPException(status_code=422, detail="Posts and campaigns must belong to the same client workspace.")
         if post.campaign_id and post.campaign_id != campaign.id:
             db.query(CampaignPost).filter(CampaignPost.post_id == post.id).delete()
         post.campaign_id = campaign.id
@@ -218,3 +346,23 @@ def remove_campaign_post(campaign_id: int, post_id: int, user: User = Depends(ge
     _require_content_access(user); campaign = _owned_campaign(campaign_id, user, db); post = _owned_post(post_id, user, db)
     if post.campaign_id != campaign.id: raise HTTPException(status_code=404, detail="Post is not assigned to this campaign.")
     post.campaign_id = None; db.query(CampaignPost).filter_by(campaign_id=campaign.id, post_id=post.id).delete(); db.commit()
+
+
+@router.patch("/posts/{post_id}/campaign")
+def set_post_campaign(post_id: int, payload: CampaignAssignment, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    _require_content_access(user)
+    post = _owned_post(post_id, user, db)
+    if payload.campaign_id is None:
+        if post.campaign_id is not None:
+            db.query(CampaignPost).filter(CampaignPost.post_id == post.id).delete()
+            post.campaign_id = None
+            db.commit()
+        return _post_payload(post)
+    campaign = _owned_campaign(payload.campaign_id, user, db)
+    if campaign.owner_id != post.owner_id or campaign.client_id != post.client_id:
+        raise HTTPException(status_code=422, detail="Post and campaign must belong to the same workspace.")
+    db.query(CampaignPost).filter(CampaignPost.post_id == post.id).delete()
+    post.campaign_id = campaign.id
+    db.add(CampaignPost(campaign_id=campaign.id, post_id=post.id))
+    db.commit(); db.refresh(post)
+    return _post_payload(post)
