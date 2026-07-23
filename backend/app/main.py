@@ -7,17 +7,18 @@ from pathlib import Path
 
 from app.models.user import User
 from app.config import settings
-from app.core.errors import http_error_handler, unhandled_error_handler, validation_error_handler
+from app.core.errors import (
+    http_error_handler,
+    unhandled_error_handler,
+    validation_error_handler,
+)
 from app.routers.auth import router as auth_router
 from app.routers.dashboard import router as dashboard_router
 from app.routers.content import router as content_router
 from app.routers.teams import router as teams_router
 from app.routers.insights import router as insights_router
 
-app = FastAPI(
-    title="SocialPilot API",
-    version="1.0"
-)
+app = FastAPI(title="SocialPilot API", version="1.0")
 app.add_exception_handler(HTTPException, http_error_handler)
 app.add_exception_handler(RequestValidationError, validation_error_handler)
 app.add_exception_handler(Exception, unhandled_error_handler)
@@ -43,6 +44,4 @@ app.mount("/uploads", StaticFiles(directory=upload_directory), name="uploads")
 
 @app.get("/")
 def home():
-    return {
-        "message": "SocialPilot Backend Running"
-    }
+    return {"message": "SocialPilot Backend Running"}

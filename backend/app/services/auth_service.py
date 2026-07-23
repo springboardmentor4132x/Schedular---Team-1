@@ -55,7 +55,16 @@ def create_access_token(data: dict):
 
 def create_refresh_token(data: dict):
     now = datetime.now(timezone.utc)
-    return jwt.encode({**data, "iat": now, "exp": now + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS), "type": "refresh"}, SECRET_KEY, algorithm=ALGORITHM)
+    return jwt.encode(
+        {
+            **data,
+            "iat": now,
+            "exp": now + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS),
+            "type": "refresh",
+        },
+        SECRET_KEY,
+        algorithm=ALGORITHM,
+    )
 
 
 def token_hash(token: str) -> str:

@@ -1,7 +1,7 @@
 /**
  * socialService.js
  *
- * TODO: Connect to FastAPI endpoints when backend is ready.
+
  * OAuth flows (connect) will open a popup or redirect — URLs are backend-provided.
  */
 

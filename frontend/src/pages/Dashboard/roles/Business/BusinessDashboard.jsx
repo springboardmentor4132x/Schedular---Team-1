@@ -27,16 +27,21 @@ import {
 import { useApp } from '../../../../context/AppContext';
 import { resolveRole, ROLE_LABELS } from '../../shared/constants';
 import { getConnectedAccounts } from '../../../../services/socialService';
+import campaignService from '../../../../services/campaignService';
+import postService from '../../../../services/postService';
+import { getDashboardSummary } from '../../../../services/dashboardService';
 import PageContainer   from '../../components/PageContainer/PageContainer';
 import StatsCard       from '../../components/StatsCard/StatsCard';
 import Avatar          from '../../components/Avatar/Avatar';
 import SectionTitle    from '../../components/SectionTitle/SectionTitle';
-import {
-  MOCK_STATS, MOCK_CAMPAIGNS, MOCK_PLATFORMS,
-  MOCK_SCHEDULED, MOCK_PUBLISHED,
-  MOCK_CAMPAIGN_PERF, MOCK_PLATFORM_DIST, MOCK_WEEKLY_ENG, MOCK_FOLLOWERS,
-  MOCK_REPORTS, MOCK_ACTIVITY, MOCK_INSIGHTS,
-} from './BusinessDashboardMockData';
+const MOCK_PLATFORMS = [];
+const MOCK_CAMPAIGN_PERF = [];
+const MOCK_PLATFORM_DIST = [];
+const MOCK_WEEKLY_ENG = [];
+const MOCK_FOLLOWERS = [];
+const MOCK_REPORTS = [];
+const MOCK_ACTIVITY = [];
+const MOCK_INSIGHTS = [];
 import './BusinessDashboard.css';
 
 // ── Icon registry for platform logos ─────────────────────────────────────────
@@ -114,7 +119,7 @@ function WelcomeBanner({ user }) {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
   });
 
-  const activeCampaigns = MOCK_STATS.find((s) => s.id === 'campaigns')?.value ?? '0';
+  const activeCampaigns = 0; // Will be driven by summary endpoint ideally
 
   return (
     <div className="bd-welcome">
@@ -149,12 +154,19 @@ function WelcomeBanner({ user }) {
 // Section 3 — Campaign Overview Table
 // ─────────────────────────────────────────────────────────────────────────────
 function CampaignTable() {
+  const [campaigns, setCampaigns] = useState([]);
+  useEffect(() => {
+    campaignService.getCampaigns().then(data => {
+      if (data) setCampaigns(data);
+    });
+  }, []);
+
   return (
     <div className="bd-section-card">
       <div className="bd-section-card__header">
         <div>
           <h2 className="bd-section-card__title">Campaign Overview</h2>
-          <p className="bd-section-card__subtitle">{MOCK_CAMPAIGNS.length} campaigns total</p>
+          <p className="bd-section-card__subtitle">{campaigns.length} campaigns total</p>
         </div>
         <button className="bd-section-card__action">View All →</button>
       </div>
@@ -172,33 +184,36 @@ function CampaignTable() {
             </tr>
           </thead>
           <tbody>
-            {MOCK_CAMPAIGNS.map((c) => (
-              <tr key={c.id}>
-                <td><span className="bd-campaign-name">{c.name}</span></td>
-                <td>
-                  <span className={`bd-status bd-status--${c.status}`}>
-                    <span className="bd-status-dot" />
-                    {c.status}
-                  </span>
-                </td>
-                <td>
-                  <div className="bd-progress-wrap">
-                    <div className="bd-progress-bar">
-                      <div className="bd-progress-fill" style={{ width: `${c.progress}%` }} />
+            {campaigns.map((c) => {
+              const progress = c.status === 'active' ? 50 : (c.status === 'completed' ? 100 : 0);
+              return (
+                <tr key={c.id}>
+                  <td><span className="bd-campaign-name">{c.name}</span></td>
+                  <td>
+                    <span className={`bd-status bd-status--${c.status}`}>
+                      <span className="bd-status-dot" />
+                      {c.status}
+                    </span>
+                  </td>
+                  <td>
+                    <div className="bd-progress-wrap">
+                      <div className="bd-progress-bar">
+                        <div className="bd-progress-fill" style={{ width: `${progress}%` }} />
+                      </div>
+                      <span className="bd-progress-pct">{progress}%</span>
                     </div>
-                    <span className="bd-progress-pct">{c.progress}%</span>
-                  </div>
-                </td>
-                <td><span className="bd-team">{c.team}</span></td>
-                <td><span className="bd-date">{formatDate(c.startDate)}</span></td>
-                <td><span className="bd-date">{formatDate(c.endDate)}</span></td>
-                <td>
-                  <button className="bd-view-btn">
-                    <MdOpenInNew size={14} /> View
-                  </button>
-                </td>
-              </tr>
-            ))}
+                  </td>
+                  <td><span className="bd-team">Assigned</span></td>
+                  <td><span className="bd-date">{c.start_date ? formatDate(c.start_date) : 'TBD'}</span></td>
+                  <td><span className="bd-date">{c.end_date ? formatDate(c.end_date) : 'TBD'}</span></td>
+                  <td>
+                    <button className="bd-view-btn">
+                      <MdOpenInNew size={14} /> View
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
@@ -286,6 +301,13 @@ function ConnectedPlatforms({ liveAccounts }) {
 // Section 5 — Scheduled Posts Preview
 // ─────────────────────────────────────────────────────────────────────────────
 function ScheduledPostsPreview() {
+  const [posts, setPosts] = useState([]);
+  useEffect(() => {
+    postService.getPosts().then(data => {
+      if (data) setPosts(data.filter(p => p.status === 'scheduled').slice(0, 5));
+    });
+  }, []);
+
   return (
     <div className="bd-section-card">
       <div className="bd-section-card__header">
@@ -295,22 +317,25 @@ function ScheduledPostsPreview() {
         </div>
       </div>
       <div className="bd-posts-list">
-        {MOCK_SCHEDULED.map((post) => (
+        {posts.map((post) => {
+          let plat = 'facebook';
+          try { const arr = JSON.parse(post.platforms); if (arr.length) plat = arr[0]; } catch { plat = 'facebook'; }
+          return (
           <div key={post.id} className="bd-post-row">
             <div
               className="bd-post-platform-icon"
-              style={{ background: PLATFORM_COLORS[post.platform] ?? '#6b7280' }}
+              style={{ background: PLATFORM_COLORS[plat] ?? '#6b7280' }}
             >
-              {PLATFORM_EMOJI[post.platform]}
+              {PLATFORM_EMOJI[plat]}
             </div>
             <div className="bd-post-content">
-              <p className="bd-post-text">{post.content}</p>
-              <p className="bd-post-campaign">{post.campaign}</p>
+              <p className="bd-post-text">{post.caption || '(No caption)'}</p>
+              <p className="bd-post-campaign">Scheduled</p>
             </div>
-            <span className="bd-post-time">{formatScheduleTime(post.scheduledAt)}</span>
+            <span className="bd-post-time">{formatScheduleTime(post.scheduled_for || new Date().toISOString())}</span>
             <span className={`bd-post-status-tag bd-post-status-tag--${post.status}`}>{post.status}</span>
           </div>
-        ))}
+        )})}
       </div>
       <div className="bd-view-all-footer">
         <button className="bd-view-all-btn">View All Scheduled Posts →</button>
@@ -323,6 +348,13 @@ function ScheduledPostsPreview() {
 // Section 6 — Published Posts Preview
 // ─────────────────────────────────────────────────────────────────────────────
 function PublishedPostsPreview() {
+  const [posts, setPosts] = useState([]);
+  useEffect(() => {
+    postService.getPosts().then(data => {
+      if (data) setPosts(data.filter(p => p.status === 'published').slice(0, 5));
+    });
+  }, []);
+
   return (
     <div className="bd-section-card">
       <div className="bd-section-card__header">
@@ -332,40 +364,34 @@ function PublishedPostsPreview() {
         </div>
       </div>
       <div className="bd-published-list">
-        {MOCK_PUBLISHED.map((post) => (
+        {posts.map((post) => {
+          let plat = 'facebook';
+          try { const arr = JSON.parse(post.platforms); if (arr.length) plat = arr[0]; } catch { plat = 'facebook'; }
+          return (
           <div key={post.id} className="bd-published-row">
             <div
               className="bd-post-platform-icon"
-              style={{ background: PLATFORM_COLORS[post.platform] ?? '#6b7280' }}
+              style={{ background: PLATFORM_COLORS[plat] ?? '#6b7280' }}
             >
-              {PLATFORM_EMOJI[post.platform]}
+              {PLATFORM_EMOJI[plat]}
             </div>
             <div className="bd-post-content">
-              <p className="bd-post-text">{post.content}</p>
-              <p className="bd-post-campaign">{formatRelativeTime(post.publishedAt)}</p>
+              <p className="bd-post-text">{post.caption || '(No caption)'}</p>
+              <p className="bd-post-campaign">{formatRelativeTime(post.scheduled_for || new Date().toISOString())}</p>
             </div>
             <div className="bd-published-metrics">
               <div className="bd-metric">
                 <span className="bd-metric__label">Reach</span>
-                <span className="bd-metric__value">{post.reach}</span>
+                <span className="bd-metric__value">0</span>
               </div>
               <div className="bd-metric">
-                <span className="bd-metric__label">Likes</span>
-                <span className="bd-metric__value">{post.likes}</span>
-              </div>
-              <div className="bd-metric">
-                <span className="bd-metric__label">Comments</span>
-                <span className="bd-metric__value">{post.comments}</span>
+                <span className="bd-metric__label">Engagement</span>
+                <span className="bd-metric__value">0%</span>
               </div>
             </div>
-            <button className="bd-view-btn">
-              <MdOpenInNew size={14} /> View
-            </button>
+            <button className="bd-view-post-btn"><MdOpenInNew size={16} /></button>
           </div>
-        ))}
-      </div>
-      <div className="bd-view-all-footer">
-        <button className="bd-view-all-btn">View All Published Posts →</button>
+        )})}
       </div>
     </div>
   );
@@ -628,10 +654,23 @@ function ManagedBy() {
 export default function BusinessDashboard() {
   const { user } = useApp();
   const [liveAccounts, setLiveAccounts] = useState([]);
+  const [stats, setStats] = useState([]);
 
   // Fetch real connected account status from backend
   useEffect(() => {
     getConnectedAccounts().then(setLiveAccounts).catch(() => setLiveAccounts([]));
+    getDashboardSummary().then(data => {
+      if (data) {
+        setStats([
+          { id: 'campaigns', title: 'Active Campaigns', value: data.activeCampaigns, change: 'Total: ' + data.campaigns, trend: 'up' },
+          { id: 'scheduled', title: 'Scheduled Posts', value: data.scheduledPosts, change: 'In Queue', trend: 'neutral' },
+          { id: 'published', title: 'Published Posts', value: data.publishedPosts, change: 'Lifetime', trend: 'up' },
+          { id: 'platforms', title: 'Connected Platforms', value: data.connectedPlatforms, change: 'Sync active', trend: 'neutral' },
+          { id: 'analytics', title: 'Unread Notifications', value: data.unreadNotifications, change: 'Pending alerts', trend: 'up' },
+          { id: 'reports', title: 'Generated Reports', value: '0', change: 'View Reports', trend: 'neutral' },
+        ]);
+      }
+    });
   }, []);
 
   return (
@@ -648,7 +687,7 @@ export default function BusinessDashboard() {
         description="Real-time metrics across all your campaigns and platforms."
       />
       <div className="bd-stats-grid">
-        {MOCK_STATS.map((s) => (
+        {stats.map((s) => (
           <StatsCard
             key={s.id}
             title={s.title}

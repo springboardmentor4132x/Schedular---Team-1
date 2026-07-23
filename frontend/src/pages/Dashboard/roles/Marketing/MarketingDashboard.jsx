@@ -17,7 +17,7 @@
  * 10. Quick Actions (large shortcut cards)
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import {
   MdPeople, MdCampaign, MdDrafts, MdSchedule, MdQueue, MdRateReview,
   MdAdd, MdCalendarMonth, MdManageAccounts, MdTune,
@@ -29,13 +29,23 @@ import PageContainer        from '../../components/PageContainer/PageContainer';
 import StatsCard            from '../../components/StatsCard/StatsCard';
 import Avatar               from '../../components/Avatar/Avatar';
 import SectionTitle         from '../../components/SectionTitle/SectionTitle';
-import {
-  MOCK_MKT_STATS, MOCK_CLIENTS, MOCK_TODAY_SCHEDULE,
-  MOCK_MKT_CAMPAIGNS, MOCK_DRAFTS, MOCK_QUEUE,
-  MOCK_MKT_NOTIFICATIONS,
-  MOCK_WEEKLY_POSTS, MOCK_MKT_PLATFORM_DIST,
-  MOCK_CAMPAIGN_SUCCESS, MOCK_MKT_ENGAGEMENT,
-} from './MarketingDashboardMockData';
+import campaignService      from '../../../../services/campaignService';
+import postService          from '../../../../services/postService';
+import { getNotifications, markNotificationRead, markAllRead } from '../../../../services/notificationService';
+import analyticsService from '../../../../services/analyticsService';
+import { getDashboardSummary } from '../../../../services/dashboardService';
+
+const MOCK_MKT_STATS = [];
+const MOCK_CLIENTS = [];
+const MOCK_TODAY_SCHEDULE = [];
+const MOCK_MKT_CAMPAIGNS = [];
+const MOCK_DRAFTS = [];
+const MOCK_QUEUE = [];
+const MOCK_MKT_NOTIFICATIONS = [];
+const MOCK_WEEKLY_POSTS = [];
+const MOCK_MKT_PLATFORM_DIST = [];
+const MOCK_MKT_ENGAGEMENT = [];
+
 import './MarketingDashboard.css';
 
 // ── Constants ────────────────────────────────────────────────────────────────
@@ -259,13 +269,39 @@ function MyClients() {
 // Section 4 — Today's Schedule Timeline
 // ─────────────────────────────────────────────────────────────────────────────
 function TodaySchedule() {
+  const [schedule, setSchedule] = useState(MOCK_TODAY_SCHEDULE);
+  useEffect(() => {
+    postService.getPosts().then(data => {
+      if (data) {
+        const sched = data.filter(p => p.status === 'scheduled');
+        if (sched.length > 0) {
+          setSchedule(sched.map(p => {
+            let plat = 'facebook';
+            try { const arr = JSON.parse(p.platforms); if (arr.length) plat = arr[0]; } catch { plat = 'facebook'; }
+            const d = p.scheduled_for ? new Date(p.scheduled_for) : new Date();
+            const timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+            return {
+              id: p.id,
+              time: timeStr,
+              platform: plat,
+              client: p.client_id ? `Client #${p.client_id}` : 'Internal',
+              type: p.content_type || 'Post',
+              caption: p.caption || '',
+              status: 'scheduled'
+            };
+          }));
+        }
+      }
+    });
+  }, []);
+
   return (
     <div className="md-card">
       <div className="md-card__header">
         <div className="md-card__title-group">
           <h2 className="md-card__title">Today's Schedule</h2>
           <p className="md-card__subtitle">
-            {MOCK_TODAY_SCHEDULE.length} posts across all clients
+            {schedule.length} posts across all clients
           </p>
         </div>
         <button className="md-card__action md-card__action--ghost">
@@ -274,11 +310,11 @@ function TodaySchedule() {
       </div>
 
       <div className="md-timeline-wrap">
-        {MOCK_TODAY_SCHEDULE.map((item) => {
+        {schedule.map((item) => {
           const [hh, mm] = item.time.split(':');
-          const h = parseInt(hh, 10);
+          const h = parseInt(hh, 10) || 0;
           const suffix = h >= 12 ? 'PM' : 'AM';
-          const display = `${h > 12 ? h - 12 : h === 0 ? 12 : h}:${mm}`;
+          const display = `${h > 12 ? h - 12 : h === 0 ? 12 : h}:${mm || '00'}`;
 
           return (
             <div key={item.id} className="md-schedule-item">
@@ -319,12 +355,37 @@ function TodaySchedule() {
 // Section 5 — Running Campaigns Table
 // ─────────────────────────────────────────────────────────────────────────────
 function RunningCampaigns() {
+  const [campaigns, setCampaigns] = useState(MOCK_MKT_CAMPAIGNS);
+
+  useEffect(() => {
+    campaignService.getCampaigns().then(data => {
+      if (data && data.length > 0) {
+        const mapped = data.map(c => {
+          let platformsArray;
+          try { platformsArray = JSON.parse(c.platforms || '[]'); } catch { platformsArray = []; }
+          return {
+            id: c.id,
+            name: c.name,
+            client: c.client_id ? `Client #${c.client_id}` : 'Unassigned',
+            clientColor: '#111827',
+            progress: c.status === 'completed' ? 100 : c.status === 'active' ? 50 : 0,
+            platforms: Array.isArray(platformsArray) ? platformsArray : [],
+            deadline: c.end_date,
+            status: c.status,
+            postsLeft: 0
+          };
+        });
+        setCampaigns(mapped);
+      }
+    }).catch(err => console.error("Failed to fetch campaigns", err));
+  }, []);
+
   return (
     <div className="md-card">
       <div className="md-card__header">
         <div className="md-card__title-group">
           <h2 className="md-card__title">Running Campaigns</h2>
-          <p className="md-card__subtitle">{MOCK_MKT_CAMPAIGNS.length} campaigns assigned to you</p>
+          <p className="md-card__subtitle">{campaigns.length} campaigns assigned to you</p>
         </div>
         <button className="md-card__action md-card__action--primary">
           <MdAdd size={15} /> Create Campaign
@@ -344,7 +405,7 @@ function RunningCampaigns() {
             </tr>
           </thead>
           <tbody>
-            {MOCK_MKT_CAMPAIGNS.map((c) => (
+            {campaigns.map((c) => (
               <tr key={c.id}>
                 <td>
                   <div>
@@ -412,20 +473,45 @@ function RunningCampaigns() {
 // ─────────────────────────────────────────────────────────────────────────────
 function DraftContent() {
   const draftEmoji = { instagram: '📸', facebook: '📘', linkedin: '💼', youtube: '🎬', x: '🐦' };
+  const [drafts, setDrafts] = useState(MOCK_DRAFTS);
+
+  useEffect(() => {
+    postService.getPosts().then(data => {
+      if (data && data.length > 0) {
+        const backendDrafts = data.filter(p => p.status === 'draft');
+        if (backendDrafts.length > 0) {
+          const mapped = backendDrafts.map(d => {
+            let platformsArray;
+            try { platformsArray = JSON.parse(d.platforms || '["facebook"]'); } catch { platformsArray = ['facebook']; }
+            return {
+              id: d.id,
+              platform: Array.isArray(platformsArray) && platformsArray.length > 0 ? platformsArray[0] : 'facebook',
+              client: d.client_id ? `Client #${d.client_id}` : 'Internal',
+              clientColor: '#0A66C2',
+              lastEdited: d.updated_at,
+              caption: d.caption || 'No caption',
+              platforms: Array.isArray(platformsArray) ? platformsArray : ['facebook']
+            };
+          });
+          setDrafts(mapped);
+        }
+      }
+    }).catch(err => console.error(err));
+  }, []);
 
   return (
     <div className="md-card">
       <div className="md-card__header">
         <div className="md-card__title-group">
           <h2 className="md-card__title">Draft Content</h2>
-          <p className="md-card__subtitle">{MOCK_DRAFTS.length} drafts awaiting completion</p>
+          <p className="md-card__subtitle">{drafts.length} drafts awaiting completion</p>
         </div>
         <button className="md-card__action md-card__action--primary">
           <MdEditNote size={16} /> New Post
         </button>
       </div>
       <div className="md-drafts-grid">
-        {MOCK_DRAFTS.map((draft) => (
+        {drafts.map((draft) => (
           <div key={draft.id} className="md-draft-card">
             {/* Thumbnail area */}
             <div className="md-draft-thumbnail">
@@ -485,17 +571,40 @@ function DraftContent() {
 // Section 7 — Publishing Queue
 // ─────────────────────────────────────────────────────────────────────────────
 function PublishingQueue() {
+  const [queue, setQueue] = useState(MOCK_QUEUE);
+  useEffect(() => {
+    postService.getPosts().then(data => {
+      if (data) {
+        const queued = data.filter(p => p.status === 'scheduled' || p.status === 'publishing').slice(0, 5);
+        if (queued.length > 0) {
+          setQueue(queued.map(p => {
+            let plat = 'facebook';
+            try { const arr = JSON.parse(p.platforms); if (arr.length) plat = arr[0]; } catch { plat = 'facebook'; }
+            return {
+              id: p.id,
+              platform: plat,
+              caption: p.caption || '(No caption)',
+              client: p.client_id ? `Client #${p.client_id}` : 'Internal',
+              scheduledAt: p.scheduled_for || new Date().toISOString(),
+              priority: p.status === 'publishing' ? 'high' : 'normal'
+            };
+          }));
+        }
+      }
+    });
+  }, []);
+
   return (
     <div className="md-card">
       <div className="md-card__header">
         <div className="md-card__title-group">
           <h2 className="md-card__title">Publishing Queue</h2>
-          <p className="md-card__subtitle">{MOCK_QUEUE.length} posts queued for today</p>
+          <p className="md-card__subtitle">{queue.length} posts queued</p>
         </div>
         <button className="md-card__action md-card__action--ghost">Manage Queue →</button>
       </div>
       <div className="md-queue-list">
-        {MOCK_QUEUE.map((item) => (
+        {queue.map((item) => (
           <div key={item.id} className="md-queue-row">
             <div
               className="md-queue-platform-icon"
@@ -525,12 +634,37 @@ function PublishingQueue() {
 // Section 8 — Team Notifications
 // ─────────────────────────────────────────────────────────────────────────────
 function TeamNotifications() {
-  const [notifs, setNotifs] = useState(MOCK_MKT_NOTIFICATIONS);
+  const [notifs, setNotifs] = useState([]);
+
+  useEffect(() => {
+    getNotifications().then(data => {
+      if (data && data.length) {
+        setNotifs(data.map(n => ({
+          id: n.id,
+          title: n.title,
+          body: n.message,
+          type: n.type,
+          isRead: n.isRead || n.is_read,
+          time: n.createdAt || n.created_at || new Date().toISOString(),
+          icon: n.type === 'campaign' ? <MdCampaign /> : (n.type === 'report' ? <MdFolderOpen /> : <MdRateReview />)
+        })));
+      }
+    });
+  }, []);
+
   const unread = notifs.filter((n) => !n.isRead).length;
 
   const markRead = useCallback((id) => {
-    setNotifs((prev) => prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)));
+    markNotificationRead(id).then(() => {
+      setNotifs((prev) => prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)));
+    });
   }, []);
+
+  const handleMarkAllRead = () => {
+    markAllRead().then(() => {
+      setNotifs((prev) => prev.map((n) => ({ ...n, isRead: true })));
+    });
+  };
 
   return (
     <div className="md-card">
@@ -544,7 +678,7 @@ function TeamNotifications() {
         {unread > 0 && (
           <button
             className="md-card__action md-card__action--ghost"
-            onClick={() => setNotifs((prev) => prev.map((n) => ({ ...n, isRead: true })))}
+            onClick={handleMarkAllRead}
           >
             Mark all read
           </button>
@@ -575,9 +709,27 @@ function TeamNotifications() {
 // Section 9 — Performance Snapshot
 // ─────────────────────────────────────────────────────────────────────────────
 function PerformanceSnapshot() {
+  const [metrics, setMetrics] = useState({ reach: 0, impressions: 0, reactions: 0, comments: 0, shares: 0 });
+  const [platforms, setPlatforms] = useState(MOCK_MKT_PLATFORM_DIST);
+
+  useEffect(() => {
+    analyticsService.getMetrics().then(data => {
+      if (data && data.totals) {
+        setMetrics(data.totals);
+        if (data.platforms && data.platforms.length > 0) {
+          setPlatforms(data.platforms.map(p => ({
+             label: p.platform.charAt(0).toUpperCase() + p.platform.slice(1),
+             value: p.reach,
+             color: PLATFORM_COLORS[p.platform] || '#6b7280'
+          })));
+        }
+      }
+    });
+  }, []);
+
+  const totalDist = Math.max(platforms.reduce((s, d) => s + d.value, 0), 1);
   const maxWeeklyPosts = Math.max(...MOCK_WEEKLY_POSTS.map((d) => d.value), 1);
-  const maxEngagement  = Math.max(...MOCK_MKT_ENGAGEMENT.map((d) => d.value), 1);
-  const totalDist      = MOCK_MKT_PLATFORM_DIST.reduce((s, d) => s + d.value, 0);
+  const maxEngagement  = Math.max(metrics.reach, metrics.impressions, metrics.reactions, 1);
 
   return (
     <div className="md-perf-grid">
@@ -597,18 +749,22 @@ function PerformanceSnapshot() {
         </div>
       </div>
 
-      {/* Campaign success rate */}
+      {/* Overall KPI Metrics */}
       <div className="md-chart-card">
-        <h3 className="md-chart-card__title">🎯 Campaign Success Rate</h3>
+        <h3 className="md-chart-card__title">🎯 Overall Performance Metrics</h3>
         <div className="md-bar-chart">
-          {MOCK_CAMPAIGN_SUCCESS.map((item) => (
+          {[
+            { label: 'Reach', value: metrics.reach },
+            { label: 'Impressions', value: metrics.impressions },
+            { label: 'Reactions', value: metrics.reactions }
+          ].map((item) => (
             <div key={item.label} className="md-bar-item">
               <div className="md-bar-label-row">
                 <span className="md-bar-label">{item.label}</span>
-                <span className="md-bar-value">{item.value}%</span>
+                <span className="md-bar-value">{item.value}</span>
               </div>
               <div className="md-bar-track">
-                <div className="md-bar-fill" style={{ width: `${item.value}%` }} />
+                <div className="md-bar-fill" style={{ width: `${Math.min((item.value / maxEngagement) * 100, 100)}%` }} />
               </div>
             </div>
           ))}
@@ -617,9 +773,9 @@ function PerformanceSnapshot() {
 
       {/* Platform distribution */}
       <div className="md-chart-card">
-        <h3 className="md-chart-card__title">🌐 Platform Distribution</h3>
+        <h3 className="md-chart-card__title">🌐 Platform Reach Distribution</h3>
         <div className="md-donut-list">
-          {MOCK_MKT_PLATFORM_DIST.map((item) => (
+          {platforms.map((item) => (
             <div key={item.label} className="md-donut-item">
               <div className="md-donut-dot" style={{ background: item.color }} />
               <span className="md-donut-label">{item.label}</span>
@@ -632,7 +788,7 @@ function PerformanceSnapshot() {
                   }}
                 />
               </div>
-              <span className="md-donut-pct">{item.value}%</span>
+              <span className="md-donut-pct">{Math.round((item.value / totalDist) * 100)}%</span>
             </div>
           ))}
         </div>
@@ -647,7 +803,7 @@ function PerformanceSnapshot() {
               <div
                 className="md-line-bar"
                 style={{
-                  height: `${(d.value / maxEngagement) * 68}px`,
+                  height: `${(d.value / Math.max(...MOCK_MKT_ENGAGEMENT.map(e => e.value), 1)) * 68}px`,
                   background: 'linear-gradient(180deg, #10b981, #6ee7b7)',
                 }}
               />
@@ -732,6 +888,22 @@ function QuickActions() {
 // ─────────────────────────────────────────────────────────────────────────────
 export default function MarketingDashboard() {
   const { user } = useApp();
+  const [stats, setStats] = useState(MOCK_MKT_STATS);
+
+  useEffect(() => {
+    getDashboardSummary().then(data => {
+      if (data) {
+        setStats([
+          { id: 'clients', title: 'Connected Platforms', value: data.connectedPlatforms, change: 'Sync complete', trend: 'up' },
+          { id: 'campaigns', title: 'Active Campaigns', value: data.activeCampaigns, change: 'Total: ' + data.campaigns, trend: 'up' },
+          { id: 'drafts', title: 'Draft Posts', value: data.draftPosts, change: 'Requires review', trend: 'neutral' },
+          { id: 'scheduled', title: 'Scheduled', value: data.scheduledPosts, change: 'In Queue', trend: 'up' },
+          { id: 'queue', title: 'Published', value: data.publishedPosts, change: 'Lifetime', trend: 'up' },
+          { id: 'reviews', title: 'Unread Notifications', value: data.unreadNotifications, change: 'Pending', trend: 'neutral' },
+        ]);
+      }
+    });
+  }, []);
 
   return (
     <PageContainer>
@@ -744,7 +916,7 @@ export default function MarketingDashboard() {
         description="Your real-time workload and campaign health across all clients."
       />
       <div className="md-stats-grid">
-        {MOCK_MKT_STATS.map((s) => (
+        {stats.map((s) => (
           <StatsCard
             key={s.id}
             title={s.title}

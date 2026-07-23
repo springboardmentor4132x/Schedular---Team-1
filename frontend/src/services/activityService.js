@@ -1,7 +1,7 @@
 /**
  * activityService.js
  *
- * TODO: Connect to FastAPI endpoints when backend is ready.
+
  */
 
 import api from './api';
