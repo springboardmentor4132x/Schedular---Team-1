@@ -1,4 +1,5 @@
 import bcrypt
+import hashlib
 from datetime import datetime, timedelta, timezone
 from jose import JWTError, jwt
 from fastapi import Depends, HTTPException, status
@@ -12,6 +13,7 @@ from app.models.user import User
 SECRET_KEY = settings.SECRET_KEY
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
+REFRESH_TOKEN_EXPIRE_DAYS = 30
 security = HTTPBearer(
     auto_error=False,
     bearerFormat="JWT",
@@ -49,6 +51,15 @@ def create_access_token(data: dict):
     to_encode.update({"iat": now, "exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
+
+
+def create_refresh_token(data: dict):
+    now = datetime.now(timezone.utc)
+    return jwt.encode({**data, "iat": now, "exp": now + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS), "type": "refresh"}, SECRET_KEY, algorithm=ALGORITHM)
+
+
+def token_hash(token: str) -> str:
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
 
 
 def get_current_user(

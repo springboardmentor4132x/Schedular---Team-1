@@ -1,16 +1,23 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.schemas.auth_schema import UserCreate, UserLogin, Token, UserResponse
+from app.schemas.auth_schema import RefreshRequest, UserCreate, UserLogin, Token, UserResponse
 from app.schemas.dashboard_schema import PasswordChange
-from app.models.user import ActivityLog, Notification, User
-from app.services.auth_service import create_access_token, get_current_user, get_password_hash, verify_password
+from app.models.user import ActivityLog, Notification, RefreshToken, User
+from app.services.auth_service import ALGORITHM, create_access_token, create_refresh_token, get_current_user, get_password_hash, token_hash, verify_password
+from datetime import datetime, timedelta, timezone
+from jose import JWTError, jwt
+from app.config import settings
 from app.database import get_db
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 @router.post("/register", response_model=Token, status_code=status.HTTP_201_CREATED)
 def register_user(user: UserCreate, db: Session = Depends(get_db)):
+    # The first administrator bootstraps the installation. Subsequent public
+    # registrations cannot grant themselves administrator privileges.
+    if user.role == "Administrator" and db.query(User).filter(User.role == "Administrator").first():
+        raise HTTPException(status_code=403, detail="Administrator accounts must be provisioned by an administrator.")
     existing_email = db.query(User).filter(User.email == user.email).first()
     if existing_email:
         raise HTTPException(
@@ -48,8 +55,7 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
     ])
     db.commit()
 
-    access_token = create_access_token(data={"sub": new_user.email})
-    return {"access_token": access_token, "token_type": "bearer", "user": new_user}
+    return _token_response(new_user, db)
 
 @router.post("/login", response_model=Token)
 def login_user(user: UserLogin, db: Session = Depends(get_db)):
@@ -64,8 +70,30 @@ def login_user(user: UserLogin, db: Session = Depends(get_db)):
 
     db.add(ActivityLog(user_id=db_user.id, activity="Signed in"))
     db.commit()
-    access_token = create_access_token(data={"sub": db_user.email})
-    return {"access_token": access_token, "token_type": "bearer", "user": db_user}
+    return _token_response(db_user, db)
+
+
+def _token_response(user: User, db: Session):
+    access_token = create_access_token(data={"sub": user.email})
+    refresh_token = create_refresh_token(data={"sub": user.email})
+    db.add(RefreshToken(user_id=user.id, token_hash=token_hash(refresh_token), expires_at=datetime.now(timezone.utc) + timedelta(days=30)))
+    db.commit()
+    return {"access_token": access_token, "refresh_token": refresh_token, "token_type": "bearer", "user": user}
+
+
+@router.post("/refresh", response_model=Token)
+def refresh_access_token(payload: RefreshRequest, db: Session = Depends(get_db)):
+    try:
+        claims = jwt.decode(payload.refresh_token, settings.SECRET_KEY, algorithms=[ALGORITHM])
+        email = claims.get("sub") if claims.get("type") == "refresh" else None
+    except JWTError:
+        email = None
+    token = db.query(RefreshToken).filter(RefreshToken.token_hash == token_hash(payload.refresh_token), RefreshToken.revoked_at.is_(None)).first()
+    user = db.query(User).filter(User.email == email).first() if email else None
+    if not token or not user or token.expires_at < datetime.now(timezone.utc):
+        raise HTTPException(status_code=401, detail="Invalid or expired refresh token")
+    token.revoked_at = datetime.now(timezone.utc)
+    return _token_response(user, db)
 
 
 @router.get("/me", response_model=UserResponse)
@@ -90,8 +118,7 @@ def change_password(
 
 @router.post("/logout-all")
 def logout_other_devices(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    # Stateless JWTs have no server-side session registry yet; this endpoint is
-    # intentionally a safe no-op until token revocation/session tracking is added.
+    db.query(RefreshToken).filter(RefreshToken.user_id == user.id, RefreshToken.revoked_at.is_(None)).update({"revoked_at": datetime.now(timezone.utc)})
     db.add(ActivityLog(user_id=user.id, activity="Requested logout from other devices"))
     db.commit()
     return {"success": True, "message": "All other sessions have been terminated."}
