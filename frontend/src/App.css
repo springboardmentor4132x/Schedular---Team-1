@@ -55,7 +55,7 @@ body{
 
 .nav-links a{
     text-decoration:none;
-    color:#374151;
+    color: var(--text-h);
     font-weight:500;
     transition:.3s;
 }
@@ -118,7 +118,7 @@ body{
 .hero-content h1{
     font-size:64px;
     line-height:1.2;
-    color:#111827;
+    color: var(--text-h);
 }
 
 .hero-content h1 span{
@@ -128,7 +128,7 @@ body{
 .hero-content p{
     margin:30px 0;
     font-size:20px;
-    color:#6b7280;
+    color: var(--text);
     line-height:1.8;
 }
 
@@ -202,12 +202,12 @@ body{
 
 .platforms h2{
     font-size:42px;
-    color:#111827;
+    color: var(--text-h);
     margin-bottom:15px;
 }
 
 .platforms p{
-    color:#6b7280;
+    color: var(--text);
     margin-bottom:50px;
 }
 
@@ -236,7 +236,7 @@ body{
 
 .platform-card span{
     font-size:15px;
-    color:#374151;
+    color: var(--text-h);
     font-weight:600;
 }
 
@@ -291,12 +291,12 @@ body{
 
 .features h2 {
     font-size: 42px;
-    color: #111827;
+    color: var(--text-h);
     margin: 15px 0;
 }
 
 .features-desc {
-    color: #6b7280;
+    color: var(--text);
     font-size: 18px;
     margin-bottom: 50px;
 }
@@ -334,13 +334,13 @@ body{
 
 
 .feature-card h3 {
-    color: #111827;
+    color: var(--text-h);
     margin-bottom: 12px;
 }
 
 
 .feature-card p {
-    color: #6b7280;
+    color: var(--text);
     line-height: 1.6;
 }
 

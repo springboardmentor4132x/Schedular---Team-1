@@ -17,6 +17,7 @@ from app.routers.dashboard import router as dashboard_router
 from app.routers.content import router as content_router
 from app.routers.teams import router as teams_router
 from app.routers.insights import router as insights_router
+from app.scheduler import start_scheduler, stop_scheduler
 
 app = FastAPI(title="SocialPilot API", version="1.0")
 app.add_exception_handler(HTTPException, http_error_handler)
@@ -40,6 +41,15 @@ app.include_router(insights_router)
 upload_directory = Path(__file__).resolve().parents[1] / "uploads"
 upload_directory.mkdir(exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=upload_directory), name="uploads")
+
+@app.on_event("startup")
+async def startup_event():
+    start_scheduler()
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    stop_scheduler()
+
 
 
 @app.get("/")

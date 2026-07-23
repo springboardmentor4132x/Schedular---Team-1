@@ -5,7 +5,7 @@
 .sp-app-layout {
   display: flex;
   min-height: 100vh;
-  background: #f8f9fb;
+  background: var(--code-bg);
   font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
 }
 

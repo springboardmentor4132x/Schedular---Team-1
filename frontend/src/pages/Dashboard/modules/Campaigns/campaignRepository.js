@@ -5,9 +5,7 @@
  * Prepares the codebase for easy backend service integration in future phases.
  */
 
-import { INITIAL_MOCK_CAMPAIGNS } from './campaignMockData';
-
-let campaigns = [...INITIAL_MOCK_CAMPAIGNS];
+let campaigns = [];
 
 export const campaignRepository = {
   getCampaigns() {

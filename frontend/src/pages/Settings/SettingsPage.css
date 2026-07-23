@@ -7,16 +7,16 @@
   font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
 }
 .sp-st-head { margin-bottom: 24px; }
-.sp-st-heading { font-size: 1.4rem; font-weight: 700; color: #111827; margin: 0 0 4px; }
-.sp-st-sub { font-size: 0.875rem; color: #6b7280; margin: 0; }
+.sp-st-heading { font-size: 1.4rem; font-weight: 700; color: var(--text-h); margin: 0 0 4px; }
+.sp-st-sub { font-size: 0.875rem; color: var(--text); margin: 0; }
 
 /* ── Toast ───────────────────────────────────────────────────── */
 .sp-st-toast {
   position: fixed;
   bottom: 24px;
   right: 24px;
-  background: #111827;
-  color: #fff;
+  background: var(--text-h);
+  color: var(--bg);
   padding: 10px 18px;
   border-radius: 10px;
   font-size: 0.875rem;
@@ -34,7 +34,7 @@
 .sp-st-tabs {
   display: flex;
   gap: 2px;
-  background: rgba(0,0,0,0.04);
+  background: var(--code-bg);
   border-radius: 10px;
   padding: 4px;
   margin-bottom: 20px;
@@ -49,27 +49,27 @@
   border-radius: 7px;
   font-size: 0.82rem;
   font-weight: 500;
-  color: #6b7280;
+  color: var(--text);
   cursor: pointer;
   font-family: inherit;
   transition: background 0.15s, color 0.15s;
   white-space: nowrap;
 }
-.sp-st-tab:hover { color: #374151; }
-.sp-st-tab--active { background: #fff; color: #111827; font-weight: 700; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+.sp-st-tab:hover { color: var(--text-h); }
+.sp-st-tab--active { background: var(--bg); color: var(--text-h); font-weight: 700; box-shadow: var(--shadow); }
 
 /* ── Section ─────────────────────────────────────────────────── */
 .sp-st-section {
-  background: #fff;
-  border: 1px solid rgba(0,0,0,0.07);
+  background: var(--bg);
+  border: 1px solid var(--border);
   border-radius: 14px;
   padding: 24px;
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
-.sp-st-section-title { font-size: 0.9rem; font-weight: 700; color: #111827; margin: 0; }
-.sp-st-divider { border: none; border-top: 1px solid rgba(0,0,0,0.06); margin: 4px 0; }
+.sp-st-section-title { font-size: 0.9rem; font-weight: 700; color: var(--text-h); margin: 0; }
+.sp-st-divider { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
 
 /* ── Field row (for General tab) ─────────────────────────────── */
 .sp-st-field-row {
@@ -78,21 +78,21 @@
   justify-content: space-between;
   gap: 16px;
   padding: 10px 0;
-  border-bottom: 1px solid rgba(0,0,0,0.05);
+  border-bottom: 1px solid var(--border);
 }
 .sp-st-field-row:last-child { border: none; }
 
 /* ── Controls ────────────────────────────────────────────────── */
-.sp-st-label { font-size: 0.82rem; font-weight: 600; color: #374151; }
-.sp-st-hint  { font-size: 0.78rem; color: #9ca3af; margin: 0; }
+.sp-st-label { font-size: 0.82rem; font-weight: 600; color: var(--text-h); }
+.sp-st-hint  { font-size: 0.78rem; color: var(--text); margin: 0; }
 
 .sp-st-select, .sp-st-input {
   padding: 8px 12px;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--border);
   border-radius: 8px;
   font-size: 0.875rem;
-  color: #111827;
-  background: #fff;
+  color: var(--text-h);
+  background: var(--bg);
   font-family: inherit;
   outline: none;
   min-width: 180px;
@@ -126,9 +126,9 @@
 .sp-st-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 .sp-st-btn--primary { background: linear-gradient(135deg, #6c5ce7, #00b4d8); color: #fff; }
 .sp-st-btn--primary:hover:not(:disabled) { filter: brightness(1.06); }
-.sp-st-btn--outline { background: #fff; border: 1px solid #d1d5db; color: #374151; }
-.sp-st-btn--outline:hover:not(:disabled) { background: #f9fafb; }
-.sp-st-btn--danger  { background: #fff; border: 1px solid #fca5a5; color: #dc2626; }
+.sp-st-btn--outline { background: var(--bg); border: 1px solid var(--border); color: var(--text-h); }
+.sp-st-btn--outline:hover:not(:disabled) { background: var(--code-bg); }
+.sp-st-btn--danger  { background: var(--bg); border: 1px solid #fca5a5; color: #dc2626; }
 .sp-st-btn--danger:hover:not(:disabled)  { background: #fef2f2; }
 .sp-st-mt { margin-top: 4px; }
 
@@ -139,18 +139,18 @@
   justify-content: space-between;
   gap: 16px;
   padding: 10px 0;
-  border-bottom: 1px solid rgba(0,0,0,0.05);
+  border-bottom: 1px solid var(--border);
 }
 .sp-st-toggle-row:last-child { border: none; }
-.sp-st-toggle-label { font-size: 0.875rem; font-weight: 600; color: #111827; margin: 0 0 2px; }
-.sp-st-toggle-desc  { font-size: 0.78rem; color: #6b7280; margin: 0; }
+.sp-st-toggle-label { font-size: 0.875rem; font-weight: 600; color: var(--text-h); margin: 0 0 2px; }
+.sp-st-toggle-desc  { font-size: 0.78rem; color: var(--text); margin: 0; }
 
 .sp-st-toggle {
   position: relative;
   width: 44px;
   height: 24px;
   border-radius: 999px;
-  background: #d1d5db;
+  background: var(--border);
   border: none;
   cursor: pointer;
   flex-shrink: 0;
@@ -164,7 +164,7 @@
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: #fff;
+  background: var(--bg);
   box-shadow: 0 1px 4px rgba(0,0,0,0.15);
   transition: left 0.2s;
 }
@@ -178,16 +178,16 @@
   align-items: center;
   gap: 6px;
   padding: 16px 24px;
-  border: 1.5px solid #d1d5db;
+  border: 1.5px solid var(--border);
   border-radius: 12px;
-  background: #fff;
+  background: var(--bg);
   cursor: pointer;
   font-family: inherit;
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 .sp-st-theme-btn--active { border-color: #6c5ce7; box-shadow: 0 0 0 2px rgba(108,92,231,0.15); }
 .sp-st-theme-icon { font-size: 1.4rem; }
-.sp-st-theme-label { font-size: 0.8rem; font-weight: 600; color: #374151; }
+.sp-st-theme-label { font-size: 0.8rem; font-weight: 600; color: var(--text-h); }
 
 /* ── Sessions ────────────────────────────────────────────────── */
 .sp-st-sessions { display: flex; flex-direction: column; gap: 8px; }
@@ -196,12 +196,12 @@
   align-items: center;
   justify-content: space-between;
   padding: 10px 12px;
-  background: #f8f9fb;
+  background: var(--code-bg);
   border-radius: 8px;
-  border: 1px solid rgba(0,0,0,0.05);
+  border: 1px solid var(--border);
 }
-.sp-st-session-device { font-size: 0.82rem; font-weight: 600; color: #111827; margin: 0; }
-.sp-st-session-meta   { font-size: 0.74rem; color: #9ca3af; margin: 0; }
+.sp-st-session-device { font-size: 0.82rem; font-weight: 600; color: var(--text-h); margin: 0; }
+.sp-st-session-meta   { font-size: 0.74rem; color: var(--text); margin: 0; }
 .sp-st-current-badge {
   font-size: 0.7rem; font-weight: 700;
   padding: 2px 8px;
@@ -224,7 +224,7 @@
 
 /* ── Skeleton ────────────────────────────────────────────────── */
 .sp-st-skeleton {
-  background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+  background: linear-gradient(90deg, #f3f4f6 25%, var(--border) 50%, #f3f4f6 75%);
   background-size: 200% 100%;
   animation: sp-shimmer 1.4s infinite;
 }

@@ -58,7 +58,7 @@
 }
 .sp-header__search-icon {
   font-size: 1rem;
-  color: #9ca3af;
+  color: var(--text);
   flex-shrink: 0;
 }
 .sp-header__search-input {
@@ -66,11 +66,11 @@
   border: none;
   background: transparent;
   font-size: 0.875rem;
-  color: #374151;
+  color: var(--text-h);
   outline: none;
   font-family: inherit;
 }
-.sp-header__search-input::placeholder { color: #9ca3af; }
+.sp-header__search-input::placeholder { color: var(--text); }
 
 /* ── Right cluster ─────────────────────────────────────────── */
 .sp-header__right {
@@ -93,10 +93,10 @@
   align-items: center;
   justify-content: center;
   font-size: 1.25rem;
-  color: #6b7280;
+  color: var(--text);
   transition: background 0.15s, color 0.15s;
 }
-.sp-header__icon-btn:hover { background: rgba(0,0,0,0.05); color: #374151; }
+.sp-header__icon-btn:hover { background: rgba(0,0,0,0.05); color: var(--text-h); }
 
 .sp-header__badge {
   position: absolute;
@@ -146,7 +146,7 @@
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
-  background: #fff;
+  background: var(--bg);
   border: 1px solid rgba(0,0,0,0.08);
   border-radius: 12px;
   box-shadow: 0 8px 32px rgba(0,0,0,0.12);
@@ -173,7 +173,7 @@
 .sp-dropdown-title {
   font-size: 0.8rem;
   font-weight: 700;
-  color: #111827;
+  color: var(--text-h);
   letter-spacing: 0.02em;
   text-transform: uppercase;
 }
@@ -197,7 +197,7 @@
 .sp-dropdown-empty {
   padding: 20px 16px;
   font-size: 0.82rem;
-  color: #9ca3af;
+  color: var(--text);
   text-align: center;
 }
 
@@ -224,7 +224,7 @@
   border-radius: 50%;
   flex-shrink: 0;
   margin-top: 5px;
-  background: #d1d5db;
+  background: var(--border);
 }
 .sp-notif-dot[data-type="info"]    { background: #6c5ce7; }
 .sp-notif-dot[data-type="warning"] { background: #f59e0b; }
@@ -235,7 +235,7 @@
 .sp-notif-title {
   font-size: 0.82rem;
   font-weight: 600;
-  color: #111827;
+  color: var(--text-h);
   margin: 0 0 2px;
   white-space: nowrap;
   overflow: hidden;
@@ -243,11 +243,11 @@
 }
 .sp-notif-msg {
   font-size: 0.78rem;
-  color: #6b7280;
+  color: var(--text);
   margin: 0 0 3px;
   line-height: 1.4;
 }
-.sp-notif-time { font-size: 0.7rem; color: #9ca3af; margin: 0; }
+.sp-notif-time { font-size: 0.7rem; color: var(--text); margin: 0; }
 
 /* ── User dropdown items ───────────────────────────────────── */
 .sp-dropdown-header--user {
@@ -255,8 +255,8 @@
   align-items: flex-start;
   gap: 2px;
 }
-.sp-dropdown-user-name { font-size: 0.85rem; font-weight: 700; color: #111827; margin: 0; }
-.sp-dropdown-user-email { font-size: 0.75rem; color: #6b7280; margin: 0; }
+.sp-dropdown-user-name { font-size: 0.85rem; font-weight: 700; color: var(--text-h); margin: 0; }
+.sp-dropdown-user-email { font-size: 0.75rem; color: var(--text); margin: 0; }
 
 .sp-user-menu-item {
   display: flex;
@@ -266,7 +266,7 @@
   padding: 9px 16px;
   font-size: 0.875rem;
   font-weight: 500;
-  color: #374151;
+  color: var(--text-h);
   background: none;
   border: none;
   cursor: pointer;

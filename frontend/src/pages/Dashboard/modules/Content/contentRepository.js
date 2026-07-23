@@ -5,9 +5,7 @@
  * Provides APIs for filtering posts by status, client, platform, or campaign.
  */
 
-import { INITIAL_MOCK_POSTS } from './contentMockData';
-
-let posts = [...INITIAL_MOCK_POSTS];
+let posts = [];
 
 export const contentRepository = {
   getPosts(filters = {}) {

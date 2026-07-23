@@ -29,7 +29,7 @@ import StatsCard from '../../components/StatsCard/StatsCard';
 import Avatar from '../../components/Avatar/Avatar';
 import SectionTitle from '../../components/SectionTitle/SectionTitle';
 
-const MOCK_CALENDAR_PREVIEW = [];
+const FALLBACK_CALENDAR_PREVIEW = [];
 
 import postService from '../../../../services/postService';
 import campaignService from '../../../../services/campaignService';
@@ -412,7 +412,7 @@ export default function CreatorDashboard() {
               </button>
             </div>
             <div className="cd-calendar-preview">
-              {MOCK_CALENDAR_PREVIEW.map((day) => (
+              {FALLBACK_CALENDAR_PREVIEW.map((day) => (
                 <div
                   key={day.date}
                   className={`cd-calendar-day${day.isToday ? ' cd-calendar-day--today' : ''}`}

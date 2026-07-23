@@ -5,17 +5,14 @@
  * Clicking a client's "Open Workspace" navigates to their Client Workspace.
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MdSearch, MdPeople, MdFolderOpen, MdCheckCircle, MdLaunch } from 'react-icons/md';
 import Avatar from '../../../components/Avatar/Avatar';
 import PageContainer from '../../../components/PageContainer/PageContainer';
 import StatsCard from '../../../components/StatsCard/StatsCard';
 import SectionTitle from '../../../components/SectionTitle/SectionTitle';
-import {
-  INITIAL_MOCK_CLIENTS,
-  INITIAL_PENDING_REQUESTS,
-} from './mockData';
+import { getClients, getCollaborationRequests, updateCollaborationRequest } from '../../../../../services/teamService';
 import './ClientsPage.css';
 
 const PLATFORM_CHARS = {
@@ -38,10 +35,39 @@ const PLATFORM_COLORS = {
 
 export default function ClientsPage() {
   const navigate = useNavigate();
-  const [clients, setClients] = useState(INITIAL_MOCK_CLIENTS);
-  const [pendingRequests, setPendingRequests] = useState(INITIAL_PENDING_REQUESTS);
+  const [clients, setClients] = useState([]);
+  const [pendingRequests, setPendingRequests] = useState([]);
   const [searchVal, setSearchVal] = useState('');
   const [filterStatus, setFilterStatus] = useState('All');
+
+  useEffect(() => {
+      getClients().then(data => {
+        setClients(data.map(c => ({
+          id: c.id,
+          name: c.name,
+          industry: c.organization || 'Digital Marketing',
+          profileImage: c.avatar_url || '',
+          status: 'active',
+          connectedPlatforms: ['facebook', 'instagram', 'linkedin', 'x', 'youtube'],
+          activeCampaigns: 0,
+          scheduledPosts: 0,
+          publishedPosts: 0,
+          engagementRate: 0.0,
+          lastActivity: 'Active',
+        })));
+      });
+      getCollaborationRequests().then(data => {
+        const pending = data.filter(r => r.status === 'pending');
+        setPendingRequests(pending.map(r => ({
+          id: r.id,
+          name: r.sender_name || 'Business User',
+          industry: 'Unknown',
+          requestType: 'Management',
+          timeRequested: new Date(r.created_at).toLocaleDateString(),
+          profileImage: '',
+        })));
+      });
+    }, []);
 
   // Interactive Requests handling
   const handleAcceptRequest = (request) => {

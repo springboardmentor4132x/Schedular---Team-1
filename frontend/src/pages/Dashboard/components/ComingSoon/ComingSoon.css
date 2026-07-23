@@ -16,13 +16,13 @@
 .sp-coming-soon__title {
   font-size: 22px;
   font-weight: 700;
-  color: #111827;
+  color: var(--text-h);
   margin: 0;
 }
 
 .sp-coming-soon__desc {
   font-size: 15px;
-  color: #6b7280;
+  color: var(--text);
   max-width: 340px;
   margin: 0;
   line-height: 1.6;

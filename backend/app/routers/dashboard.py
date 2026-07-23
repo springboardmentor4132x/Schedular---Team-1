@@ -7,7 +7,7 @@ from datetime import datetime, timedelta, timezone
 from json import loads
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
-from urllib.request import Request, urlopen
+import httpx
 
 from cryptography.fernet import Fernet
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
@@ -91,19 +91,18 @@ def _read_oauth_json(
     url: str, *, data: dict | None = None, headers: dict | None = None
 ) -> dict:
     request_headers = {"Accept": "application/json", **(headers or {})}
-    body = urlencode(data).encode() if data is not None else None
-    if body is not None:
+    if data is not None:
         request_headers["Content-Type"] = "application/x-www-form-urlencoded"
-    request = Request(
-        url,
-        data=body,
-        headers=request_headers,
-        method="POST" if body is not None else "GET",
-    )
+    
     try:
-        with urlopen(request, timeout=15) as response:
-            return loads(response.read().decode("utf-8"))
-    except (HTTPError, URLError, ValueError) as exc:
+        with httpx.Client(timeout=15) as client:
+            if data is not None:
+                response = client.post(url, data=data, headers=request_headers)
+            else:
+                response = client.get(url, headers=request_headers)
+            response.raise_for_status()
+            return response.json()
+    except httpx.HTTPError as exc:
         raise HTTPException(
             status_code=502, detail="Social provider could not be reached."
         ) from exc

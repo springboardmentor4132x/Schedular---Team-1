@@ -7,6 +7,7 @@
 
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import authService from '../services/authService';
+import { getSettings } from '../services/settingsService';
 
 const AppContext = createContext(null);
 
@@ -29,6 +30,17 @@ export function AppProvider({ children }) {
     document.documentElement.setAttribute('data-theme', resolved);
     localStorage.setItem('sp_theme', theme);
   }, [theme]);
+
+  // Sync theme from backend when user logs in
+  useEffect(() => {
+    if (user) {
+      getSettings().then(settings => {
+        if (settings?.appearance?.theme) {
+          setThemeState(settings.appearance.theme);
+        }
+      }).catch(err => console.error("Failed to sync theme:", err));
+    }
+  }, [user]);
 
   const setUser = useCallback((u) => setUserState(u), []);
 

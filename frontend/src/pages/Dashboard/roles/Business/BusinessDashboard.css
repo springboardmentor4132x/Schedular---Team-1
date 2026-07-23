@@ -12,8 +12,8 @@
 
 /* ── Section 1 · Welcome Banner ──────────────────────────────────────── */
 .bd-welcome {
-  background: #fff;
-  border: 1px solid #e5e7eb;
+  background: var(--bg);
+  border: 1px solid var(--border);
   border-radius: 16px;
   padding: 28px 32px;
   display: flex;
@@ -28,7 +28,7 @@
 .bd-welcome__greeting {
   font-size: 13px;
   font-weight: 500;
-  color: #6b7280;
+  color: var(--text);
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
@@ -36,7 +36,7 @@
 .bd-welcome__name {
   font-size: 26px;
   font-weight: 800;
-  color: #111827;
+  color: var(--text-h);
   letter-spacing: -0.02em;
   margin: 0;
 }
@@ -51,13 +51,13 @@
 
 .bd-welcome__company {
   font-size: 14px;
-  color: #374151;
+  color: var(--text-h);
   font-weight: 500;
 }
 
 .bd-welcome__date {
   font-size: 13px;
-  color: #9ca3af;
+  color: var(--text);
 }
 
 .bd-welcome__role-badge {
@@ -77,11 +77,11 @@
 .bd-welcome__summary {
   margin-top: 8px;
   font-size: 14px;
-  color: #6b7280;
+  color: var(--text);
   line-height: 1.6;
 }
 
-.bd-welcome__summary strong { color: #111827; }
+.bd-welcome__summary strong { color: var(--text-h); }
 
 .bd-welcome__right { flex-shrink: 0; }
 
@@ -98,8 +98,8 @@
 
 /* ── Section 3 · Campaign Table ──────────────────────────────────────── */
 .bd-section-card {
-  background: #fff;
-  border: 1px solid #e5e7eb;
+  background: var(--bg);
+  border: 1px solid var(--border);
   border-radius: 16px;
   box-shadow: 0 1px 4px rgba(0,0,0,.05);
   overflow: hidden;
@@ -117,13 +117,13 @@
 .bd-section-card__title {
   font-size: 16px;
   font-weight: 700;
-  color: #111827;
+  color: var(--text-h);
   margin: 0;
 }
 
 .bd-section-card__subtitle {
   font-size: 13px;
-  color: #9ca3af;
+  color: var(--text);
   margin: 0;
 }
 
@@ -158,15 +158,15 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: #9ca3af;
-  background: #f9fafb;
+  color: var(--text);
+  background: var(--code-bg);
   border-bottom: 1px solid #f3f4f6;
   white-space: nowrap;
 }
 
 .bd-table td {
   padding: 14px 16px;
-  color: #374151;
+  color: var(--text-h);
   border-bottom: 1px solid #f9fafb;
   vertical-align: middle;
 }
@@ -176,7 +176,7 @@
 .bd-table tr:hover td { background: #fafafa; }
 
 /* Campaign name */
-.bd-campaign-name { font-weight: 600; color: #111827; }
+.bd-campaign-name { font-weight: 600; color: var(--text-h); }
 
 /* Status badge */
 .bd-status {
@@ -193,7 +193,7 @@
 
 .bd-status--active     { background: #d1fae5; color: #065f46; }
 .bd-status--planning   { background: #dbeafe; color: #1e40af; }
-.bd-status--completed  { background: #f3f4f6; color: #374151; }
+.bd-status--completed  { background: var(--code-bg); color: var(--text-h); }
 .bd-status--paused     { background: #fef3c7; color: #92400e; }
 .bd-status--error      { background: #fee2e2; color: #991b1b; }
 
@@ -215,7 +215,7 @@
 .bd-progress-bar {
   flex: 1;
   height: 6px;
-  background: #f3f4f6;
+  background: var(--code-bg);
   border-radius: 3px;
   overflow: hidden;
 }
@@ -230,7 +230,7 @@
 .bd-progress-pct {
   font-size: 12px;
   font-weight: 600;
-  color: #374151;
+  color: var(--text-h);
   white-space: nowrap;
   min-width: 32px;
 }
@@ -253,8 +253,8 @@
 }
 .bd-view-btn:hover { background: #e0e7ff; }
 
-.bd-date { font-size: 13px; color: #6b7280; white-space: nowrap; }
-.bd-team { font-size: 13px; color: #374151; }
+.bd-date { font-size: 13px; color: var(--text); white-space: nowrap; }
+.bd-team { font-size: 13px; color: var(--text-h); }
 
 /* ── Section 4 · Connected Platforms ─────────────────────────────────── */
 .bd-platforms-grid {
@@ -265,14 +265,14 @@
 }
 
 .bd-platform-card {
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--border);
   border-radius: 12px;
   padding: 18px 16px;
   display: flex;
   flex-direction: column;
   gap: 10px;
   transition: box-shadow 0.15s, transform 0.15s;
-  background: #fff;
+  background: var(--bg);
 }
 
 .bd-platform-card:hover {
@@ -318,25 +318,25 @@
 }
 
 .bd-platform-card__status--connected    .bd-platform-card__status-dot { background: #10b981; }
-.bd-platform-card__status--disconnected .bd-platform-card__status-dot { background: #d1d5db; }
+.bd-platform-card__status--disconnected .bd-platform-card__status-dot { background: var(--border); }
 .bd-platform-card__status--connected    { color: #065f46; }
-.bd-platform-card__status--disconnected { color: #9ca3af; }
+.bd-platform-card__status--disconnected { color: var(--text); }
 
 .bd-platform-card__name {
   font-size: 15px;
   font-weight: 700;
-  color: #111827;
+  color: var(--text-h);
   margin: 0;
 }
 
 .bd-platform-card__meta {
   font-size: 12px;
-  color: #9ca3af;
+  color: var(--text);
 }
 
 .bd-platform-card__reach {
   font-size: 13px;
-  color: #374151;
+  color: var(--text-h);
   font-weight: 500;
 }
 
@@ -347,13 +347,13 @@
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  border: 1px solid #e5e7eb;
-  background: #f9fafb;
-  color: #374151;
+  border: 1px solid var(--border);
+  background: var(--code-bg);
+  color: var(--text-h);
   transition: background 0.12s, color 0.12s;
   text-align: center;
 }
-.bd-platform-card__btn:hover { background: #f3f4f6; color: #111827; }
+.bd-platform-card__btn:hover { background: var(--code-bg); color: var(--text-h); }
 
 /* ── Section 5 · Scheduled Posts ─────────────────────────────────────── */
 .bd-posts-list { display: flex; flex-direction: column; gap: 0; }
@@ -390,7 +390,7 @@
 .bd-post-text {
   font-size: 13px;
   font-weight: 500;
-  color: #111827;
+  color: var(--text-h);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -399,13 +399,13 @@
 
 .bd-post-campaign {
   font-size: 12px;
-  color: #9ca3af;
+  color: var(--text);
   margin: 0;
 }
 
 .bd-post-time {
   font-size: 12px;
-  color: #6b7280;
+  color: var(--text);
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -457,13 +457,13 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #9ca3af;
+  color: var(--text);
 }
 
 .bd-metric__value {
   font-size: 13px;
   font-weight: 700;
-  color: #111827;
+  color: var(--text-h);
 }
 
 @media (max-width: 640px) {
@@ -480,8 +480,8 @@
 }
 
 .bd-chart-card {
-  background: #fff;
-  border: 1px solid #e5e7eb;
+  background: var(--bg);
+  border: 1px solid var(--border);
   border-radius: 16px;
   padding: 20px 22px;
   box-shadow: 0 1px 4px rgba(0,0,0,.05);
@@ -490,7 +490,7 @@
 .bd-chart-card__title {
   font-size: 14px;
   font-weight: 700;
-  color: #111827;
+  color: var(--text-h);
   margin: 0 0 16px;
 }
 
@@ -505,12 +505,12 @@
   align-items: center;
 }
 
-.bd-bar-label { font-size: 12px; color: #6b7280; }
-.bd-bar-value { font-size: 12px; font-weight: 600; color: #374151; }
+.bd-bar-label { font-size: 12px; color: var(--text); }
+.bd-bar-value { font-size: 12px; font-weight: 600; color: var(--text-h); }
 
 .bd-bar-track {
   height: 8px;
-  background: #f3f4f6;
+  background: var(--code-bg);
   border-radius: 4px;
   overflow: hidden;
 }
@@ -538,13 +538,13 @@
   flex-shrink: 0;
 }
 
-.bd-donut-label { flex: 1; font-size: 13px; color: #374151; }
-.bd-donut-pct   { font-size: 13px; font-weight: 700; color: #111827; }
+.bd-donut-label { flex: 1; font-size: 13px; color: var(--text-h); }
+.bd-donut-pct   { font-size: 13px; font-weight: 700; color: var(--text-h); }
 
 .bd-donut-track {
   flex: 2;
   height: 6px;
-  background: #f3f4f6;
+  background: var(--code-bg);
   border-radius: 3px;
   overflow: hidden;
 }
@@ -581,7 +581,7 @@
   min-height: 4px;
 }
 
-.bd-line-label { font-size: 10px; color: #9ca3af; }
+.bd-line-label { font-size: 10px; color: var(--text); }
 
 /* ── Section 8 · Reports ──────────────────────────────────────────────── */
 .bd-reports-list {
@@ -606,7 +606,7 @@
   width: 40px;
   height: 40px;
   border-radius: 10px;
-  background: #f3f4f6;
+  background: var(--code-bg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -619,7 +619,7 @@
 .bd-report-name {
   font-size: 14px;
   font-weight: 600;
-  color: #111827;
+  color: var(--text-h);
   margin: 0 0 2px;
   white-space: nowrap;
   overflow: hidden;
@@ -628,7 +628,7 @@
 
 .bd-report-meta {
   font-size: 12px;
-  color: #9ca3af;
+  color: var(--text);
   margin: 0;
 }
 
@@ -650,15 +650,15 @@
   border-radius: 8px;
   font-size: 12px;
   font-weight: 600;
-  color: #374151;
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
+  color: var(--text-h);
+  background: var(--code-bg);
+  border: 1px solid var(--border);
   cursor: pointer;
   transition: background 0.12s;
   white-space: nowrap;
   flex-shrink: 0;
 }
-.bd-report-download-btn:hover { background: #f3f4f6; }
+.bd-report-download-btn:hover { background: var(--code-bg); }
 
 /* ── Section 9 · Activity Timeline ───────────────────────────────────── */
 .bd-timeline { display: flex; flex-direction: column; gap: 0; padding: 4px 24px 8px; }
@@ -677,15 +677,15 @@
   top: 44px;
   bottom: 0;
   width: 2px;
-  background: #f3f4f6;
+  background: var(--code-bg);
 }
 
 .bd-timeline-icon {
   width: 38px;
   height: 38px;
   border-radius: 50%;
-  background: #f9fafb;
-  border: 2px solid #e5e7eb;
+  background: var(--code-bg);
+  border: 2px solid var(--border);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -698,14 +698,14 @@
 
 .bd-timeline-text {
   font-size: 14px;
-  color: #374151;
+  color: var(--text-h);
   margin: 0 0 3px;
   line-height: 1.5;
 }
 
 .bd-timeline-time {
   font-size: 12px;
-  color: #9ca3af;
+  color: var(--text);
   margin: 0;
 }
 
@@ -740,13 +740,13 @@
 .bd-insight-title {
   font-size: 13px;
   font-weight: 700;
-  color: #111827;
+  color: var(--text-h);
   margin: 0 0 5px;
 }
 
 .bd-insight-text {
   font-size: 12px;
-  color: #6b7280;
+  color: var(--text);
   line-height: 1.6;
   margin: 0;
 }
@@ -814,7 +814,7 @@
 .bd-managed-by__name {
   font-size: 15px;
   font-weight: 700;
-  color: #111827;
+  color: var(--text-h);
   margin: 0;
 }
 
@@ -826,10 +826,10 @@
 
 .bd-managed-by__btn {
   padding: 6px 12px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--border);
   border-radius: 8px;
-  background: #fff;
-  color: #374151;
+  background: var(--bg);
+  color: var(--text-h);
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
@@ -837,7 +837,7 @@
 }
 
 .bd-managed-by__btn:hover {
-  background: #f9fafb;
+  background: var(--code-bg);
 }
 
 .bd-managed-by__details {
@@ -872,12 +872,12 @@
 .bd-managed-by__val {
   font-size: 14px;
   font-weight: 700;
-  color: #111827;
+  color: var(--text-h);
 }
 
 .bd-managed-by__lbl {
   font-size: 10px;
-  color: #9ca3af;
+  color: var(--text);
   text-transform: uppercase;
 }
 

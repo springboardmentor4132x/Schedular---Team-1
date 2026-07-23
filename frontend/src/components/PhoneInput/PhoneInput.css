@@ -12,9 +12,9 @@
   display: flex;
   align-items: center;
   height: 44px;
-  border: 1.5px solid #e5e7eb;
+  border: 1.5px solid var(--border);
   border-radius: 8px;
-  background-color: #ffffff;
+  background: var(--bg);
   overflow: hidden;
   box-sizing: border-box;
   width: 100%;
@@ -30,9 +30,9 @@
   display: flex;
   align-items: center;
   padding: 0 10px 0 12px;
-  border-right: 1.5px solid #e5e7eb;
+  border-right: 1.5px solid var(--border);
   height: 100%;
-  background: #f9fafb;
+  background: var(--code-bg);
   gap: 4px;
   flex-shrink: 0;
 }

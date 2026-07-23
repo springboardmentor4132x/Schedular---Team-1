@@ -17,14 +17,7 @@ import SectionTitle from '../../components/SectionTitle/SectionTitle';
 import EmptyState from '../../components/EmptyState/EmptyState';
 import './ReportsPage.css';
 
-const MOCK_REPORTS = [
-  { id: 'rep-01', title: 'Monthly Campaign Performance', type: 'Campaign Performance', period: 'July 2026', generatedAt: '2026-07-20T10:00:00.000Z', clientId: 'nike', ownerType: 'marketing', status: 'ready' },
-  { id: 'rep-02', title: 'LinkedIn Channels Audit', type: 'Platform Performance', period: 'Q2 2026', generatedAt: '2026-07-15T09:12:00.000Z', clientId: 'nike', ownerType: 'marketing', status: 'ready' },
-  { id: 'rep-03', title: 'Summer Sale Conversion Brief', type: 'Content Performance', period: 'July 2026', generatedAt: '2026-07-10T14:30:00.000Z', clientId: 'nike', ownerType: 'marketing', status: 'ready' },
-  { id: 'rep-04', title: 'Nike Global Product Placement', type: 'Campaign Performance', period: 'June 2026', generatedAt: '2026-06-30T17:45:00.000Z', clientId: 'nike', ownerType: 'marketing', status: 'ready' },
-  { id: 'rep-05', title: 'Puma Running Shoes launch', type: 'Campaign Performance', period: 'July 2026', generatedAt: '2026-07-20T11:00:00.000Z', clientId: 'puma', ownerType: 'marketing', status: 'ready' },
-  { id: 'rep-06', title: 'Personal Creator Channels Growth', type: 'Platform Performance', period: 'July 2026', generatedAt: '2026-07-21T08:15:00.000Z', clientId: null, ownerType: 'creator', status: 'ready' },
-];
+const FALLBACK_REPORTS = [];
 
 export default function ReportsPage({
   clientId: propClientId,
@@ -36,7 +29,7 @@ export default function ReportsPage({
   const clientId = propClientId || paramClientId;
 
   // Local repository reports
-  const [reportsList, setReportsList] = useState(MOCK_REPORTS);
+  const [reportsList, setReportsList] = useState(FALLBACK_REPORTS);
   const [filterType, setFilterType] = useState('All');
   const [filterClientId, setFilterClientId] = useState('All');
   const [activeReportId, setActiveReportId] = useState(null);

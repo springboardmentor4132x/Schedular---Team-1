@@ -21,10 +21,8 @@ import ContentList from '../../../modules/Content/ContentList';
 import PublishingCalendar from '../../../modules/Content/PublishingCalendar';
 import AnalyticsPage from '../../../modules/Analytics/AnalyticsPage';
 import ReportsPage from '../../../modules/Reports/ReportsPage';
-import {
-  INITIAL_MOCK_CLIENTS,
-  MOCK_CLIENT_WORKSPACES,
-} from './mockData';
+import { useState, useEffect } from 'react';
+import { getClients } from '../../../../../services/teamService';
 import './ClientWorkspace.css';
 
 const PLATFORM_CHARS = {
@@ -261,9 +259,36 @@ export default function ClientWorkspace() {
   const { clientId } = useParams();
   const navigate = useNavigate();
 
-  // Find dynamic client data
-  const client = INITIAL_MOCK_CLIENTS.find((c) => c.id === clientId) ?? INITIAL_MOCK_CLIENTS[0];
-  const workspace = MOCK_CLIENT_WORKSPACES[client.id];
+  const [client, setClient] = useState(null);
+  
+  useEffect(() => {
+    getClients().then(clients => {
+      const found = clients.find(c => String(c.id) === String(clientId));
+      if (found) {
+        setClient({
+          id: found.id,
+          name: found.name,
+          industry: found.organization || 'Digital Marketing',
+          profileImage: found.avatar_url || '',
+          status: 'active',
+          connectedPlatforms: ['facebook', 'instagram', 'linkedin', 'x', 'youtube'],
+          publishedPosts: 0,
+          engagementRate: 0.0,
+        });
+      }
+    });
+  }, [clientId]);
+
+  if (!client) {
+    return <PageContainer title="Loading Workspace..." breadcrumb={['Marketing', 'Clients', 'Loading']}><div className="cw-empty">Loading client workspace...</div></PageContainer>;
+  }
+
+  const workspace = {
+    activeCampaignsList: [],
+    upcomingPosts: [],
+    publishedPosts: [],
+    activityTimeline: [],
+  };
 
   return (
     <PageContainer

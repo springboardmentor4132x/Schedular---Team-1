@@ -63,6 +63,7 @@ export default function PostComposer({
   const [mediaFiles, setMediaFiles] = useState(() => existing?.media || []);
   const [selectedPlatforms, setSelectedPlatforms] = useState(() => existing?.platforms || []);
   const [selectedCampaignId, setSelectedCampaignId] = useState(() => existing?.campaignId || '');
+  const [recurrenceInterval, setRecurrenceInterval] = useState(() => existing?.recurrenceInterval || '');
 
   const [scheduleMode, setScheduleMode] = useState(() => {
     if (existing) {
@@ -229,6 +230,7 @@ export default function PostComposer({
       media: mediaFiles,
       platforms: selectedPlatforms,
       campaignId: selectedCampaignId || null,
+      recurrenceInterval: recurrenceInterval || null,
       status: finalStatus,
       scheduledAt: scheduledAtVal,
     };
@@ -438,10 +440,27 @@ export default function PostComposer({
             )}
           </div>
 
-          {/* S5: Optional Campaign drop-down */}
+          {/* S5: Optional Recurrence */}
+          {scheduleMode === 'schedule' && (
+            <div className="cs-composer__section">
+              <h4 className="cs-composer__section-lbl">Step 5 — Recurrence (Optional)</h4>
+              <select
+                className="cs-composer__input"
+                value={recurrenceInterval}
+                onChange={(e) => setRecurrenceInterval(e.target.value)}
+              >
+                <option value="">None (One-time)</option>
+                <option value="daily">Daily</option>
+                <option value="weekly">Weekly</option>
+                <option value="monthly">Monthly</option>
+              </select>
+            </div>
+          )}
+
+          {/* S6: Optional Campaign drop-down */}
           <div className="cs-composer__section">
             <div className="cs-composer__campaign-title-row">
-              <h4 className="cs-composer__section-lbl">Step 5 — Select Campaign (Optional)</h4>
+              <h4 className="cs-composer__section-lbl">Step 6 — Select Campaign (Optional)</h4>
               <button
                 type="button"
                 onClick={handleCreateCampaignShortcut}
@@ -468,7 +487,7 @@ export default function PostComposer({
 
         {/* Right Column: Dynamic Post Preview */}
         <div className="cs-composer__preview-col">
-          <h4 className="cs-composer__section-lbl">Step 6 — Live Preview</h4>
+          <h4 className="cs-composer__section-lbl">Step 7 — Live Preview</h4>
           
           <div className="cs-preview-box">
             {/* Tabs for platform switching */}
