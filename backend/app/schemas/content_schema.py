@@ -7,7 +7,9 @@ PLATFORMS = {"facebook", "instagram", "linkedin", "pinterest", "youtube", "x"}
 
 class PostWrite(BaseModel):
     caption: str = Field(default="", max_length=5000)
-    content_type: str = Field(default="text", pattern="^(text|image|video|carousel|story|reel)$")
+    content_type: str = Field(
+        default="text", pattern="^(text|image|video|carousel|story|reel)$"
+    )
     media_urls: list[str] = Field(default_factory=list, max_length=10)
     platforms: list[str] = Field(default_factory=list, max_length=6)
     scheduled_for: datetime | None = None
@@ -25,7 +27,9 @@ class PostWrite(BaseModel):
 
 class PostUpdate(BaseModel):
     caption: str | None = Field(default=None, max_length=5000)
-    content_type: str | None = Field(default=None, pattern="^(text|image|video|carousel|story|reel)$")
+    content_type: str | None = Field(
+        default=None, pattern="^(text|image|video|carousel|story|reel)$"
+    )
     media_urls: list[str] | None = Field(default=None, max_length=10)
     platforms: list[str] | None = Field(default=None, max_length=6)
     timezone: str | None = Field(default=None, max_length=100)
@@ -58,7 +62,9 @@ class CampaignWrite(BaseModel):
     platforms: list[str] = Field(default_factory=list, max_length=6)
     start_date: datetime
     end_date: datetime
-    status: str = Field(default="draft", pattern="^(draft|active|paused|completed|cancelled)$")
+    status: str = Field(
+        default="draft", pattern="^(draft|active|paused|completed|cancelled)$"
+    )
     client_id: int | None = None
 
     @model_validator(mode="after")
@@ -80,7 +86,9 @@ class CampaignUpdate(BaseModel):
     platforms: list[str] | None = Field(default=None, max_length=6)
     start_date: datetime | None = None
     end_date: datetime | None = None
-    status: str | None = Field(default=None, pattern="^(draft|active|paused|completed|cancelled)$")
+    status: str | None = Field(
+        default=None, pattern="^(draft|active|paused|completed|cancelled)$"
+    )
     client_id: int | None = None
 
     @field_validator("platforms")

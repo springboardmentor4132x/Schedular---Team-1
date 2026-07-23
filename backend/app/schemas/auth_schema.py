@@ -14,7 +14,16 @@ class UserCreate(BaseModel):
     @field_validator("role")
     @classmethod
     def normalize_role(cls, value: str) -> str:
-        roles = {"administrator": "Administrator", "marketing_team": "Marketing Team", "business_user": "Business User", "content_creator": "Content Creator", "Administrator": "Administrator", "Marketing Team": "Marketing Team", "Business User": "Business User", "Content Creator": "Content Creator"}
+        roles = {
+            "administrator": "Administrator",
+            "marketing_team": "Marketing Team",
+            "business_user": "Business User",
+            "content_creator": "Content Creator",
+            "Administrator": "Administrator",
+            "Marketing Team": "Marketing Team",
+            "Business User": "Business User",
+            "Content Creator": "Content Creator",
+        }
         if value not in roles:
             raise ValueError("Unsupported role")
         return roles[value]

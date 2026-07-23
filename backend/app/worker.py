@@ -3,6 +3,7 @@
 Usage: python -m app.worker --once
        python -m app.worker --interval 30
 """
+
 import argparse
 import time
 
@@ -20,8 +21,12 @@ def run_once() -> list[dict]:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run SocialPilot publishing work.")
-    parser.add_argument("--once", action="store_true", help="Process the queue once and exit.")
-    parser.add_argument("--interval", type=int, default=30, help="Polling interval in seconds.")
+    parser.add_argument(
+        "--once", action="store_true", help="Process the queue once and exit."
+    )
+    parser.add_argument(
+        "--interval", type=int, default=30, help="Polling interval in seconds."
+    )
     args = parser.parse_args()
     if args.once:
         run_once()

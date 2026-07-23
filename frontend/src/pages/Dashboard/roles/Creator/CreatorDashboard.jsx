@@ -9,7 +9,7 @@
  * and connected platform health checks.
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   MdArticle,
@@ -29,17 +29,14 @@ import StatsCard from '../../components/StatsCard/StatsCard';
 import Avatar from '../../components/Avatar/Avatar';
 import SectionTitle from '../../components/SectionTitle/SectionTitle';
 
-import {
-  MOCK_CREATOR_STATS,
-  MOCK_TODAY_CONTENT,
-  MOCK_RECENT_POSTS,
-  MOCK_CREATOR_CAMPAIGNS,
-  MOCK_UPCOMING_SCHEDULE,
-  MOCK_CALENDAR_PREVIEW,
-  MOCK_CREATOR_PERFORMANCE,
-  MOCK_CREATOR_NOTIFICATIONS,
-  MOCK_CREATOR_PLATFORMS,
-} from './CreatorDashboardMockData';
+const MOCK_CALENDAR_PREVIEW = [];
+
+import postService from '../../../../services/postService';
+import campaignService from '../../../../services/campaignService';
+import { getConnectedAccounts } from '../../../../services/socialService';
+import { getDashboardSummary } from '../../../../services/dashboardService';
+import { getNotifications } from '../../../../services/notificationService';
+import analyticsService from '../../../../services/analyticsService';
 
 import './CreatorDashboard.css';
 
@@ -92,13 +89,42 @@ export default function CreatorDashboard() {
     day: 'numeric',
   });
 
+  const [posts, setPosts] = useState([]);
+  const [stats, setStats] = useState([]);
+  const [campaigns, setCampaigns] = useState([]);
+  const [notifs, setNotifs] = useState([]);
+  const [platforms, setPlatforms] = useState([]);
+  const [metrics, setMetrics] = useState({ reach: 0, engagement: 0 });
+
+  useEffect(() => {
+    postService.getPosts().then(data => { if (data) setPosts(data); });
+    campaignService.getCampaigns().then(data => { if (data) setCampaigns(data); });
+    getDashboardSummary().then(data => {
+      if (data) {
+        setStats([
+          { id: 'total', title: 'Total Posts', value: data.publishedPosts + data.scheduledPosts + data.draftPosts, change: 'All time', trend: 'neutral' },
+          { id: 'drafts', title: 'Drafts', value: data.draftPosts, change: 'Requires edit', trend: 'up' },
+          { id: 'scheduled', title: 'Scheduled', value: data.scheduledPosts, change: 'In Queue', trend: 'up' },
+          { id: 'published', title: 'Published', value: data.publishedPosts, change: 'Live', trend: 'neutral' },
+          { id: 'campaigns', title: 'Campaigns', value: data.activeCampaigns, change: 'Active', trend: 'up' },
+          { id: 'reviews', title: 'Reviews', value: data.unreadNotifications, change: 'Pending', trend: 'neutral' }
+        ]);
+      }
+    });
+    getConnectedAccounts().then(data => { if (data) setPlatforms(data); }).catch(() => setPlatforms([]));
+    getNotifications().then(data => { if (data && data.length) setNotifs(data); });
+    analyticsService.getMetrics().then(data => { if (data && data.totals) setMetrics(data.totals); });
+  }, []);
+
   // Section 4 Filters: 'all' | 'draft' | 'scheduled' | 'published'
   const [filterTab, setFilterTab] = useState('all');
 
-  const filteredPosts = MOCK_RECENT_POSTS.filter((post) => {
+  const filteredPosts = posts.filter((post) => {
     if (filterTab === 'all') return true;
     return post.status === filterTab;
   });
+
+  const scheduledPosts = posts.filter(p => p.status === 'scheduled' || p.status === 'publishing').slice(0, 5);
 
   return (
     <PageContainer>
@@ -132,7 +158,7 @@ export default function CreatorDashboard() {
         description="Key performance indicators of your personal studio workspace."
       />
       <div className="cd-stats-grid">
-        {MOCK_CREATOR_STATS.map((s) => (
+        {stats.map((s) => (
           <StatsCard
             key={s.id}
             title={s.title}
@@ -158,26 +184,25 @@ export default function CreatorDashboard() {
               </div>
             </div>
             <div className="cd-today-list">
-              {MOCK_TODAY_CONTENT.map((post) => (
+              {scheduledPosts.map((post) => {
+                let plat = 'facebook';
+                try { const arr = JSON.parse(post.platforms); if (arr.length) plat = arr[0]; } catch { plat = 'facebook'; }
+                return (
                 <div key={post.id} className="cd-today-item">
                   <div className="cd-today-item__time-box">
-                    <span className="cd-today-item__time">{post.time.split(' ')[0]}</span>
-                    <span className="cd-today-item__ampm">{post.time.split(' ')[1]}</span>
+                    <span className="cd-today-item__time">{post.scheduled_for ? new Date(post.scheduled_for).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'TBD'}</span>
                   </div>
                   <div
                     className="cd-today-item__platform-icon"
-                    style={{ background: PLATFORM_COLORS[post.platform] ?? '#6b7280' }}
+                    style={{ background: PLATFORM_COLORS[plat] ?? '#6b7280' }}
                   >
-                    {PLATFORM_CHARS[post.platform]}
+                    {PLATFORM_CHARS[plat]}
                   </div>
                   <div className="cd-today-item__details">
                     <div className="cd-today-item__header">
-                      <span className="cd-today-item__type">{post.type}</span>
-                      {post.campaign && (
-                        <span className="cd-today-item__campaign">{post.campaign}</span>
-                      )}
+                      <span className="cd-today-item__type">Post</span>
                     </div>
-                    <p className="cd-today-item__caption">{post.caption}</p>
+                    <p className="cd-today-item__caption">{post.caption || '(No caption)'}</p>
                   </div>
                   <span className={`cd-today-item__status cd-status--${post.status}`}>
                     {post.status}
@@ -187,7 +212,7 @@ export default function CreatorDashboard() {
                     <button className="cd-today-btn cd-today-btn--primary">Edit</button>
                   </div>
                 </div>
-              ))}
+              )})}
             </div>
           </div>
 
@@ -217,30 +242,30 @@ export default function CreatorDashboard() {
               ))}
             </div>
             <div className="cd-posts-grid">
-              {filteredPosts.slice(0, 4).map((post) => (
+              {filteredPosts.slice(0, 4).map((post) => {
+                let plat = 'facebook';
+                try { const arr = JSON.parse(post.platforms); if (arr.length) plat = arr[0]; } catch { plat = 'facebook'; }
+                return (
                 <div key={post.id} className="cd-post-card">
                   <div className="cd-post-card__thumb">
                     <div
                       className="cd-post-card__badge-platform"
-                      style={{ background: PLATFORM_COLORS[post.platform] ?? '#6b7280' }}
+                      style={{ background: PLATFORM_COLORS[plat] ?? '#6b7280' }}
                     >
-                      {PLATFORM_CHARS[post.platform]}
+                      {PLATFORM_CHARS[plat]}
                     </div>
                     <span className="cd-post-card__emoji">📝</span>
                   </div>
                   <div className="cd-post-card__body">
                     <div className="cd-post-card__header">
-                      {post.campaign && (
-                        <span className="cd-post-card__campaign">{post.campaign}</span>
-                      )}
                       <span className="cd-post-card__date">
-                        {new Date(post.dateTime).toLocaleDateString(undefined, {
+                        {post.created_at ? new Date(post.created_at).toLocaleDateString(undefined, {
                           month: 'short',
                           day: 'numeric',
-                        })}
+                        }) : 'TBD'}
                       </span>
                     </div>
-                    <p className="cd-post-card__caption">{post.caption}</p>
+                    <p className="cd-post-card__caption">{post.caption || '(No caption)'}</p>
                     <div className="cd-post-card__footer">
                       <span className={`cd-post-card__status-tag cd-tag--${post.status}`}>
                         {post.status}
@@ -249,7 +274,7 @@ export default function CreatorDashboard() {
                     </div>
                   </div>
                 </div>
-              ))}
+              )})}
             </div>
           </div>
 
@@ -268,41 +293,40 @@ export default function CreatorDashboard() {
               </button>
             </div>
             <div className="cd-campaigns-grid">
-              {MOCK_CREATOR_CAMPAIGNS.map((c) => (
+              {campaigns.map((c) => {
+                const progress = c.status === 'active' ? 50 : (c.status === 'completed' ? 100 : 0);
+                return (
                 <div key={c.id} className="cd-campaign-card">
                   <div className="cd-campaign-card__top">
                     <h3 className="cd-campaign-card__name">{c.name}</h3>
-                    <span className="cd-campaign-card__posts">{c.postsCount} posts planned</span>
+                    <span className="cd-campaign-card__posts">{c.status}</span>
                   </div>
                   <div className="cd-campaign-card__progress-row">
                     <div className="cd-campaign-card__track">
-                      <div className="cd-campaign-card__fill" style={{ width: `${c.progress}%` }} />
+                      <div className="cd-campaign-card__fill" style={{ width: `${progress}%` }} />
                     </div>
-                    <span className="cd-campaign-card__pct">{c.progress}%</span>
+                    <span className="cd-campaign-card__pct">{progress}%</span>
                   </div>
                   <div className="cd-campaign-card__footer">
                     <div className="cd-campaign-card__platforms">
-                      {c.platforms.map((p) => (
-                        <span
-                          key={p}
-                          className="cd-campaign-card__platform-dot"
-                          style={{ background: PLATFORM_COLORS[p] ?? '#6b7280' }}
-                          title={p}
-                        >
-                          {PLATFORM_CHARS[p]}
-                        </span>
-                      ))}
+                      <span
+                        className="cd-campaign-card__platform-dot"
+                        style={{ background: PLATFORM_COLORS['facebook'] }}
+                        title="Platform"
+                      >
+                        {PLATFORM_CHARS['facebook']}
+                      </span>
                     </div>
                     <span className="cd-campaign-card__deadline">
-                      Ends: {new Date(c.deadline).toLocaleDateString(undefined, {
+                      Ends: {c.end_date ? new Date(c.end_date).toLocaleDateString(undefined, {
                         month: 'short',
                         day: 'numeric',
-                      })}
+                      }) : 'TBD'}
                     </span>
                     <button className="cd-campaign-card__manage-btn">Manage</button>
                   </div>
                 </div>
-              ))}
+              )})}
             </div>
           </div>
         </div>
@@ -359,14 +383,14 @@ export default function CreatorDashboard() {
             </div>
             <div className="cd-platforms-summary">
               <div className="cd-platforms-list">
-                {MOCK_CREATOR_PLATFORMS.map((platform) => (
+                {platforms.map((platform) => (
                   <div
                     key={platform.id}
-                    className={`cd-platform-badge${platform.connected ? ' cd-platform-badge--connected' : ''}`}
+                    className={`cd-platform-badge${platform.status === 'connected' ? ' cd-platform-badge--connected' : ''}`}
                   >
                     <span className="cd-platform-badge__indicator" />
-                    <span style={{ fontSize: '12px' }}>{PLATFORM_CHARS[platform.id]}</span>
-                    <span>{platform.label}</span>
+                    <span style={{ fontSize: '12px' }}>{PLATFORM_CHARS[platform.platform]}</span>
+                    <span>{platform.platform}</span>
                   </div>
                 ))}
               </div>
@@ -409,32 +433,32 @@ export default function CreatorDashboard() {
               <h2 className="cd-card__title">Upcoming Releases</h2>
             </div>
             <div className="cd-schedule-list">
-              {MOCK_UPCOMING_SCHEDULE.map((item) => (
+              {scheduledPosts.map((item) => {
+                let plat = 'facebook';
+                try { const arr = JSON.parse(item.platforms); if (arr.length) plat = arr[0]; } catch { plat = 'facebook'; }
+                return (
                 <div
                   key={item.id}
-                  className={`cd-schedule-row${item.dayGroup === 'Today' ? ' cd-schedule-row--today' : ''}`}
+                  className={`cd-schedule-row${new Date(item.scheduled_for || new Date().toISOString()).toDateString() === new Date().toDateString() ? ' cd-schedule-row--today' : ''}`}
                 >
                   <div className="cd-schedule-dot" />
                   <div className="cd-schedule-info">
                     <div className="cd-schedule-header">
-                      <span className="cd-schedule-day">{item.dayGroup}</span>
-                      <span className="cd-schedule-time">{item.time}</span>
-                      {item.campaign && (
-                        <span className="cd-schedule-campaign">{item.campaign}</span>
-                      )}
+                      <span className="cd-schedule-day">Scheduled</span>
+                      <span className="cd-schedule-time">{item.scheduled_for ? new Date(item.scheduled_for).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'TBD'}</span>
                     </div>
                     <div className="cd-schedule-details">
                       <div
                         className="cd-schedule-platform"
-                        style={{ background: PLATFORM_COLORS[item.platform] ?? '#6b7280' }}
+                        style={{ background: PLATFORM_COLORS[plat] ?? '#6b7280' }}
                       >
-                        {PLATFORM_CHARS[item.platform]}
+                        {PLATFORM_CHARS[plat]}
                       </div>
-                      <p className="cd-schedule-caption">{item.caption}</p>
+                      <p className="cd-schedule-caption">{item.caption || '(No caption)'}</p>
                     </div>
                   </div>
                 </div>
-              ))}
+              )})}
             </div>
           </div>
 
@@ -446,47 +470,30 @@ export default function CreatorDashboard() {
             <div className="cd-perf-snapshot">
               <div className="cd-perf-metrics">
                 <div className="cd-perf-metric-card">
-                  <span className="cd-perf-metric-card__title">Weekly Reach</span>
+                  <span className="cd-perf-metric-card__title">Total Reach</span>
                   <span className="cd-perf-metric-card__value">
-                    {MOCK_CREATOR_PERFORMANCE.weeklyReach}
+                    {metrics.reach || 0}
                   </span>
                   <span className="cd-perf-metric-card__change">
-                    +{MOCK_CREATOR_PERFORMANCE.reachChange}%
+                    +0%
                   </span>
                 </div>
                 <div className="cd-perf-metric-card">
-                  <span className="cd-perf-metric-card__title">Engagement Rate</span>
+                  <span className="cd-perf-metric-card__title">Total Engagement</span>
                   <span className="cd-perf-metric-card__value">
-                    {MOCK_CREATOR_PERFORMANCE.avgEngagement}
+                    {metrics.reactions || 0}
                   </span>
                   <span className="cd-perf-metric-card__change">
-                    +{MOCK_CREATOR_PERFORMANCE.engChange}%
+                    +0%
                   </span>
                 </div>
               </div>
 
               {/* Reach chart */}
               <div className="cd-perf-chart-wrap">
-                <span className="cd-perf-chart-title">Reach trend (Mon - Sun)</span>
+                <span className="cd-perf-chart-title">Reach overview</span>
                 <div className="cd-mini-line-chart">
-                  {MOCK_CREATOR_PERFORMANCE.reachTrend.map((d, i) => {
-                    const maxVal = Math.max(
-                      ...MOCK_CREATOR_PERFORMANCE.reachTrend.map((t) => t.value)
-                    );
-                    const barHeight = (d.value / maxVal) * 50;
-                    return (
-                      <div
-                        key={d.label}
-                        className={`cd-mini-line-bar${i === 6 ? ' cd-mini-line-bar--active' : ''}`}
-                        style={{ height: `${barHeight}px` }}
-                        title={`${d.label}: ${d.value}`}
-                      />
-                    );
-                  })}
-                </div>
-                <div className="cd-mini-line-labels">
-                  <span>Mon</span>
-                  <span>Sun</span>
+                  <div className="cd-mini-line-bar cd-mini-line-bar--active" style={{ height: '50px' }} title="Current" />
                 </div>
               </div>
             </div>
@@ -498,19 +505,19 @@ export default function CreatorDashboard() {
               <h2 className="cd-card__title">Recent Studio Activity</h2>
             </div>
             <div className="cd-notif-list">
-              {MOCK_CREATOR_NOTIFICATIONS.map((n) => (
+              {notifs.map((n) => (
                 <div key={n.id} className="cd-notif-item">
-                  <span className="cd-notif-item__icon">{n.icon}</span>
+                  <span className="cd-notif-item__icon"><MdRateReview /></span>
                   <div className="cd-notif-item__body">
-                    <p className="cd-notif-item__text">{n.text}</p>
+                    <p className="cd-notif-item__text">{n.message || n.title}</p>
                     <span className="cd-notif-item__time">
-                      {new Date(n.time).toLocaleTimeString(undefined, {
+                      {new Date(n.created_at || new Date()).toLocaleTimeString(undefined, {
                         hour: '2-digit',
                         minute: '2-digit',
                       })}
                     </span>
                   </div>
-                  {!n.isRead && <div className="cd-notif-item__unread-dot" />}
+                  {!n.is_read && <div className="cd-notif-item__unread-dot" />}
                 </div>
               ))}
             </div>

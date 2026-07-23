@@ -1,57 +1,61 @@
 from logging.config import fileConfig
+import sys
+import os
 
-from sqlalchemy import engine_from_config, pool
+# 1. TELL PYTHON WHERE THE ROOT DIRECTORY IS
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
+from sqlalchemy import engine_from_config
+from sqlalchemy import pool
 from alembic import context
 
-from app.config import settings
+# 2. IMPORT YOUR NEW MODELS
 from app.database import Base
+from app.models import *
 
-# Import all models here
-from app.models import ActivityLog, AnalyticsMetric, CollaborationRequest, Notification, PublishingLog, Report, SocialAccount, User, UserProfile, UserSettings, Team, TeamMember, RefreshToken, ClientAssignment, Post, Campaign, CampaignPost, MediaAsset
-
+# This is the Alembic Config object
 config = context.config
 
-# Read DATABASE_URL from config.py
-config.set_main_option(
-    "sqlalchemy.url",
-    settings.DATABASE_URL.replace("%", "%%")
-)
-
+# Interpret the config file for Python logging
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# Metadata for autogenerate
+# Add your model's MetaData object here
 target_metadata = Base.metadata
 
 
-def run_migrations_offline():
-    url = config.get_main_option("sqlalchemy.url")
-
+def run_migrations_offline() -> None:
+    """Run migrations in 'offline' mode."""
+    from app.config import settings
+    url = settings.DATABASE_URL
     context.configure(
         url=url,
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
+        render_as_batch=True  # Enables SQLite compatibility
     )
 
     with context.begin_transaction():
         context.run_migrations()
 
 
-def run_migrations_online():
+def run_migrations_online() -> None:
+    """Run migrations in 'online' mode."""
+    from app.config import settings
+    configuration = config.get_section(config.config_ini_section, {})
+    configuration["sqlalchemy.url"] = settings.DATABASE_URL
     connectable = engine_from_config(
-        config.get_section(config.config_ini_section),
+        configuration,
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
 
     with connectable.connect() as connection:
-
         context.configure(
             connection=connection,
             target_metadata=target_metadata,
-            compare_type=True
+            render_as_batch=True  # Enables SQLite compatibility
         )
 
         with context.begin_transaction():

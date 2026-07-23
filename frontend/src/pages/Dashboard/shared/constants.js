@@ -24,10 +24,13 @@ export const ROLE_LABELS = {
 export const ROLE_MAP = {
   business: ROLES.BUSINESS,
   business_user: ROLES.BUSINESS,
+  'business user': ROLES.BUSINESS,
   marketing: ROLES.MARKETING,
   marketing_team: ROLES.MARKETING,
+  'marketing team': ROLES.MARKETING,
   creator: ROLES.CREATOR,
   content_creator: ROLES.CREATOR,
+  'content creator': ROLES.CREATOR,
 };
 
 /** Returns a canonical ROLES value from any backend-supplied role string. */
