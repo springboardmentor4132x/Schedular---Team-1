@@ -16,6 +16,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models.user import ActivityLog, Notification, SocialAccount, User, UserProfile, UserSettings
+from app.models.content import Post
 from app.schemas.dashboard_schema import ProfileUpdate, SettingsUpdate
 from app.config import settings
 from app.services.auth_service import ALGORITHM, get_current_user
@@ -213,7 +214,11 @@ def get_dashboard(user: User = Depends(get_current_user), db: Session = Depends(
             "totalConnected": sum(account.status == "connected" for account in accounts),
             "apiHealth": "healthy",
         },
-        "scheduledPosts": [],
+        "scheduledPosts": [{"id": post.id, "caption": post.caption, "contentType": post.content_type,
+                            "platforms": loads(post.platforms), "scheduledFor": post.scheduled_for,
+                            "status": post.status} for post in db.query(Post).filter(
+                                (Post.client_id == user.id) if user.role == "Business User" else (Post.owner_id == user.id),
+                                Post.status == "scheduled").order_by(Post.scheduled_for).limit(5).all()],
     }
 
 
@@ -280,7 +285,9 @@ def update_profile(payload: ProfileUpdate, user: User = Depends(get_current_user
             raise HTTPException(status_code=400, detail="Phone number is already registered.")
     profile = _profile_for(user, db)
     user.full_name, user.email, user.phone = f"{payload.firstName.strip()} {payload.lastName.strip()}".strip(), str(payload.email), payload.phone or None
-    user.country, user.organization, user.role = payload.country or None, payload.organization or None, payload.role or user.role
+    # Roles are assigned through administration/team workflows; profile edits
+    # must never become a privilege-escalation path.
+    user.country, user.organization = payload.country or None, payload.organization or None
     profile.first_name, profile.last_name = payload.firstName.strip(), payload.lastName.strip()
     profile.timezone, profile.bio, profile.language = payload.timezone or "Asia/Kolkata", payload.bio or None, payload.language or "en"
     db.commit()
@@ -359,9 +366,21 @@ def get_social_account(platform: str, user: User = Depends(get_current_user), db
 
 
 @router.post("/social/connect/{platform}")
-def connect_social_account(platform: str, user: User = Depends(get_current_user)):
+def connect_social_account(platform: str, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     _validate_platform(platform)
-    client_id, _ = _oauth_configuration(platform)
+    try:
+        client_id, _ = _oauth_configuration(platform)
+    except HTTPException:
+        # A local provider adapter keeps the complete scheduling workflow usable
+        # until production OAuth credentials are configured.
+        _save_oauth_account(
+            db,
+            user.id,
+            platform,
+            {"access_token": f"mock-{secrets.token_urlsafe(24)}", "expires_in": 86400},
+            {"name": f"{user.full_name} ({platform.title()})", "email": user.email},
+        )
+        return {"success": True, "message": f"{platform.title()} connected using the local demo provider.", "mode": "mock"}
     code_verifier = secrets.token_urlsafe(64) if platform == "x" else None
     state = _oauth_state(user.id, platform, code_verifier)
     params = {"response_type": "code", "client_id": client_id, "redirect_uri": _callback_url(platform), "state": state}

@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, field_validator
 from typing import Optional
 
 
@@ -10,6 +10,14 @@ class UserCreate(BaseModel):
     country: Optional[str] = None
     role: str
     organization: Optional[str] = None
+
+    @field_validator("role")
+    @classmethod
+    def normalize_role(cls, value: str) -> str:
+        roles = {"administrator": "Administrator", "marketing_team": "Marketing Team", "business_user": "Business User", "content_creator": "Content Creator", "Administrator": "Administrator", "Marketing Team": "Marketing Team", "Business User": "Business User", "Content Creator": "Content Creator"}
+        if value not in roles:
+            raise ValueError("Unsupported role")
+        return roles[value]
 
 
 class UserLogin(BaseModel):
@@ -32,5 +40,10 @@ class UserResponse(BaseModel):
 
 class Token(BaseModel):
     access_token: str
+    refresh_token: str
     token_type: str
     user: UserResponse
+
+
+class RefreshRequest(BaseModel):
+    refresh_token: str
