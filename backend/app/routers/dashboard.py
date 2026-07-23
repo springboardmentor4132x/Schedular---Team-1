@@ -15,8 +15,8 @@ from jose import JWTError, jwt
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models.user import ActivityLog, Notification, SocialAccount, User, UserProfile, UserSettings
-from app.models.content import Post
+from app.models.user import ActivityLog, ClientAssignment, CollaborationRequest, Notification, SocialAccount, Team, TeamMember, User, UserProfile, UserSettings
+from app.models.content import AnalyticsMetric, Campaign, CampaignPost, MediaAsset, Post, PublishingLog, Report
 from app.schemas.dashboard_schema import ProfileUpdate, SettingsUpdate
 from app.config import settings
 from app.services.auth_service import ALGORITHM, get_current_user
@@ -203,6 +203,17 @@ def _account_payload(account: SocialAccount | None, platform: str) -> dict:
     }
 
 
+def _profile_payload(user: User, profile: UserProfile) -> dict:
+    avatar_url = None
+    if profile.avatar_data and profile.avatar_content_type:
+        avatar_url = f"data:{profile.avatar_content_type};base64,{base64.b64encode(profile.avatar_data).decode()}"
+    return {"id": user.id, "firstName": profile.first_name, "lastName": profile.last_name,
+            "fullName": user.full_name, "email": user.email, "phone": user.phone or "",
+            "country": user.country or "", "timezone": profile.timezone,
+            "organization": user.organization or "", "role": user.role or "", "bio": profile.bio or "",
+            "language": profile.language, "avatarUrl": avatar_url}
+
+
 @router.get("/dashboard")
 def get_dashboard(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     accounts = db.query(SocialAccount).filter(SocialAccount.user_id == user.id).all()
@@ -222,6 +233,25 @@ def get_dashboard(user: User = Depends(get_current_user), db: Session = Depends(
     }
 
 
+@router.get("/dashboard/summary")
+def get_dashboard_summary(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Role-scoped totals for dashboard cards; detailed records remain on resource routes."""
+    post_scope = Post.client_id == user.id if user.role == "Business User" else Post.owner_id == user.id
+    campaign_scope = Campaign.client_id == user.id if user.role == "Business User" else Campaign.owner_id == user.id
+    posts = db.query(Post).filter(post_scope)
+    campaigns = db.query(Campaign).filter(campaign_scope)
+    return {
+        "role": user.role,
+        "campaigns": campaigns.count(),
+        "activeCampaigns": campaigns.filter(Campaign.status == "active").count(),
+        "draftPosts": posts.filter(Post.status == "draft").count(),
+        "scheduledPosts": posts.filter(Post.status == "scheduled").count(),
+        "publishedPosts": posts.filter(Post.status == "published").count(),
+        "connectedPlatforms": db.query(SocialAccount).filter(SocialAccount.user_id == user.id, SocialAccount.status == "connected").count(),
+        "unreadNotifications": db.query(Notification).filter(Notification.user_id == user.id, Notification.is_read.is_(False)).count(),
+    }
+
+
 @router.get("/activity")
 def get_activity(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     rows = (db.query(ActivityLog).filter(ActivityLog.user_id == user.id)
@@ -235,6 +265,11 @@ def get_notifications(user: User = Depends(get_current_user), db: Session = Depe
             .order_by(Notification.created_at.desc()).limit(50).all())
     return [{"id": row.id, "title": row.title, "message": row.message, "type": row.type,
              "isRead": row.is_read, "createdAt": row.created_at} for row in rows]
+
+
+@router.get("/notifications/unread-count")
+def notification_unread_count(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    return {"count": db.query(Notification).filter(Notification.user_id == user.id, Notification.is_read.is_(False)).count()}
 
 
 @router.patch("/notifications/read-all")
@@ -261,17 +296,20 @@ def clear_notifications(user: User = Depends(get_current_user), db: Session = De
     return {"success": True}
 
 
+@router.delete("/notifications/{notification_id}")
+def delete_notification(notification_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    row = db.query(Notification).filter(Notification.id == notification_id, Notification.user_id == user.id).first()
+    if row is None:
+        raise HTTPException(status_code=404, detail="Notification not found")
+    db.delete(row); db.commit()
+    return {"success": True}
+
+
 @router.get("/profile")
 def get_profile(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     profile = _profile_for(user, db)
     db.commit()
-    avatar_url = None
-    if profile.avatar_data and profile.avatar_content_type:
-        avatar_url = f"data:{profile.avatar_content_type};base64,{base64.b64encode(profile.avatar_data).decode()}"
-    return {"firstName": profile.first_name, "lastName": profile.last_name, "email": user.email,
-            "phone": user.phone or "", "country": user.country or "", "timezone": profile.timezone,
-            "organization": user.organization or "", "role": user.role or "", "bio": profile.bio or "",
-            "language": profile.language, "avatarUrl": avatar_url}
+    return _profile_payload(user, profile)
 
 
 @router.put("/profile")
@@ -291,7 +329,8 @@ def update_profile(payload: ProfileUpdate, user: User = Depends(get_current_user
     profile.first_name, profile.last_name = payload.firstName.strip(), payload.lastName.strip()
     profile.timezone, profile.bio, profile.language = payload.timezone or "Asia/Kolkata", payload.bio or None, payload.language or "en"
     db.commit()
-    return {"success": True, "message": "Profile updated successfully."}
+    db.refresh(profile)
+    return {"success": True, "message": "Profile updated successfully.", "user": _profile_payload(user, profile)}
 
 
 @router.post("/profile/avatar")
@@ -489,6 +528,22 @@ def export_account_data(user: User = Depends(get_current_user), db: Session = De
 def delete_account(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     # Delete dependent rows explicitly so this works on databases that do not
     # enforce ON DELETE CASCADE (notably SQLite unless foreign keys are enabled).
+    post_ids = [post_id for (post_id,) in db.query(Post.id).filter(Post.owner_id == user.id).all()]
+    campaign_ids = [campaign_id for (campaign_id,) in db.query(Campaign.id).filter(Campaign.owner_id == user.id).all()]
+    if post_ids:
+        db.query(AnalyticsMetric).filter(AnalyticsMetric.post_id.in_(post_ids)).delete(synchronize_session=False)
+        db.query(PublishingLog).filter(PublishingLog.post_id.in_(post_ids)).delete(synchronize_session=False)
+        db.query(CampaignPost).filter(CampaignPost.post_id.in_(post_ids)).delete(synchronize_session=False)
+    if campaign_ids:
+        db.query(CampaignPost).filter(CampaignPost.campaign_id.in_(campaign_ids)).delete(synchronize_session=False)
+    db.query(Post).filter(Post.owner_id == user.id).delete(synchronize_session=False)
+    db.query(Campaign).filter(Campaign.owner_id == user.id).delete(synchronize_session=False)
+    db.query(MediaAsset).filter(MediaAsset.owner_id == user.id).delete(synchronize_session=False)
+    db.query(Report).filter(Report.owner_id == user.id).delete(synchronize_session=False)
+    db.query(CollaborationRequest).filter((CollaborationRequest.business_user_id == user.id) | (CollaborationRequest.requested_by_user_id == user.id)).delete(synchronize_session=False)
+    db.query(ClientAssignment).filter(ClientAssignment.business_user_id == user.id).delete(synchronize_session=False)
+    db.query(TeamMember).filter(TeamMember.user_id == user.id).delete(synchronize_session=False)
+    db.query(Team).filter(Team.owner_id == user.id).delete(synchronize_session=False)
     for model in (ActivityLog, Notification, SocialAccount, UserProfile, UserSettings):
         db.query(model).filter(model.user_id == user.id).delete()
     db.delete(user)

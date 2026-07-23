@@ -58,3 +58,41 @@ class MediaAsset(Base):
     content_type = Column(String(100), nullable=False)
     size_bytes = Column(Integer, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
+class PublishingLog(Base):
+    __tablename__ = "publishing_logs"
+    id = Column(Integer, primary_key=True)
+    post_id = Column(Integer, ForeignKey("posts.id", ondelete="CASCADE"), nullable=False, index=True)
+    platform = Column(String(30), nullable=False)
+    status = Column(String(20), nullable=False, index=True)
+    external_post_id = Column(String(255), nullable=True)
+    error_message = Column(Text, nullable=True)
+    attempted_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
+class AnalyticsMetric(Base):
+    __tablename__ = "analytics_metrics"
+    __table_args__ = (UniqueConstraint("post_id", "platform", name="uq_post_platform_metric"),)
+    id = Column(Integer, primary_key=True)
+    post_id = Column(Integer, ForeignKey("posts.id", ondelete="CASCADE"), nullable=False, index=True)
+    platform = Column(String(30), nullable=False)
+    reach = Column(Integer, nullable=False, default=0)
+    impressions = Column(Integer, nullable=False, default=0)
+    reactions = Column(Integer, nullable=False, default=0)
+    comments = Column(Integer, nullable=False, default=0)
+    shares = Column(Integer, nullable=False, default=0)
+    recorded_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
+class Report(Base):
+    __tablename__ = "reports"
+    id = Column(Integer, primary_key=True)
+    owner_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    client_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    name = Column(String(150), nullable=False)
+    status = Column(String(20), nullable=False, default="ready", index=True)
+    start_date = Column(DateTime(timezone=True), nullable=True)
+    end_date = Column(DateTime(timezone=True), nullable=True)
+    rendered_data = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)

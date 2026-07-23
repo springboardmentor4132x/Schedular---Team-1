@@ -15,3 +15,19 @@ class TeamInvite(BaseModel):
         if value not in {"Marketing Team", "Content Creator", "Business User"}:
             raise ValueError("Unsupported team role")
         return value
+
+
+class CollaborationRequestCreate(BaseModel):
+    team_id: int
+    message: str | None = Field(default=None, max_length=1000)
+
+
+class CollaborationDecision(BaseModel):
+    status: str
+
+    @field_validator("status")
+    @classmethod
+    def valid_status(cls, value: str) -> str:
+        if value not in {"accepted", "declined", "revoked"}:
+            raise ValueError("Status must be accepted, declined, or revoked")
+        return value

@@ -3,7 +3,8 @@ from sqlalchemy.orm import Session
 
 from app.schemas.auth_schema import RefreshRequest, UserCreate, UserLogin, Token, UserResponse
 from app.schemas.dashboard_schema import PasswordChange
-from app.models.user import ActivityLog, Notification, RefreshToken, User
+import base64
+from app.models.user import ActivityLog, Notification, RefreshToken, User, UserProfile
 from app.services.auth_service import ALGORITHM, create_access_token, create_refresh_token, get_current_user, get_password_hash, token_hash, verify_password
 from datetime import datetime, timedelta, timezone
 from jose import JWTError, jwt
@@ -78,7 +79,16 @@ def _token_response(user: User, db: Session):
     refresh_token = create_refresh_token(data={"sub": user.email})
     db.add(RefreshToken(user_id=user.id, token_hash=token_hash(refresh_token), expires_at=datetime.now(timezone.utc) + timedelta(days=30)))
     db.commit()
-    return {"access_token": access_token, "refresh_token": refresh_token, "token_type": "bearer", "user": user}
+    return {"access_token": access_token, "refresh_token": refresh_token, "token_type": "bearer", "user": _user_payload(user, db)}
+
+
+def _user_payload(user: User, db: Session) -> dict:
+    profile = db.get(UserProfile, user.id)
+    avatar_url = None
+    if profile and profile.avatar_data and profile.avatar_content_type:
+        avatar_url = f"data:{profile.avatar_content_type};base64,{base64.b64encode(profile.avatar_data).decode()}"
+    return {"id": user.id, "full_name": user.full_name, "email": user.email, "phone": user.phone,
+            "role": user.role, "country": user.country, "organization": user.organization, "avatarUrl": avatar_url}
 
 
 @router.post("/refresh", response_model=Token)
@@ -97,9 +107,9 @@ def refresh_access_token(payload: RefreshRequest, db: Session = Depends(get_db))
 
 
 @router.get("/me", response_model=UserResponse)
-def get_authenticated_user(user: User = Depends(get_current_user)):
+def get_authenticated_user(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """Use this endpoint to verify that an access token is accepted."""
-    return user
+    return _user_payload(user, db)
 
 
 @router.post("/change-password")

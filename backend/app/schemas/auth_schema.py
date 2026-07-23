@@ -33,6 +33,7 @@ class UserResponse(BaseModel):
     role: str
     country: Optional[str] = None
     organization: Optional[str] = None
+    avatarUrl: Optional[str] = None
 
     class Config:
         from_attributes = True

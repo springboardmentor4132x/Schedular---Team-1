@@ -1,6 +1,6 @@
 from datetime import datetime
 from decimal import Decimal
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 PLATFORMS = {"facebook", "instagram", "linkedin", "pinterest", "youtube", "x"}
 
@@ -21,6 +21,22 @@ class PostWrite(BaseModel):
         if self.content_type != "text" and not self.media_urls:
             raise ValueError("Media is required for this content type.")
         return self
+
+
+class PostUpdate(BaseModel):
+    caption: str | None = Field(default=None, max_length=5000)
+    content_type: str | None = Field(default=None, pattern="^(text|image|video|carousel|story|reel)$")
+    media_urls: list[str] | None = Field(default=None, max_length=10)
+    platforms: list[str] | None = Field(default=None, max_length=6)
+    timezone: str | None = Field(default=None, max_length=100)
+    client_id: int | None = None
+
+    @field_validator("platforms")
+    @classmethod
+    def validate_platforms(cls, value: list[str] | None) -> list[str] | None:
+        if value is not None and set(value) - PLATFORMS:
+            raise ValueError("Unsupported platform selected.")
+        return value
 
 
 class ScheduleWrite(BaseModel):
@@ -54,5 +70,30 @@ class CampaignWrite(BaseModel):
         return self
 
 
+class CampaignUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=2, max_length=150)
+    description: str | None = Field(default=None, max_length=5000)
+    objective: str | None = Field(default=None, min_length=2, max_length=100)
+    budget: Decimal | None = Field(default=None, ge=0)
+    category: str | None = Field(default=None, max_length=100)
+    priority: str | None = Field(default=None, pattern="^(low|medium|high)$")
+    platforms: list[str] | None = Field(default=None, max_length=6)
+    start_date: datetime | None = None
+    end_date: datetime | None = None
+    status: str | None = Field(default=None, pattern="^(draft|active|paused|completed|cancelled)$")
+    client_id: int | None = None
+
+    @field_validator("platforms")
+    @classmethod
+    def validate_platforms(cls, value: list[str] | None) -> list[str] | None:
+        if value is not None and set(value) - PLATFORMS:
+            raise ValueError("Unsupported platform selected.")
+        return value
+
+
 class AssignPosts(BaseModel):
     post_ids: list[int] = Field(min_length=1)
+
+
+class CampaignAssignment(BaseModel):
+    campaign_id: int | None = None
