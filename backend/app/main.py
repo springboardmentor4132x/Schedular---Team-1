@@ -42,8 +42,37 @@ upload_directory = Path(__file__).resolve().parents[1] / "uploads"
 upload_directory.mkdir(exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=upload_directory), name="uploads")
 
+def backfill_marketing_teams():
+    from app.database import SessionLocal
+    from app.models.user import User, Team, TeamMember
+    db = SessionLocal()
+    try:
+        marketing_users = db.query(User).filter(User.role == "Marketing Team").all()
+        for mu in marketing_users:
+            existing_team = db.query(Team).filter(Team.owner_id == mu.id).first()
+            if not existing_team:
+                team_name = f"{mu.full_name}'s Workspace"
+                default_team = Team(name=team_name, owner_id=mu.id)
+                db.add(default_team)
+                db.commit()
+                db.refresh(default_team)
+                db.add(TeamMember(team_id=default_team.id, user_id=mu.id, role="Marketing Team"))
+                db.commit()
+                print(f"Backfilled default team '{team_name}' for marketing user '{mu.full_name}'")
+            else:
+                if existing_team.name == "SocialPilot":
+                    existing_team.name = f"{mu.full_name}'s Workspace"
+                    db.commit()
+                    print(f"Updated generic team name to '{existing_team.name}' for marketing user '{mu.full_name}'")
+    except Exception as e:
+        print(f"Failed backfilling teams: {e}")
+    finally:
+        db.close()
+
+
 @app.on_event("startup")
 async def startup_event():
+    backfill_marketing_teams()
     start_scheduler()
 
 @app.on_event("shutdown")

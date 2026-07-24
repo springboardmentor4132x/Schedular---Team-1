@@ -5,7 +5,7 @@
  * draft logs, scheduled timeline rows, and launches the PostComposer editor.
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   MdAdd, MdDrafts, MdSchedule, MdCheckCircle,
   MdEdit, MdDelete, MdLabel, MdFolderOpen
@@ -15,6 +15,7 @@ import SectionTitle from '../../components/SectionTitle/SectionTitle';
 import EmptyState from '../../components/EmptyState/EmptyState';
 import { campaignRepository } from '../Campaigns/campaignRepository';
 import { contentRepository } from './contentRepository';
+import * as teamService from '../../../../services/teamService';
 import PostComposer from './PostComposer';
 import PostDetailsModal from './PostDetailsModal';
 import './ContentList.css';
@@ -53,22 +54,34 @@ export default function ContentList({
   const [showAssignDropdown, setShowAssignDropdown] = useState(false);
   const [selectedClientId, setSelectedClientId] = useState('All');
 
-  // Retrieve campaigns for the inline quick assign selector
+  const [campaignsList, setCampaignsList] = useState([]);
+  const [posts, setPosts] = useState([]);
+  const [clients, setClients] = useState([]);
+
+  // Fetch campaigns and clients
+  useEffect(() => {
+    campaignRepository.getCampaigns()
+      .then(setCampaignsList)
+      .catch((err) => console.error('Failed to load campaigns:', err));
+      
+    teamService.getClients()
+      .then(setClients)
+      .catch((err) => console.error('Failed to load clients:', err));
+  }, [listRevision]);
+
   const campaigns = useMemo(() => {
-    const all = campaignRepository.getCampaigns();
     if (ownerType === 'marketing') {
       const activeClientId = clientId || (selectedClientId !== 'All' ? selectedClientId : null);
       if (activeClientId) {
-        return all.filter((c) => c.clientId === activeClientId);
+        return campaignsList.filter((c) => String(c.clientId) === String(activeClientId) || String(c.client_id) === String(activeClientId));
       }
-      return all;
+      return campaignsList;
     }
-    return all.filter((c) => c.ownerId === ownerId);
-  }, [clientId, selectedClientId, ownerId, ownerType]);
+    return campaignsList.filter((c) => c.ownerId === ownerId || c.owner_id === ownerId);
+  }, [campaignsList, clientId, selectedClientId, ownerId, ownerType]);
 
   // Load all posts
-  const posts = useMemo(() => {
-    listRevision;
+  useEffect(() => {
     let filter = {};
     if (ownerType === 'marketing') {
       if (clientId) {
@@ -79,7 +92,9 @@ export default function ContentList({
     } else {
       filter = { ownerType, ownerId };
     }
-    return contentRepository.getPosts(filter);
+    contentRepository.getPosts(filter)
+      .then(setPosts)
+      .catch((err) => console.error('Failed to load posts:', err));
   }, [clientId, selectedClientId, ownerId, ownerType, listRevision]);
 
   const viewingPost = useMemo(() => posts.find((p) => p.id === viewingPostId), [posts, viewingPostId]);
@@ -112,23 +127,31 @@ export default function ContentList({
     setShowComposer(true);
   };
 
-  const handleDelete = (postId) => {
+  const handleDelete = async (postId) => {
     const confirm = window.confirm('Are you sure you want to delete this post entry?');
     if (confirm) {
-      contentRepository.deletePost(postId);
-      setListRevision((prev) => prev + 1);
+      try {
+        await contentRepository.deletePost(postId);
+        setListRevision((prev) => prev + 1);
+      } catch {
+        alert('Failed to delete post.');
+      }
     }
   };
 
-  const handleAssignCampaignShortcut = (postId, campaignId) => {
-    if (campaignId) {
-      contentRepository.assignCampaign(postId, campaignId);
-    } else {
-      contentRepository.removeCampaign(postId);
+  const handleAssignCampaignShortcut = async (postId, campaignId) => {
+    try {
+      if (campaignId) {
+        await contentRepository.assignCampaign(postId, campaignId);
+      } else {
+        await contentRepository.removeCampaign(postId);
+      }
+      setListRevision((prev) => prev + 1);
+      setCampaignAssigningPostId(null);
+      setShowAssignDropdown(false);
+    } catch {
+      alert('Failed to assign campaign.');
     }
-    setListRevision((prev) => prev + 1);
-    setCampaignAssigningPostId(null);
-    setShowAssignDropdown(false);
   };
 
   return (
@@ -168,11 +191,16 @@ export default function ContentList({
                 cursor: 'pointer'
               }}
             >
-              <option value="All">All Clients</option>
-              <option value="nike">Nike</option>
-              <option value="puma">Puma</option>
-              <option value="tesla">Tesla</option>
-              <option value="spotify">Spotify</option>
+              {clients.length === 0 ? (
+                <option value="">No clients available</option>
+              ) : (
+                <>
+                  <option value="All">All Clients</option>
+                  {clients.map((c) => (
+                    <option key={c.id} value={c.id}>{c.organization || c.name}</option>
+                  ))}
+                </>
+              )}
             </select>
           )}
         </div>
@@ -421,12 +449,16 @@ export default function ContentList({
             setViewingPostId(null);
             handleDelete(id);
           }}
-          onCancelSchedule={(id) => {
+          onCancelSchedule={async (id) => {
             const confirm = window.confirm('Are you sure you want to cancel publication scheduling for this post?');
             if (confirm) {
-              contentRepository.updatePost(id, { status: 'draft', scheduledAt: null });
-              setListRevision((prev) => prev + 1);
-              setViewingPostId(null);
+              try {
+                await contentRepository.updatePost(id, { status: 'draft', scheduledAt: null });
+                setListRevision((prev) => prev + 1);
+                setViewingPostId(null);
+              } catch {
+                alert('Failed to cancel schedule.');
+              }
             }
           }}
           onAssignCampaign={(id) => {

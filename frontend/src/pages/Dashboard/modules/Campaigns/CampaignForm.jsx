@@ -5,8 +5,9 @@
  * Handles validation and interacts with campaignRepository.
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { campaignRepository } from './campaignRepository';
+import * as teamService from '../../../../services/teamService';
 import './CampaignForm.css';
 
 const PLATFORM_OPTIONS = [
@@ -35,44 +36,64 @@ const STATUS_OPTIONS = [
   { id: 'completed', label: 'Completed' },
 ];
 
-const CLIENT_OPTIONS = [
-  { id: 'nike', name: 'Nike' },
-  { id: 'puma', name: 'Puma' },
-  { id: 'tesla', name: 'Tesla' },
-  { id: 'spotify', name: 'Spotify' },
-];
-
 export default function CampaignForm({ campaignId, clientId, ownerId, onSave, onCancel }) {
   const isEdit = !!campaignId;
-  const [formData, setFormData] = useState(() => {
-    if (campaignId) {
-      const existing = campaignRepository.getCampaign(campaignId);
-      if (existing) {
-        return {
-          name: existing.name,
-          description: existing.description,
-          startDate: existing.startDate,
-          endDate: existing.endDate,
-          platforms: existing.platforms,
-          goals: existing.goals,
-          status: existing.status,
-          clientId: existing.clientId || '',
-        };
-      }
-    }
-    return {
-      name: '',
-      description: '',
-      startDate: '',
-      endDate: '',
-      platforms: [],
-      goals: [],
-      status: 'draft',
-      clientId: clientId || '',
-    };
+  const [clientOptions, setClientOptions] = useState([]);
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+    startDate: '',
+    endDate: '',
+    platforms: [],
+    goals: [],
+    status: 'draft',
+    clientId: '',
   });
 
+  const isSubmitDisabled = !ownerId && !clientId && clientOptions.length === 0;
+
+  // Load clients
+  useEffect(() => {
+    teamService.getClients()
+      .then((clients) => {
+        setClientOptions(clients.map(c => ({ id: c.id, name: c.organization || c.name })));
+      })
+      .catch((err) => console.error('Failed to load clients:', err));
+  }, []);
+
+  // Load existing campaign details if editing
+  useEffect(() => {
+    if (campaignId) {
+      campaignRepository.getCampaign(campaignId)
+        .then((existing) => {
+          if (existing) {
+            setFormData({
+              name: existing.name || '',
+              description: existing.description || '',
+              startDate: existing.startDate ? new Date(existing.startDate).toISOString().split('T')[0] : (existing.start_date ? new Date(existing.start_date).toISOString().split('T')[0] : ''),
+              endDate: existing.endDate ? new Date(existing.endDate).toISOString().split('T')[0] : (existing.end_date ? new Date(existing.end_date).toISOString().split('T')[0] : ''),
+              platforms: existing.platforms || [],
+              goals: existing.goals || [],
+              status: existing.status || 'draft',
+              clientId: existing.clientId || existing.client_id || '',
+            });
+          }
+        })
+        .catch((err) => console.error(err));
+    }
+  }, [campaignId]);
+
   const [errors, setErrors] = useState({});
+
+  const formatApiError = (err) => {
+    const detail = err.response?.data?.detail;
+    if (!detail) return err.message || 'An error occurred';
+    if (typeof detail === 'string') return detail;
+    if (Array.isArray(detail)) {
+      return detail.map(d => `${d.loc.join('.')}: ${d.msg}`).join('\n');
+    }
+    return JSON.stringify(detail);
+  };
 
   const validate = () => {
     const newErrors = {};
@@ -88,6 +109,10 @@ export default function CampaignForm({ campaignId, clientId, ownerId, onSave, on
 
     if (formData.platforms.length === 0) {
       newErrors.platforms = 'Select at least one social media platform';
+    }
+
+    if (formData.goals.length === 0) {
+      newErrors.goals = 'Select at least one campaign goal';
     }
 
     if (!clientId && !ownerId && !formData.clientId) {
@@ -127,9 +152,12 @@ export default function CampaignForm({ campaignId, clientId, ownerId, onSave, on
         : [...prev.goals, goal];
       return { ...prev, goals: updated };
     });
+    if (errors.goals) {
+      setErrors((prev) => ({ ...prev, goals: null }));
+    }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validate()) return;
 
@@ -139,14 +167,18 @@ export default function CampaignForm({ campaignId, clientId, ownerId, onSave, on
       ownerId: ownerId || null,
     };
 
-    if (isEdit) {
-      campaignRepository.updateCampaign(campaignId, finalData);
-    } else {
-      campaignRepository.createCampaign(finalData);
-    }
-
-    if (onSave) {
-      onSave();
+    try {
+      if (isEdit) {
+        await campaignRepository.updateCampaign(campaignId, finalData);
+      } else {
+        await campaignRepository.createCampaign(finalData);
+      }
+      if (onSave) {
+        onSave();
+      }
+    } catch (err) {
+      console.error('Failed to save campaign:', err);
+      alert(formatApiError(err));
     }
   };
 
@@ -169,13 +201,24 @@ export default function CampaignForm({ campaignId, clientId, ownerId, onSave, on
             onChange={handleTextChange}
             disabled={isEdit}
           >
-            <option value="">Select a Client...</option>
-            {CLIENT_OPTIONS.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
+            {clientOptions.length === 0 ? (
+              <option value="">No clients available</option>
+            ) : (
+              <>
+                <option value="">Select a Client...</option>
+                {clientOptions.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </>
+            )}
           </select>
+          {!clientId && !ownerId && clientOptions.length === 0 && (
+            <div style={{ color: '#ef4444', fontSize: '13px', marginTop: '4px', fontWeight: 500 }}>
+              ⚠️ You must assign at least one client workspace to your team before creating campaigns.
+            </div>
+          )}
           {errors.clientId && <span className="cm-form__error-text">{errors.clientId}</span>}
         </div>
       )}
@@ -281,6 +324,7 @@ export default function CampaignForm({ campaignId, clientId, ownerId, onSave, on
             );
           })}
         </div>
+        {errors.goals && <span className="cm-form__error-text">{errors.goals}</span>}
       </div>
 
       <div className="cm-form__field">
@@ -306,7 +350,12 @@ export default function CampaignForm({ campaignId, clientId, ownerId, onSave, on
         <button type="button" className="cm-form__btn cm-form__btn--cancel" onClick={onCancel}>
           Cancel
         </button>
-        <button type="submit" className="cm-form__btn cm-form__btn--submit">
+        <button
+          type="submit"
+          className="cm-form__btn cm-form__btn--submit"
+          disabled={isSubmitDisabled}
+          style={isSubmitDisabled ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
+        >
           Save Campaign
         </button>
       </div>

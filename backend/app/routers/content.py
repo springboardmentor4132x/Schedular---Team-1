@@ -298,12 +298,17 @@ def create_post(
         media_urls=json.dumps(payload.media_urls),
         platforms=json.dumps(payload.platforms),
         timezone=payload.timezone,
+        campaign_id=payload.campaign_id,
         recurrence_interval=payload.recurrence_interval,
     )
     db.add(post)
     db.add(ActivityLog(user_id=user.id, activity="Created draft"))
     db.commit()
     db.refresh(post)
+    if payload.campaign_id:
+        db.add(CampaignPost(campaign_id=payload.campaign_id, post_id=post.id))
+        db.commit()
+        db.refresh(post)
     return _post_payload(post)
 
 
@@ -330,9 +335,15 @@ def update_post(
         "platforms": json.dumps(payload.platforms),
         "timezone": payload.timezone,
         "client_id": payload.client_id,
+        "campaign_id": payload.campaign_id,
         "recurrence_interval": payload.recurrence_interval,
     }.items():
         setattr(post, name, value)
+    
+    db.query(CampaignPost).filter(CampaignPost.post_id == post.id).delete()
+    if payload.campaign_id:
+        db.add(CampaignPost(campaign_id=payload.campaign_id, post_id=post.id))
+    
     db.commit()
     db.refresh(post)
     return _post_payload(post)
@@ -364,6 +375,11 @@ def patch_post(
             name,
             json.dumps(value) if name in {"media_urls", "platforms"} else value,
         )
+    if "campaign_id" in changes:
+        db.query(CampaignPost).filter(CampaignPost.post_id == post.id).delete()
+        if changes["campaign_id"]:
+            db.add(CampaignPost(campaign_id=changes["campaign_id"], post_id=post.id))
+
     content_type = changes.get("content_type", post.content_type)
     media_urls = changes.get("media_urls", json.loads(post.media_urls))
     if content_type != "text" and not media_urls:

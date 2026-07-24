@@ -5,7 +5,7 @@
  * Displays scheduled or published content list with mock performance reach stats.
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { MdArticle, MdSchedule, MdCheckCircle, MdSearch } from 'react-icons/md';
 import PageContainer from '../../components/PageContainer/PageContainer';
 import StatsCard from '../../components/StatsCard/StatsCard';
@@ -38,14 +38,23 @@ export default function BusinessPostsPage({ mode = 'scheduled', businessClientId
   const [filterPlatform, setFilterPlatform] = useState('All');
   const [viewingPostId, setViewingPostId] = useState(null);
 
-  // Campaigns list for campaigns labels resolving
-  const campaigns = useMemo(() => {
-    return campaignRepository.getCampaigns().filter((c) => c.clientId === businessClientId);
-  }, [businessClientId]);
+  const [campaignsList, setCampaignsList] = useState([]);
+  const [posts, setPosts] = useState([]);
 
-  // Load all client posts
-  const posts = useMemo(() => {
-    return contentRepository.getPosts({ clientId: businessClientId, status: mode });
+  useEffect(() => {
+    campaignRepository.getCampaigns()
+      .then(setCampaignsList)
+      .catch((err) => console.error(err));
+  }, []);
+
+  const campaigns = useMemo(() => {
+    return campaignsList.filter((c) => String(c.clientId) === String(businessClientId) || String(c.client_id) === String(businessClientId));
+  }, [campaignsList, businessClientId]);
+
+  useEffect(() => {
+    contentRepository.getPosts({ clientId: businessClientId, status: mode })
+      .then(setPosts)
+      .catch((err) => console.error(err));
   }, [businessClientId, mode]);
 
   // Statistics

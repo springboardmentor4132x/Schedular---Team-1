@@ -6,8 +6,9 @@
  * campaign metrics, and lists top-performing content derived from contentRepository.
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import * as teamService from '../../../../services/teamService';
 import {
   MdTimeline, MdTrendingUp, MdPeople, MdCheckCircle
 } from 'react-icons/md';
@@ -57,21 +58,33 @@ export default function AnalyticsPage({
   const [activeMetric, setActiveMetric] = useState('reach'); // 'reach' | 'engagement'
   const [filterClientId, setFilterClientId] = useState('All');
 
-  // Retrieve campaigns
+  const [campaignsList, setCampaignsList] = useState([]);
+  const [posts, setPosts] = useState([]);
+  const [clients, setClients] = useState([]);
+
+  useEffect(() => {
+    campaignRepository.getCampaigns()
+      .then(setCampaignsList)
+      .catch((err) => console.error(err));
+
+    teamService.getClients()
+      .then(setClients)
+      .catch((err) => console.error(err));
+  }, []);
+
   const campaigns = useMemo(() => {
-    const all = campaignRepository.getCampaigns();
     if (ownerType === 'marketing' || ownerType === 'business') {
       const activeClientId = clientId || (filterClientId !== 'All' ? filterClientId : null);
       if (activeClientId) {
-        return all.filter((c) => c.clientId === activeClientId);
+        return campaignsList.filter((c) => String(c.clientId) === String(activeClientId) || String(c.client_id) === String(activeClientId));
       }
-      return all;
+      return campaignsList;
     }
-    return all.filter((c) => c.ownerId === ownerId);
-  }, [clientId, filterClientId, ownerId, ownerType]);
+    return campaignsList.filter((c) => c.ownerId === ownerId || c.owner_id === ownerId);
+  }, [campaignsList, clientId, filterClientId, ownerId, ownerType]);
 
   // Load all posts
-  const posts = useMemo(() => {
+  useEffect(() => {
     let filter = {};
     if (ownerType === 'marketing' || ownerType === 'business') {
       if (clientId) {
@@ -82,7 +95,9 @@ export default function AnalyticsPage({
     } else {
       filter = { ownerType, ownerId };
     }
-    return contentRepository.getPosts(filter);
+    contentRepository.getPosts(filter)
+      .then(setPosts)
+      .catch((err) => console.error(err));
   }, [clientId, filterClientId, ownerId, ownerType]);
 
   // Derive metrics from published posts
@@ -239,11 +254,16 @@ export default function AnalyticsPage({
                 fontWeight: 500
               }}
             >
-              <option value="All">All Clients</option>
-              <option value="nike">Nike</option>
-              <option value="puma">Puma</option>
-              <option value="tesla">Tesla</option>
-              <option value="spotify">Spotify</option>
+              {clients.length === 0 ? (
+                <option value="">No clients available</option>
+              ) : (
+                <>
+                  <option value="All">All Clients</option>
+                  {clients.map((c) => (
+                    <option key={c.id} value={c.id}>{c.organization || c.name}</option>
+                  ))}
+                </>
+              )}
             </select>
           )}
           <button

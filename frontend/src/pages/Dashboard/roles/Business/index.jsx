@@ -7,6 +7,7 @@
  */
 
 import { Routes, Route, useNavigate } from 'react-router-dom';
+import { useApp } from '../../../../context/AppContext';
 import PageContainer     from '../../components/PageContainer/PageContainer';
 import ComingSoon        from '../../components/ComingSoon/ComingSoon';
 import BusinessDashboard from './BusinessDashboard';
@@ -30,14 +31,18 @@ function PlaceholderPage({ name }) {
 
 function BusinessCampaignRoutes() {
   const navigate = useNavigate();
+  const { user } = useApp();
+  const businessClientId = user?.id || 'nike';
+  const businessClientName = user?.orgName || user?.fullName || 'Nike';
+
   return (
     <Routes>
       <Route
         index
         element={
           <CampaignList
-            clientId="nike"
-            clientName="Nike"
+            clientId={businessClientId}
+            clientName={businessClientName}
             readOnly={true}
             onOpenDetails={(id) => navigate(id)}
           />
@@ -58,16 +63,20 @@ function BusinessCampaignRoutes() {
 
 // ── Router ────────────────────────────────────────────────────────────────────
 export default function BusinessPages() {
+  const { user } = useApp();
+  const businessClientId = user?.id || 'nike';
+  const businessClientName = user?.orgName || user?.fullName || 'Nike';
+
   return (
     <Routes>
       <Route index                element={<BusinessDashboard />} />
       <Route path="dashboard"     element={<BusinessDashboard />} />
       <Route path="marketing-teams" element={<MarketingTeamsPage />} />
       <Route path="campaigns/*"   element={<BusinessCampaignRoutes />} />
-      <Route path="scheduled"     element={<BusinessPostsPage mode="scheduled" businessClientId="nike" />} />
-      <Route path="published"     element={<BusinessPostsPage mode="published" businessClientId="nike" />} />
-      <Route path="analytics"     element={<AnalyticsPage ownerType="business" clientId="nike" clientName="Nike" readOnly={true} />} />
-      <Route path="reports"       element={<ReportsPage ownerType="business" clientId="nike" clientName="Nike" readOnly={true} />} />
+      <Route path="scheduled"     element={<BusinessPostsPage mode="scheduled" businessClientId={businessClientId} />} />
+      <Route path="published"     element={<BusinessPostsPage mode="published" businessClientId={businessClientId} />} />
+      <Route path="analytics"     element={<AnalyticsPage ownerType="business" clientId={businessClientId} clientName={businessClientName} readOnly={true} />} />
+      <Route path="reports"       element={<ReportsPage ownerType="business" clientId={businessClientId} clientName={businessClientName} readOnly={true} />} />
       {Object.entries(STUB_PAGES).map(([path, name]) => (
         <Route key={path} path={path} element={<PlaceholderPage name={name} />} />
       ))}

@@ -30,6 +30,7 @@ import { getConnectedAccounts } from '../../../../services/socialService';
 import campaignService from '../../../../services/campaignService';
 import postService from '../../../../services/postService';
 import { getDashboardSummary } from '../../../../services/dashboardService';
+import { getTeams } from '../../../../services/teamService';
 import PageContainer   from '../../components/PageContainer/PageContainer';
 import StatsCard       from '../../components/StatsCard/StatsCard';
 import Avatar          from '../../components/Avatar/Avatar';
@@ -110,7 +111,7 @@ function formatScheduleTime(iso) {
 // ─────────────────────────────────────────────────────────────────────────────
 // Section 1 — Welcome Banner
 // ─────────────────────────────────────────────────────────────────────────────
-function WelcomeBanner({ user }) {
+function WelcomeBanner({ user, summary }) {
   const role      = resolveRole(user?.role);
   const firstName = user?.fullName?.split(' ')[0] ?? 'User';
   const lastName  = user?.fullName?.split(' ').slice(1).join(' ') ?? '';
@@ -119,7 +120,7 @@ function WelcomeBanner({ user }) {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
   });
 
-  const activeCampaigns = 0; // Will be driven by summary endpoint ideally
+  const activeCampaigns = summary?.activeCampaigns ?? 0;
 
   return (
     <div className="bd-welcome">
@@ -595,29 +596,61 @@ function QuickInsights() {
 // ─────────────────────────────────────────────────────────────────────────────
 // Section — Managed By Marketing Team
 // ─────────────────────────────────────────────────────────────────────────────
-function ManagedBy() {
+function ManagedBy({ summary }) {
   const navigate = useNavigate();
-  const myTeam = {
-    name: 'Growth Labs Media',
-    profileImage: null,
-    status: 'Approved',
-    activeCampaigns: 3,
-    scheduledPosts: 12,
-    lastActivity: 'Scheduled Instagram Reel today at 6:00 PM',
-  };
+  const [team, setTeam] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getTeams()
+      .then((data) => {
+        if (data && data.length > 0) {
+          setTeam(data[0]);
+        } else {
+          setTeam(null);
+        }
+        setLoading(false);
+      })
+      .catch(() => {
+        setTeam(null);
+        setLoading(false);
+      });
+  }, []);
+
+  if (loading) {
+    return <div className="bd-section-card bd-managed-by">Loading marketing team status...</div>;
+  }
+
+  if (!team) {
+    return (
+      <div className="bd-section-card bd-managed-by" style={{ textAlign: 'center', padding: '24px' }}>
+        <h4 style={{ margin: '0 0 8px 0', color: '#64748b', fontSize: '16px' }}>No Marketing Team Assigned</h4>
+        <p style={{ margin: '0 0 16px 0', fontSize: '14px', color: '#94a3b8' }}>
+          Connect with a professional marketing team to start planning and publishing your content.
+        </p>
+        <button
+          className="bd-managed-by__btn"
+          style={{ float: 'none', display: 'inline-block' }}
+          onClick={() => navigate('/business/marketing-teams')}
+        >
+          Discover Teams
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="bd-section-card bd-managed-by">
       <div className="bd-managed-by__header">
         <div className="bd-managed-by__meta">
           <Avatar
-            profileImage={myTeam.profileImage}
-            firstName={myTeam.name}
+            profileImage={null}
+            firstName={team.name}
             lastName=""
             size="md"
           />
           <div>
-            <h4 className="bd-managed-by__name">{myTeam.name}</h4>
+            <h4 className="bd-managed-by__name">{team.name}</h4>
             <span className="bd-managed-by__status-badge">Managed By</span>
           </div>
         </div>
@@ -630,18 +663,18 @@ function ManagedBy() {
       </div>
       <div className="bd-managed-by__details">
         <div className="bd-managed-by__detail-item">
-          <span className="bd-managed-by__val">{myTeam.activeCampaigns}</span>
+          <span className="bd-managed-by__val">{summary?.activeCampaigns ?? 0}</span>
           <span className="bd-managed-by__lbl">Active Campaigns</span>
         </div>
         <div className="bt-my-team-stat" style={{ borderRight: '1px solid #f3f4f6', paddingRight: '16px' }}>
-          <span className="bd-managed-by__val">{myTeam.scheduledPosts}</span>
+          <span className="bd-managed-by__val">{summary?.scheduledPosts ?? 0}</span>
           <span className="bd-managed-by__lbl">Scheduled Posts</span>
         </div>
         <div className="bd-managed-by__detail-item" style={{ flex: 1, minWidth: '150px' }}>
-          <span className="bd-managed-by__val text-truncate" title={myTeam.lastActivity} style={{ display: 'block', maxWidth: '280px' }}>
-            {myTeam.lastActivity}
+          <span className="bd-managed-by__val text-truncate" title="Active Relationship" style={{ display: 'block', maxWidth: '280px' }}>
+            Active Relationship
           </span>
-          <span className="bd-managed-by__lbl">Last Activity</span>
+          <span className="bd-managed-by__lbl">Status</span>
         </div>
       </div>
     </div>
@@ -655,12 +688,14 @@ export default function BusinessDashboard() {
   const { user } = useApp();
   const [liveAccounts, setLiveAccounts] = useState([]);
   const [stats, setStats] = useState([]);
+  const [summary, setSummary] = useState(null);
 
   // Fetch real connected account status from backend
   useEffect(() => {
     getConnectedAccounts().then(setLiveAccounts).catch(() => setLiveAccounts([]));
     getDashboardSummary().then(data => {
       if (data) {
+        setSummary(data);
         setStats([
           { id: 'campaigns', title: 'Active Campaigns', value: data.activeCampaigns, change: 'Total: ' + data.campaigns, trend: 'up' },
           { id: 'scheduled', title: 'Scheduled Posts', value: data.scheduledPosts, change: 'In Queue', trend: 'neutral' },
@@ -676,10 +711,10 @@ export default function BusinessDashboard() {
   return (
     <PageContainer>
       {/* S1 · Welcome Banner */}
-      <WelcomeBanner user={user} />
+      <WelcomeBanner user={user} summary={summary} />
 
       {/* Collaborating Marketing Team */}
-      <ManagedBy />
+      <ManagedBy summary={summary} />
 
       {/* S2 · KPI Overview Cards */}
       <SectionTitle

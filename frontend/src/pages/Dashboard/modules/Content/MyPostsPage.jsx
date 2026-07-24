@@ -6,7 +6,7 @@
  * and launches PostComposer/PostDetailsModal overlays.
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   MdAdd, MdArticle, MdDrafts, MdSchedule, MdCheckCircle,
   MdLabel, MdDelete, MdEdit, MdSearch
@@ -56,20 +56,29 @@ export default function MyPostsPage({
   const [campaignAssigningPostId, setCampaignAssigningPostId] = useState(null);
   const [showAssignDropdown, setShowAssignDropdown] = useState(false);
 
-  // Retrieve campaigns for campaigns mapping/dropdown
+  const [campaignsList, setCampaignsList] = useState([]);
+  const [posts, setPosts] = useState([]);
+
+  // Retrieve campaigns
+  useEffect(() => {
+    campaignRepository.getCampaigns()
+      .then(setCampaignsList)
+      .catch((err) => console.error('Failed to load campaigns:', err));
+  }, [listRevision]);
+
   const campaigns = useMemo(() => {
-    const all = campaignRepository.getCampaigns();
     if (ownerType === 'marketing') {
-      return all.filter((c) => c.clientId === clientId);
+      return campaignsList.filter((c) => c.clientId === clientId || c.client_id === clientId);
     }
-    return all.filter((c) => c.ownerId === ownerId);
-  }, [clientId, ownerId, ownerType]);
+    return campaignsList.filter((c) => c.ownerId === ownerId || c.owner_id === ownerId);
+  }, [campaignsList, clientId, ownerId, ownerType]);
 
   // Load all posts
-  const posts = useMemo(() => {
-    listRevision;
+  useEffect(() => {
     const filter = ownerType === 'marketing' ? { clientId } : { ownerType, ownerId };
-    return contentRepository.getPosts(filter);
+    contentRepository.getPosts(filter)
+      .then(setPosts)
+      .catch((err) => console.error('Failed to load posts:', err));
   }, [clientId, ownerId, ownerType, listRevision]);
 
   // Stats Card Calculations
@@ -118,23 +127,31 @@ export default function MyPostsPage({
     setShowComposer(true);
   };
 
-  const handleDelete = (postId) => {
+  const handleDelete = async (postId) => {
     const confirm = window.confirm('Are you sure you want to delete this post entry?');
     if (confirm) {
-      contentRepository.deletePost(postId);
-      setListRevision((prev) => prev + 1);
+      try {
+        await contentRepository.deletePost(postId);
+        setListRevision((prev) => prev + 1);
+      } catch {
+        alert('Failed to delete post.');
+      }
     }
   };
 
-  const handleAssignCampaignShortcut = (postId, campaignId) => {
-    if (campaignId) {
-      contentRepository.assignCampaign(postId, campaignId);
-    } else {
-      contentRepository.removeCampaign(postId);
+  const handleAssignCampaignShortcut = async (postId, campaignId) => {
+    try {
+      if (campaignId) {
+        await contentRepository.assignCampaign(postId, campaignId);
+      } else {
+        await contentRepository.removeCampaign(postId);
+      }
+      setListRevision((prev) => prev + 1);
+      setCampaignAssigningPostId(null);
+      setShowAssignDropdown(false);
+    } catch {
+      alert('Failed to assign campaign.');
     }
-    setListRevision((prev) => prev + 1);
-    setCampaignAssigningPostId(null);
-    setShowAssignDropdown(false);
   };
 
   return (
@@ -322,12 +339,16 @@ export default function MyPostsPage({
             setViewingPostId(null);
             handleDelete(id);
           }}
-          onCancelSchedule={(id) => {
+          onCancelSchedule={async (id) => {
             const confirm = window.confirm('Cancel publication schedule?');
             if (confirm) {
-              contentRepository.updatePost(id, { status: 'draft', scheduledAt: null });
-              setListRevision((prev) => prev + 1);
-              setViewingPostId(null);
+              try {
+                await contentRepository.updatePost(id, { status: 'draft', scheduledAt: null });
+                setListRevision((prev) => prev + 1);
+                setViewingPostId(null);
+              } catch {
+                alert('Failed to cancel schedule.');
+              }
             }
           }}
           onAssignCampaign={(id) => {
