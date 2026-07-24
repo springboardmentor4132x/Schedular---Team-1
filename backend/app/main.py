@@ -2,6 +2,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.database import Base, engine
+
+from app.models import post
+from app.models import campaign
+
 from app.routers.auth import router as auth_router
 from app.routers.dashboard import router as dashboard_router
 

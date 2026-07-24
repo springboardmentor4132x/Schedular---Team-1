@@ -1,8 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import axios from "axios";
 import "./CreatePost.css";
 
 function CreatePost() {
+  const location = useLocation();
+  const editPost = location.state?.post;
+
   const [post, setPost] = useState({
     title: "",
     caption: "",
@@ -10,6 +14,17 @@ function CreatePost() {
     platform: "",
     scheduled_time: ""
   });
+  useEffect(() => {
+  if (editPost) {
+    setPost({
+      title: editPost.title,
+      caption: editPost.caption,
+      media_url: editPost.media_url,
+      platform: editPost.platform,
+      scheduled_time: editPost.scheduled_time?.slice(0, 16),
+    });
+  }
+}, [editPost]);
 
   const handleChange = (e) => {
     setPost({
@@ -36,22 +51,35 @@ function CreatePost() {
 
 const schedulePost = async () => {
   try {
-    await axios.post("http://127.0.0.1:8000/posts/", post);
-    alert("Post Scheduled Successfully");
+    if (editPost) {
+      await axios.put(
+        `http://127.0.0.1:8000/posts/${editPost.id}`,
+        post
+      );
+
+      alert("Post Updated Successfully");
+    } else {
+      await axios.post(
+        "http://127.0.0.1:8000/posts/",
+        post
+      );
+
+      alert("Post Scheduled Successfully");
+    }
   } catch (error) {
     console.error(error);
-    alert("Failed to schedule post");
+    alert("Operation Failed");
   }
 };
-
   return (
     <div className="create-post">
-      <h2>Create Post</h2>
+      <h2>{editPost ? "Edit Post" : "Create Post"}</h2>
 
       <input
         type="text"
         name="title"
         placeholder="Title"
+        value={post.title}
         onChange={handleChange}
       />
 
@@ -59,6 +87,7 @@ const schedulePost = async () => {
 
       <textarea
         name="caption"
+        value={post.caption}
         placeholder="Caption"
         onChange={handleChange}
       />
@@ -68,25 +97,30 @@ const schedulePost = async () => {
       <input
         type="text"
         name="media_url"
+        value={post.media_url}
         placeholder="Media URL"
         onChange={handleChange}
       />
 
       <br /><br />
 
-      <select name="platform" onChange={handleChange}>
-        <option value="">Select Platform</option>
-        <option>Instagram</option>
-        <option>Facebook</option>
-        <option>LinkedIn</option>
-        <option>Twitter</option>
-      </select>
-
+      <select
+  name="platform"
+  value={post.platform}
+  onChange={handleChange}
+>
+  <option value="">Select Platform</option>
+  <option value="Instagram">Instagram</option>
+  <option value="Facebook">Facebook</option>
+  <option value="LinkedIn">LinkedIn</option>
+  <option value="Twitter">Twitter</option>
+</select>
       <br /><br />
 
       <input
         type="datetime-local"
         name="scheduled_time"
+        value={post.scheduled_time}
         onChange={handleChange}
       />
 

@@ -9,6 +9,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { MdRefresh, MdCalendarToday } from 'react-icons/md';
 import {
@@ -78,18 +79,34 @@ export default function DashboardHome() {
   const [syncData,   setSyncData]   = useState(null);
   const [platforms,  setPlatforms]  = useState([]);
   const [activity,   setActivity]   = useState([]);
+  const [scheduledPosts, setScheduledPosts] = useState([]);
   const [loading,    setLoading]    = useState(true);
+  const [stats, setStats] = useState({
+  total: 0,
+  drafts: 0,
+  scheduled: 0,
+  published: 0,
+});
+const [search, setSearch] = useState("");
 
   useEffect(() => {
     async function load() {
-      const [dash, accts, acts] = await Promise.all([
+      const [dash, accts, acts, statsRes] = await Promise.all([
         getDashboard(),
         getConnectedAccounts(),
         getActivity(),
+        axios.get("http://127.0.0.1:8000/posts/stats"),
       ]);
+      const postsResponse = await fetch(
+      "http://127.0.0.1:8000/posts?status=scheduled"
+      );
+      const posts = await postsResponse.json();
+
       setSyncData(dash.syncStatus);
       setPlatforms(accts);
       setActivity(acts);
+      setStats(statsRes.data);
+      setScheduledPosts(posts);
       setLoading(false);
     }
     load();
@@ -97,6 +114,52 @@ export default function DashboardHome() {
 
   const firstName      = user?.fullName?.split(' ')[0] ?? 'there';
   const connectedCount = platforms.filter((p) => p.status === 'connected').length;
+  const filteredPosts = scheduledPosts.filter((post) =>
+  post.title.toLowerCase().includes(search.toLowerCase())
+);
+  const handleDelete = async (id) => {
+  try {
+    await axios.delete(`http://127.0.0.1:8000/posts/${id}`);
+
+    setScheduledPosts((prev) =>
+      prev.filter((post) => post.id !== id)
+    );
+
+    setStats((prev) => ({
+      ...prev,
+      total: prev.total - 1,
+      scheduled: prev.scheduled - 1,
+    }));
+  } catch (err) {
+    console.error(err);
+    alert("Failed to delete post");
+  }
+};
+const handleEdit = (post) => {
+  navigate("/create-post", {
+    state: { post },
+  });
+};
+const handlePublish = async (id) => {
+  try {
+    await axios.put(`http://127.0.0.1:8000/posts/${id}/publish`);
+
+    alert("Post Published Successfully");
+
+    setScheduledPosts((prev) =>
+      prev.filter((post) => post.id !== id)
+    );
+
+    setStats((prev) => ({
+      ...prev,
+      scheduled: prev.scheduled - 1,
+      published: prev.published + 1,
+    }));
+  } catch (error) {
+    console.error(error);
+    alert("Failed to publish post");
+  }
+};
 
   return (
     <div className="sp-dash">
@@ -120,7 +183,29 @@ export default function DashboardHome() {
           </p>
         </div>
       </div>
+    <div className="dashboard-stats">
 
+  <div className="stat-card">
+    <h3>Total Posts</h3>
+    <p>{stats.total}</p>
+  </div>
+
+  <div className="stat-card">
+    <h3>Drafts</h3>
+    <p>{stats.drafts}</p>
+  </div>
+
+  <div className="stat-card">
+    <h3>Scheduled</h3>
+    <p>{stats.scheduled}</p>
+  </div>
+
+  <div className="stat-card">
+    <h3>Published</h3>
+    <p>{stats.published}</p>
+  </div>
+
+</div>  
       <div className="sp-dash-grid">
 
         {/* ── Connected Platforms (full-width) ───────────────────── */}
@@ -230,20 +315,63 @@ export default function DashboardHome() {
           <header className="sp-dash-card__header">
             <h2 className="sp-dash-card__title">Upcoming Scheduled Posts</h2>
           </header>
-          <div className="sp-empty-state">
-            <MdCalendarToday className="sp-empty-state__icon" />
-            <p className="sp-empty-state__text">No scheduled posts yet.</p>
-            <p className="sp-empty-state__sub">
-              Once you schedule content, it will appear here.
-            </p>
-            <button
-              className="sp-empty-state__btn"
-              disabled
-              title="Available after backend"
-            >
-              Schedule a Post
-            </button>
-          </div>
+          <input
+  type="text"
+  placeholder="🔍 Search by title..."
+  value={search}
+  onChange={(e) => setSearch(e.target.value)}
+  className="search-box"
+/>
+          {scheduledPosts.length === 0 ? (
+  <div className="sp-empty-state">
+    <MdCalendarToday className="sp-empty-state__icon" />
+    <p className="sp-empty-state__text">No scheduled posts yet.</p>
+  </div>
+) : (
+  <table className="scheduled-table">
+    <thead>
+      <tr>
+        <th>Title</th>
+        <th>Platform</th>
+        <th>Schedule Time</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      {scheduledPosts.map((post) => (
+        <tr key={post.id}>
+          <td>{post.title}</td>
+          <td>{post.platform}</td>
+          <td>{new Date(post.scheduled_time).toLocaleString()}</td>
+
+          <td>
+  <button
+    className="edit-btn"
+    onClick={() => handleEdit(post)}
+  >
+    Edit
+  </button>
+
+  <button
+    className="publish-btn"
+    onClick={() => handlePublish(post.id)}
+  >
+    Publish
+  </button>
+
+  <button
+    className="delete-btn"
+    onClick={() => handleDelete(post.id)}
+  >
+    Delete
+  </button>
+</td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+)}
         </section>
 
       </div>

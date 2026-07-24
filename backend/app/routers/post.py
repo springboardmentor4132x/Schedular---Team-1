@@ -36,6 +36,19 @@ def get_posts(status: Optional[str] = None,
         return db.query(Post).filter(Post.status == status).all()
 
     return db.query(Post).all()
+@router.get("/stats")
+def get_post_stats(db: Session = Depends(get_db)):
+    total = db.query(Post).count()
+    drafts = db.query(Post).filter(Post.status == "draft").count()
+    scheduled = db.query(Post).filter(Post.status == "scheduled").count()
+    published = db.query(Post).filter(Post.status == "published").count()
+
+    return {
+        "total": total,
+        "drafts": drafts,
+        "scheduled": scheduled,
+        "published": published
+    }
 @router.delete("/{post_id}")
 def delete_post(post_id: int, db: Session = Depends(get_db)):
     post = db.query(Post).filter(Post.id == post_id).first()
@@ -65,3 +78,19 @@ def update_post(post_id: int, post: PostCreate, db: Session = Depends(get_db)):
     db.refresh(db_post)
 
     return db_post
+@router.put("/{post_id}/publish")
+def publish_post(post_id: int, db: Session = Depends(get_db)):
+    post = db.query(Post).filter(Post.id == post_id).first()
+
+    if not post:
+        return {"message": "Post not found"}
+
+    post.status = "published"
+
+    db.commit()
+    db.refresh(post)
+
+    return {
+        "message": "Post published successfully",
+        "post": post
+    }

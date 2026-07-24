@@ -47,7 +47,6 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
         Notification(user_id=new_user.id, title="Connect Your Platforms", message="Link your social accounts to start scheduling content.", type="info", is_read=True),
     ])
     db.commit()
-
     access_token = create_access_token(data={"sub": new_user.email})
     return {"access_token": access_token, "token_type": "bearer", "user": new_user}
 

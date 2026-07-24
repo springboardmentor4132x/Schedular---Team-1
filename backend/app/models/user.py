@@ -1,7 +1,7 @@
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, LargeBinary, String, Text
 from sqlalchemy.sql import func
 from app.database import Base
-
+from datetime import datetime
 
 class User(Base):
 
@@ -23,8 +23,7 @@ class User(Base):
 
     organization = Column(String(150))
 
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-
+    created_at = Column(DateTime, default=datetime.utcnow)
 
 class UserProfile(Base):
     __tablename__ = "user_profiles"
@@ -37,8 +36,7 @@ class UserProfile(Base):
     language = Column(String(10), nullable=False, default="en")
     avatar_data = Column(LargeBinary, nullable=True)
     avatar_content_type = Column(String(100), nullable=True)
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
-
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 class UserSettings(Base):
     __tablename__ = "user_settings"
@@ -63,7 +61,7 @@ class Notification(Base):
     message = Column(Text, nullable=False)
     type = Column(String(20), nullable=False, default="info")
     is_read = Column(Boolean, nullable=False, default=False)
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
 
 class SocialAccount(Base):
@@ -89,4 +87,4 @@ class ActivityLog(Base):
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     activity = Column(String(255), nullable=False)
     platform = Column(String(30), nullable=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)

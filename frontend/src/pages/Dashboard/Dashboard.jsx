@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import authService from '../../services/authService';
 import './Dashboard.css';
@@ -13,6 +14,19 @@ const ROLE_LABELS = {
 const Dashboard = () => {
   const navigate = useNavigate();
   const user = authService.getSession();
+  const [stats, setStats] = useState({
+  total: 0,
+  drafts: 0,
+  scheduled: 0,
+  published: 0,
+});
+
+useEffect(() => {
+  axios
+    .get("http://127.0.0.1:8000/posts/stats")
+    .then((res) => setStats(res.data))
+    .catch((err) => console.error(err));
+}, []);
 
   const handleLogout = () => {
     authService.clearSession();
@@ -55,10 +69,27 @@ const Dashboard = () => {
           )}
         </div>
 
-        {/* Placeholder notice */}
-        <p className="dashboard-placeholder">
-          This page is a temporary placeholder until the Dashboard module is implemented.
-        </p>
+        <div className="dashboard-stats">
+  <div className="stat-card">
+    <h3>Total Posts</h3>
+    <p>{stats.total}</p>
+  </div>
+
+  <div className="stat-card">
+    <h3>Drafts</h3>
+    <p>{stats.drafts}</p>
+  </div>
+
+  <div className="stat-card">
+    <h3>Scheduled</h3>
+    <p>{stats.scheduled}</p>
+  </div>
+
+  <div className="stat-card">
+    <h3>Published</h3>
+    <p>{stats.published}</p>
+  </div>
+</div>
 
         {/* Logout */}
         <button className="dashboard-logout-btn" onClick={handleLogout}>

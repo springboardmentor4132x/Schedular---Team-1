@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
 from app.database import Base
 from datetime import datetime
 
@@ -15,3 +15,4 @@ class Post(Base):
     scheduled_time = Column(DateTime, nullable=True)
 
     created_at = Column(DateTime, default=datetime.utcnow)
+    campaign_id = Column(Integer, ForeignKey("campaigns.id"), nullable=True)
