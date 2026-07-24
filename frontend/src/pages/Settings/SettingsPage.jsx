@@ -38,19 +38,19 @@ export default function SettingsPage() {
   const [pwError, setPwError] = useState('');
   const [pwBusy, setPwBusy]   = useState(false);
 
-  useEffect(() => {
-    getSettings()
-      .then((data) => { setSettings(data); setLoading(false); })
-      .catch((err) => {
-        showToast('Failed to load settings from server.');
-        setLoading(false);
-      });
-  }, []);
-
   const showToast = (msg) => {
     setToast(msg);
     setTimeout(() => setToast(''), 3000);
   };
+
+  useEffect(() => {
+    getSettings()
+      .then((data) => { setSettings(data); setLoading(false); })
+      .catch(() => {
+        showToast('Failed to load settings from server.');
+        setLoading(false);
+      });
+  }, []);
 
   const save = async (section, values) => {
     const result = await updateSettings(section, values);

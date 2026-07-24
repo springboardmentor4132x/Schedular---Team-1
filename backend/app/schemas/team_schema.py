@@ -18,7 +18,8 @@ class TeamInvite(BaseModel):
 
 
 class CollaborationRequestCreate(BaseModel):
-    team_id: int
+    team_id: int | None = None
+    business_user_id: int | None = None
     message: str | None = Field(default=None, max_length=1000)
 
 

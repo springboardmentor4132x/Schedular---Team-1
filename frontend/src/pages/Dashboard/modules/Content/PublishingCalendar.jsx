@@ -6,7 +6,7 @@
  * view on mobile screens. Filterable by platform, status, and campaign.
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { MdChevronLeft, MdChevronRight, MdToday, MdCalendarMonth } from 'react-icons/md';
 import PageContainer from '../../components/PageContainer/PageContainer';
@@ -14,6 +14,7 @@ import SectionTitle from '../../components/SectionTitle/SectionTitle';
 import EmptyState from '../../components/EmptyState/EmptyState';
 import { campaignRepository } from '../Campaigns/campaignRepository';
 import { contentRepository } from './contentRepository';
+import * as teamService from '../../../../services/teamService';
 import PostDetailsModal from './PostDetailsModal';
 import './PublishingCalendar.css';
 
@@ -59,22 +60,34 @@ export default function PublishingCalendar({
   // Details Modal
   const [viewingPostId, setViewingPostId] = useState(null);
 
-  // Campaigns list for dropdown
+  const [campaignsList, setCampaignsList] = useState([]);
+  const [rawPosts, setRawPosts] = useState([]);
+  const [clients, setClients] = useState([]);
+
+  // Fetch campaigns, clients, and posts
+  useEffect(() => {
+    campaignRepository.getCampaigns()
+      .then(setCampaignsList)
+      .catch((err) => console.error('Failed to load campaigns:', err));
+
+    teamService.getClients()
+      .then(setClients)
+      .catch((err) => console.error('Failed to load clients:', err));
+  }, [listRevision]);
+
   const campaigns = useMemo(() => {
-    const all = campaignRepository.getCampaigns();
     if (ownerType === 'marketing') {
       const activeClientId = clientId || (filterClientId !== 'All' ? filterClientId : null);
       if (activeClientId) {
-        return all.filter((c) => c.clientId === activeClientId);
+        return campaignsList.filter((c) => String(c.clientId) === String(activeClientId) || String(c.client_id) === String(activeClientId));
       }
-      return all;
+      return campaignsList;
     }
-    return all.filter((c) => c.ownerId === ownerId);
-  }, [clientId, filterClientId, ownerId, ownerType]);
+    return campaignsList.filter((c) => c.ownerId === ownerId || c.owner_id === ownerId);
+  }, [campaignsList, clientId, filterClientId, ownerId, ownerType]);
 
   // Load all posts
-  const rawPosts = useMemo(() => {
-    listRevision;
+  useEffect(() => {
     let filter = {};
     if (ownerType === 'marketing') {
       if (clientId) {
@@ -85,7 +98,9 @@ export default function PublishingCalendar({
     } else {
       filter = { ownerType, ownerId };
     }
-    return contentRepository.getPosts(filter);
+    contentRepository.getPosts(filter)
+      .then(setRawPosts)
+      .catch((err) => console.error('Failed to load posts:', err));
   }, [clientId, filterClientId, ownerId, ownerType, listRevision]);
 
   // Apply filters client-side
@@ -200,11 +215,16 @@ export default function PublishingCalendar({
                 setFilterCampaign('All'); // Reset campaign selection when client changes
               }}
             >
-              <option value="All">All Clients</option>
-              <option value="nike">Nike</option>
-              <option value="puma">Puma</option>
-              <option value="tesla">Tesla</option>
-              <option value="spotify">Spotify</option>
+              {clients.length === 0 ? (
+                <option value="">No clients available</option>
+              ) : (
+                <>
+                  <option value="All">All Clients</option>
+                  {clients.map((c) => (
+                    <option key={c.id} value={c.id}>{c.organization || c.name}</option>
+                  ))}
+                </>
+              )}
             </select>
           )}
 
@@ -367,20 +387,28 @@ export default function PublishingCalendar({
             setViewingPostId(null);
             alert('Reopen Content Scheduling list tab to edit scheduled post values.');
           }}
-          onDelete={(id) => {
+          onDelete={async (id) => {
             const confirm = window.confirm('Are you sure you want to delete this scheduled post?');
             if (confirm) {
-              contentRepository.deletePost(id);
-              setListRevision((prev) => prev + 1);
-              setViewingPostId(null);
+              try {
+                await contentRepository.deletePost(id);
+                setListRevision((prev) => prev + 1);
+                setViewingPostId(null);
+              } catch {
+                alert('Failed to delete post.');
+              }
             }
           }}
-          onCancelSchedule={(id) => {
+          onCancelSchedule={async (id) => {
             const confirm = window.confirm('Are you sure you want to cancel publishing schedule?');
             if (confirm) {
-              contentRepository.updatePost(id, { status: 'draft', scheduledAt: null });
-              setListRevision((prev) => prev + 1);
-              setViewingPostId(null);
+              try {
+                await contentRepository.updatePost(id, { status: 'draft', scheduledAt: null });
+                setListRevision((prev) => prev + 1);
+                setViewingPostId(null);
+              } catch {
+                alert('Failed to cancel schedule.');
+              }
             }
           }}
           readOnly={false}

@@ -383,6 +383,16 @@ def get_dashboard_summary(
     )
     posts = db.query(Post).filter(post_scope)
     campaigns = db.query(Campaign).filter(campaign_scope)
+    
+    clients_count = 0
+    if user.role == "Marketing Team":
+        clients_count = (
+            db.query(ClientAssignment)
+            .join(Team, Team.id == ClientAssignment.team_id)
+            .filter(Team.owner_id == user.id)
+            .count()
+        )
+
     return {
         "role": user.role,
         "campaigns": campaigns.count(),
@@ -396,6 +406,7 @@ def get_dashboard_summary(
         "unreadNotifications": db.query(Notification)
         .filter(Notification.user_id == user.id, Notification.is_read.is_(False))
         .count(),
+        "clients": clients_count,
     }
 
 

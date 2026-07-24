@@ -17,6 +17,7 @@ import MyPostsPage from '../../modules/Content/MyPostsPage';
 import PublishingCalendar from '../../modules/Content/PublishingCalendar';
 import NotificationsPage from '../../modules/Notifications/NotificationsPage';
 import AnalyticsPage from '../../modules/Analytics/AnalyticsPage';
+import { useApp } from '../../../../context/AppContext';
 
 const pages = {};
 
@@ -30,13 +31,15 @@ function PlaceholderPage({ name }) {
 
 function CreatorCampaignRoutes() {
   const navigate = useNavigate();
+  const { user } = useApp();
+  const creatorUserId = user?.id || null;
   return (
     <Routes>
       <Route
         index
         element={
           <CampaignList
-            ownerId="creator-user-id"
+            ownerId={creatorUserId}
             onOpenDetails={(id) => navigate(id)}
           />
         }
@@ -54,6 +57,9 @@ function CreatorCampaignRoutes() {
 }
 
 export default function CreatorPages() {
+  const { user } = useApp();
+  const creatorUserId = user?.id || null;
+
   return (
     <Routes>
       <Route index element={<CreatorDashboard />} />
@@ -61,15 +67,15 @@ export default function CreatorPages() {
       <Route path="campaigns/*" element={<CreatorCampaignRoutes />} />
       <Route
         path="scheduling"
-        element={<ContentList ownerId="creator-user-id" ownerType="creator" clientId={null} />}
+        element={<ContentList ownerId={creatorUserId} ownerType="creator" clientId={null} />}
       />
       <Route
         path="posts"
-        element={<MyPostsPage ownerId="creator-user-id" ownerType="creator" clientId={null} />}
+        element={<MyPostsPage ownerId={creatorUserId} ownerType="creator" clientId={null} />}
       />
       <Route
         path="calendar"
-        element={<PublishingCalendar ownerId="creator-user-id" ownerType="creator" clientId={null} />}
+        element={<PublishingCalendar ownerId={creatorUserId} ownerType="creator" clientId={null} />}
       />
       <Route
         path="notifications"
@@ -77,7 +83,7 @@ export default function CreatorPages() {
       />
       <Route
         path="analytics"
-        element={<AnalyticsPage ownerId="creator-user-id" ownerType="creator" clientId={null} />}
+        element={<AnalyticsPage ownerId={creatorUserId} ownerType="creator" clientId={null} />}
       />
       {Object.entries(pages).map(([path, name]) => (
         <Route key={path} path={path} element={<PlaceholderPage name={name} />} />

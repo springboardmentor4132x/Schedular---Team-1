@@ -95,19 +95,21 @@ export default function CreatorDashboard() {
   const [notifs, setNotifs] = useState([]);
   const [platforms, setPlatforms] = useState([]);
   const [metrics, setMetrics] = useState({ reach: 0, engagement: 0 });
+  const [summary, setSummary] = useState(null);
 
   useEffect(() => {
     postService.getPosts().then(data => { if (data) setPosts(data); });
     campaignService.getCampaigns().then(data => { if (data) setCampaigns(data); });
     getDashboardSummary().then(data => {
       if (data) {
+        setSummary(data);
         setStats([
-          { id: 'total', title: 'Total Posts', value: data.publishedPosts + data.scheduledPosts + data.draftPosts, change: 'All time', trend: 'neutral' },
-          { id: 'drafts', title: 'Drafts', value: data.draftPosts, change: 'Requires edit', trend: 'up' },
-          { id: 'scheduled', title: 'Scheduled', value: data.scheduledPosts, change: 'In Queue', trend: 'up' },
-          { id: 'published', title: 'Published', value: data.publishedPosts, change: 'Live', trend: 'neutral' },
-          { id: 'campaigns', title: 'Campaigns', value: data.activeCampaigns, change: 'Active', trend: 'up' },
-          { id: 'reviews', title: 'Reviews', value: data.unreadNotifications, change: 'Pending', trend: 'neutral' }
+          { id: 'total', title: 'Total Posts', value: (data.publishedPosts + data.scheduledPosts + data.draftPosts).toString(), change: 'All time', trend: 'neutral' },
+          { id: 'drafts', title: 'Drafts', value: data.draftPosts.toString(), change: 'Requires edit', trend: 'up' },
+          { id: 'scheduled', title: 'Scheduled', value: data.scheduledPosts.toString(), change: 'In Queue', trend: 'up' },
+          { id: 'published', title: 'Published', value: data.publishedPosts.toString(), change: 'Live', trend: 'neutral' },
+          { id: 'campaigns', title: 'Campaigns', value: data.activeCampaigns.toString(), change: 'Active', trend: 'up' },
+          { id: 'reviews', title: 'Reviews', value: data.unreadNotifications.toString(), change: 'Pending', trend: 'neutral' }
         ]);
       }
     });
@@ -138,8 +140,8 @@ export default function CreatorDashboard() {
           <h1 className="cd-welcome__name">{firstName}</h1>
           <span className="cd-welcome__date">{todayStr}</span>
           <p className="cd-welcome__summary">
-            Your content is on track. <strong>3 posts</strong> scheduled for today •{' '}
-            <strong>2 active campaigns</strong> running.
+            Your content is on track. <strong>{summary?.scheduledPosts ?? 0} post(s)</strong> scheduled •{' '}
+            <strong>{summary?.activeCampaigns ?? 0} active campaign(s)</strong> running.
           </p>
         </div>
         <div className="cd-welcome__right">

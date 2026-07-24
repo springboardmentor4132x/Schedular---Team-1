@@ -12,6 +12,7 @@ import { MdCloudUpload, MdClose } from 'react-icons/md';
 import Avatar from '../../components/Avatar/Avatar';
 import { campaignRepository } from '../Campaigns/campaignRepository';
 import { contentRepository } from './contentRepository';
+import * as teamService from '../../../../services/teamService';
 import './PostComposer.css';
 
 const PLATFORM_OPTIONS = [
@@ -21,13 +22,6 @@ const PLATFORM_OPTIONS = [
   { id: 'youtube', label: 'YouTube', connected: true },
   { id: 'x', label: 'X (Twitter)', connected: false },
   { id: 'pinterest', label: 'Pinterest', connected: false },
-];
-
-const CLIENT_OPTIONS = [
-  { id: 'nike', name: 'Nike' },
-  { id: 'puma', name: 'Puma' },
-  { id: 'tesla', name: 'Tesla' },
-  { id: 'spotify', name: 'Spotify' },
 ];
 
 export default function PostComposer({
@@ -41,61 +35,96 @@ export default function PostComposer({
   const navigate = useNavigate();
   const isEdit = !!postId;
 
-  // Load existing post if in edit mode
-  const existing = useMemo(() => {
-    return isEdit ? contentRepository.getPostById(postId) : null;
+  const [clientOptions, setClientOptions] = useState([]);
+  const [campaignsList, setCampaignsList] = useState([]);
+
+  const [selectedClientId, setSelectedClientId] = useState('');
+  const [caption, setCaption] = useState('');
+  const [mediaFiles, setMediaFiles] = useState([]);
+  const [selectedPlatforms, setSelectedPlatforms] = useState([]);
+  const [selectedCampaignId, setSelectedCampaignId] = useState('');
+  const [recurrenceInterval, setRecurrenceInterval] = useState('');
+
+  const [scheduleMode, setScheduleMode] = useState('schedule');
+  const [scheduleDate, setScheduleDate] = useState('');
+  const [scheduleTime, setScheduleTime] = useState('');
+  const [activePreviewTab, setActivePreviewTab] = useState('facebook');
+
+  const isSubmitDisabled = ownerType === 'marketing' && !clientId && clientOptions.length === 0;
+
+  // Fetch client list
+  useEffect(() => {
+    teamService.getClients()
+      .then((clients) => {
+        setClientOptions(clients.map(c => ({ id: c.id, name: c.organization || c.name })));
+      })
+      .catch((err) => console.error('Failed to load clients:', err));
+  }, []);
+
+  // Fetch campaigns
+  useEffect(() => {
+    campaignRepository.getCampaigns()
+      .then(setCampaignsList)
+      .catch((err) => console.error('Failed to load campaigns:', err));
+  }, []);
+
+  // Load existing post details if editing
+  useEffect(() => {
+    if (isEdit) {
+      contentRepository.getPostById(postId)
+        .then((data) => {
+          if (data) {
+            setSelectedClientId(data.clientId || data.client_id || '');
+            setCaption(data.caption || '');
+            
+            // Map mediaUrls to expected frontend format
+            const files = (data.mediaUrls || data.media_urls || []).map((url, i) => {
+              const name = url.split('/').pop();
+              const isVid = name.endsWith('.mp4') || name.endsWith('.webm');
+              return {
+                id: `media-url-${i}`,
+                type: isVid ? 'video' : 'image',
+                name: name,
+                previewUrl: url,
+                size: 0
+              };
+            });
+            setMediaFiles(files);
+            setSelectedPlatforms(data.platforms || []);
+            setSelectedCampaignId(data.campaignId || data.campaign_id || '');
+            setRecurrenceInterval(data.recurrenceInterval || data.recurrence_interval || '');
+
+            if (data.status === 'draft') {
+              setScheduleMode('schedule');
+            } else if (data.scheduledFor || data.scheduled_for) {
+              setScheduleMode('schedule');
+              const dt = new Date(data.scheduledFor || data.scheduled_for);
+              setScheduleDate(dt.toISOString().split('T')[0]);
+              const hh = String(dt.getHours()).padStart(2, '0');
+              const mm = String(dt.getMinutes()).padStart(2, '0');
+              setScheduleTime(`${hh}:${mm}`);
+            } else {
+              setScheduleMode('now');
+            }
+
+            if (data.platforms && data.platforms.length > 0) {
+              setActivePreviewTab(data.platforms[0]);
+            }
+          }
+        })
+        .catch((err) => {
+          console.error(err);
+        });
+    }
   }, [postId, isEdit]);
 
-  const [selectedClientId, setSelectedClientId] = useState(() => existing?.clientId || '');
-
-  // Retrieve campaigns matching role/client
   const campaigns = useMemo(() => {
-    const all = campaignRepository.getCampaigns();
     const activeClientId = clientId || selectedClientId;
     if (ownerType === 'marketing') {
-      return all.filter((c) => c.clientId === activeClientId);
+      return campaignsList.filter((c) => String(c.clientId) === String(activeClientId) || String(c.client_id) === String(activeClientId));
     }
-    return all.filter((c) => c.ownerId === ownerId);
-  }, [clientId, selectedClientId, ownerId, ownerType]);
-
-  // Main post composition states (initialized directly from repository)
-  const [caption, setCaption] = useState(() => existing?.caption || '');
-  const [mediaFiles, setMediaFiles] = useState(() => existing?.media || []);
-  const [selectedPlatforms, setSelectedPlatforms] = useState(() => existing?.platforms || []);
-  const [selectedCampaignId, setSelectedCampaignId] = useState(() => existing?.campaignId || '');
-  const [recurrenceInterval, setRecurrenceInterval] = useState(() => existing?.recurrenceInterval || '');
-
-  const [scheduleMode, setScheduleMode] = useState(() => {
-    if (existing) {
-      if (existing.status === 'draft') return 'schedule';
-      if (existing.scheduledAt) return 'schedule';
-      return 'now';
-    }
-    return 'schedule';
-  });
-
-  const [scheduleDate, setScheduleDate] = useState(() => {
-    if (existing && existing.scheduledAt) {
-      const dt = new Date(existing.scheduledAt);
-      return dt.toISOString().split('T')[0];
-    }
-    return '';
-  });
-
-  const [scheduleTime, setScheduleTime] = useState(() => {
-    if (existing && existing.scheduledAt) {
-      const dt = new Date(existing.scheduledAt);
-      const hh = String(dt.getHours()).padStart(2, '0');
-      const mm = String(dt.getMinutes()).padStart(2, '0');
-      return `${hh}:${mm}`;
-    }
-    return '';
-  });
-
-  const [activePreviewTab, setActivePreviewTab] = useState(() => {
-    if (existing?.platforms?.length > 0) return existing.platforms[0];
-    return 'facebook';
-  });
+    return campaignsList.filter((c) => c.ownerId === ownerId || c.owner_id === ownerId);
+  }, [campaignsList, clientId, selectedClientId, ownerId, ownerType]);
   
   // Validation errors
   const [errors, setErrors] = useState({});
@@ -139,6 +168,7 @@ export default function PostComposer({
         name: file.name,
         previewUrl: URL.createObjectURL(file),
         size: file.size,
+        rawFile: file,
       });
     });
 
@@ -206,7 +236,7 @@ export default function PostComposer({
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSave = (isDraftMode = false) => {
+  const handleSave = async (isDraftMode = false) => {
     if (!validate(isDraftMode)) return;
 
     let scheduledAtVal = null;
@@ -235,13 +265,17 @@ export default function PostComposer({
       scheduledAt: scheduledAtVal,
     };
 
-    if (isEdit) {
-      contentRepository.updatePost(postId, payload);
-    } else {
-      contentRepository.createPost(payload);
+    try {
+      if (isEdit) {
+        await contentRepository.updatePost(postId, payload);
+      } else {
+        await contentRepository.createPost(payload);
+      }
+      if (onSave) onSave();
+    } catch (err) {
+      console.error('Failed to save post:', err);
+      alert(err.response?.data?.detail || err.message || 'Failed to save post.');
     }
-
-    if (onSave) onSave();
   };
 
   const handleCreateCampaignShortcut = () => {
@@ -281,13 +315,24 @@ export default function PostComposer({
                 }}
                 disabled={isEdit}
               >
-                <option value="">Select a Client...</option>
-                {CLIENT_OPTIONS.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
+                {clientOptions.length === 0 ? (
+                  <option value="">No clients available</option>
+                ) : (
+                  <>
+                    <option value="">Select a Client...</option>
+                    {clientOptions.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </>
+                )}
               </select>
+              {!clientId && ownerType === 'marketing' && clientOptions.length === 0 && (
+                <div style={{ color: '#ef4444', fontSize: '13px', marginTop: '4px', fontWeight: 500 }}>
+                  ⚠️ You must assign at least one client workspace to your team before creating content.
+                </div>
+              )}
               {errors.clientId && <span className="cs-composer__err-text">{errors.clientId}</span>}
             </div>
           )}
@@ -575,6 +620,8 @@ export default function PostComposer({
           type="button"
           onClick={() => handleSave(true)}
           className="cs-composer__btn cs-composer__btn--draft"
+          disabled={isSubmitDisabled}
+          style={isSubmitDisabled ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
         >
           Save Draft
         </button>
@@ -582,6 +629,8 @@ export default function PostComposer({
           type="button"
           onClick={() => handleSave(false)}
           className="cs-composer__btn cs-composer__btn--submit"
+          disabled={isSubmitDisabled}
+          style={isSubmitDisabled ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
         >
           {scheduleMode === 'now' ? 'Add to Publishing Queue' : 'Schedule Post'}
         </button>

@@ -10,7 +10,8 @@ import { MdSearch, MdPeople, MdStar, MdCheckCircle, MdOutlineHourglassEmpty } fr
 import Avatar from '../../../components/Avatar/Avatar';
 import PageContainer from '../../../components/PageContainer/PageContainer';
 import SectionTitle from '../../../components/SectionTitle/SectionTitle';
-import { discoverMarketingTeams, sendCollaborationRequest } from '../../../../../services/teamService';
+import { discoverMarketingTeams, sendCollaborationRequest, getTeams, getCollaborationRequests } from '../../../../../services/teamService';
+import { getDashboardSummary } from '../../../../../services/dashboardService';
 import './MarketingTeamsPage.css';
 
 const PLATFORM_CHARS = {
@@ -34,23 +35,6 @@ const PLATFORM_COLORS = {
 export default function MarketingTeamsPage() {
   const [myTeam, setMyTeam] = useState(null);
   const [availableTeams, setAvailableTeams] = useState([]);
-
-  useEffect(() => {
-    discoverMarketingTeams().then(data => {
-      setAvailableTeams(data.map(team => ({
-        id: team.id,
-        name: team.name,
-        profileImage: '',
-        rating: 5.0,
-        experience: '2+ years',
-        description: 'Marketing agency',
-        specialties: ['Social Media Management'],
-        supportedPlatforms: ['facebook', 'instagram', 'linkedin', 'x'],
-        activeClientCount: 1,
-        availabilityStatus: 'accepting_requests'
-      })));
-    }).catch(() => setAvailableTeams([]));
-  }, []);
   const [searchVal, setSearchVal] = useState('');
   const [filterExpertise, setFilterExpertise] = useState('All');
   const [filterPlatform, setFilterPlatform] = useState('All');
@@ -63,6 +47,71 @@ export default function MarketingTeamsPage() {
   const [modalTeamName, setModalTeamName] = useState('');
   const [sentRequests, setSentRequests] = useState({}); // { teamId: true }
 
+  const loadData = () => {
+    discoverMarketingTeams().then(data => {
+      if (data) {
+        setAvailableTeams(data.map(team => ({
+          id: team.id,
+          name: team.name,
+          profileImage: '',
+          rating: 5.0,
+          experience: '2+ years',
+          description: 'Marketing agency',
+          specialties: ['Social Media Management'],
+          supportedPlatforms: ['facebook', 'instagram', 'linkedin', 'x'],
+          activeClientCount: 1,
+          availabilityStatus: 'accepting_requests'
+        })));
+      }
+    }).catch(() => setAvailableTeams([]));
+
+    getTeams().then(data => {
+      if (data && data.length > 0) {
+        const team = data[0];
+        setMyTeam({
+          id: team.id,
+          name: team.name,
+          profileImage: '',
+          status: 'Approved',
+          experience: '2+ years',
+          rating: 5.0,
+          specialties: ['Social Media Management'],
+          activeCampaigns: 0,
+          scheduledPosts: 0,
+          lastActivity: 'Active',
+        });
+        
+        getDashboardSummary().then(summary => {
+          if (summary) {
+            setMyTeam(prev => prev ? {
+              ...prev,
+              activeCampaigns: summary.activeCampaigns,
+              scheduledPosts: summary.scheduledPosts,
+            } : null);
+          }
+        }).catch(() => {});
+      } else {
+        setMyTeam(null);
+      }
+    }).catch(() => setMyTeam(null));
+
+    getCollaborationRequests().then(requests => {
+      if (requests) {
+        const sent = {};
+        requests.forEach(r => {
+          if (r.status === 'pending' || r.status === 'accepted') {
+            sent[r.teamId] = true;
+          }
+        });
+        setSentRequests(sent);
+      }
+    }).catch(() => {});
+  };
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
   const handleOpenRequest = (teamId, teamName) => {
     setRequestedTeamId(teamId);
     setModalTeamName(teamName);
@@ -71,8 +120,9 @@ export default function MarketingTeamsPage() {
 
   const handleConfirmRequest = async () => {
     try {
-      await sendCollaborationRequest({ teamId: requestedTeamId, message: "Let's collaborate" });
+      await sendCollaborationRequest({ team_id: requestedTeamId, message: "Let's collaborate" });
       setSentRequests(prev => ({ ...prev, [requestedTeamId]: true }));
+      loadData();
     } catch (err) {
       console.error(err);
     }

@@ -5,41 +5,55 @@
  * Prepares the codebase for easy backend service integration in future phases.
  */
 
-let campaigns = [];
+import campaignService from '../../../../services/campaignService';
 
 export const campaignRepository = {
-  getCampaigns() {
-    return campaigns;
+  async getCampaigns() {
+    return await campaignService.getCampaigns();
   },
-  getCampaign(id) {
-    return campaigns.find(c => c.id === id);
+  
+  async getCampaign(id) {
+    return await campaignService.getCampaign(id);
   },
-  createCampaign(campaignData) {
-    const newCampaign = {
-      ...campaignData,
-      id: `cmp-${Math.random().toString(36).substring(2, 9)}`,
-      progress: 0,
-      totalPosts: 0,
-      scheduledPosts: 0,
-      publishedPosts: 0,
-      draftPosts: 0,
-      assignedPosts: [],
-      createdAt: new Date().toISOString().split('T')[0],
-      updatedAt: new Date().toISOString().split('T')[0],
+  
+  async createCampaign(campaignData) {
+    // Map camelCase to snake_case
+    const backendPayload = {
+      name: campaignData.name,
+      description: campaignData.description || "",
+      objective: (campaignData.goals && campaignData.goals.length > 0) ? campaignData.goals.join(', ') : "",
+      budget: campaignData.budget ? parseFloat(campaignData.budget) : null,
+      category: campaignData.category || null,
+      priority: campaignData.priority || "medium",
+      platforms: campaignData.platforms || [],
+      start_date: campaignData.startDate,
+      end_date: campaignData.endDate,
+      status: campaignData.status || "draft",
+      client_id: campaignData.clientId ? parseInt(campaignData.clientId, 10) : null
     };
-    campaigns = [newCampaign, ...campaigns];
-    return newCampaign;
+    return await campaignService.createCampaign(backendPayload);
   },
-  updateCampaign(id, updatedData) {
-    campaigns = campaigns.map(c => 
-      c.id === id 
-        ? { ...c, ...updatedData, updatedAt: new Date().toISOString().split('T')[0] } 
-        : c
-    );
-    return campaigns.find(c => c.id === id);
+  
+  async updateCampaign(id, updatedData) {
+    const backendPayload = {
+      name: updatedData.name,
+      description: updatedData.description || "",
+      objective: (updatedData.goals && updatedData.goals.length > 0) ? updatedData.goals.join(', ') : "",
+      budget: updatedData.budget ? parseFloat(updatedData.budget) : null,
+      category: updatedData.category || null,
+      priority: updatedData.priority || "medium",
+      platforms: updatedData.platforms || [],
+      start_date: updatedData.startDate,
+      end_date: updatedData.endDate,
+      status: updatedData.status || "draft",
+      client_id: updatedData.clientId ? parseInt(updatedData.clientId, 10) : null
+    };
+    return await campaignService.updateCampaign(id, backendPayload);
   },
-  deleteCampaign(id) {
-    campaigns = campaigns.filter(c => c.id !== id);
+  
+  async deleteCampaign(id) {
+    await campaignService.deleteCampaign(id);
   }
 };
+
 export default campaignRepository;

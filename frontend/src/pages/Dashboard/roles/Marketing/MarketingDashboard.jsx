@@ -41,7 +41,6 @@ const FALLBACK_TODAY_SCHEDULE = [];
 const FALLBACK_MKT_CAMPAIGNS = [];
 const FALLBACK_DRAFTS = [];
 const FALLBACK_QUEUE = [];
-const FALLBACK_MKT_NOTIFICATIONS = [];
 const FALLBACK_WEEKLY_POSTS = [];
 const FALLBACK_MKT_PLATFORM_DIST = [];
 const FALLBACK_MKT_ENGAGEMENT = [];
@@ -113,7 +112,7 @@ function formatAhead(iso) {
 // ─────────────────────────────────────────────────────────────────────────────
 // Section 1 — Welcome Banner
 // ─────────────────────────────────────────────────────────────────────────────
-function WelcomeBanner({ user }) {
+function WelcomeBanner({ user, summary }) {
   const role      = resolveRole(user?.role);
   const firstName = user?.fullName?.split(' ')[0] ?? 'there';
   const lastName  = user?.fullName?.split(' ').slice(1).join(' ') ?? '';
@@ -121,9 +120,10 @@ function WelcomeBanner({ user }) {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
   });
 
-  const totalClients  = FALLBACK_MKT_STATS.find((s) => s.id === 'clients')?.value ?? '0';
-  const todayQueue    = FALLBACK_MKT_STATS.find((s) => s.id === 'queue')?.value ?? '0';
-  const runCampaigns  = FALLBACK_MKT_STATS.find((s) => s.id === 'campaigns')?.value ?? '0';
+  const totalClients  = summary?.clients ?? 0;
+  const todayQueue    = summary?.scheduledPosts ?? 0;
+  const runCampaigns  = summary?.activeCampaigns ?? 0;
+  const unreadAlerts  = summary?.unreadNotifications ?? 0;
 
   return (
     <div className="md-welcome">
@@ -149,9 +149,7 @@ function WelcomeBanner({ user }) {
             <span className="md-welcome__stat-label">Today's Queue</span>
           </div>
           <div className="md-welcome__stat">
-            <span className="md-welcome__stat-value">
-              {FALLBACK_MKT_NOTIFICATIONS.filter((n) => !n.isRead).length}
-            </span>
+            <span className="md-welcome__stat-value">{unreadAlerts}</span>
             <span className="md-welcome__stat-label">Unread Alerts</span>
           </div>
         </div>
@@ -889,10 +887,12 @@ function QuickActions() {
 export default function MarketingDashboard() {
   const { user } = useApp();
   const [stats, setStats] = useState(FALLBACK_MKT_STATS);
+  const [summary, setSummary] = useState(null);
 
   useEffect(() => {
     getDashboardSummary().then(data => {
       if (data) {
+        setSummary(data);
         setStats([
           { id: 'clients', title: 'Connected Platforms', value: data.connectedPlatforms, change: 'Sync complete', trend: 'up' },
           { id: 'campaigns', title: 'Active Campaigns', value: data.activeCampaigns, change: 'Total: ' + data.campaigns, trend: 'up' },
@@ -908,7 +908,7 @@ export default function MarketingDashboard() {
   return (
     <PageContainer>
       {/* S1 · Welcome Banner */}
-      <WelcomeBanner user={user} />
+      <WelcomeBanner user={user} summary={summary} />
 
       {/* S2 · KPI Stats */}
       <SectionTitle

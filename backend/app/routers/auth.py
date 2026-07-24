@@ -10,7 +10,7 @@ from app.schemas.auth_schema import (
 )
 from app.schemas.dashboard_schema import PasswordChange
 import base64
-from app.models.user import ActivityLog, Notification, RefreshToken, User, UserProfile
+from app.models.user import ActivityLog, Notification, RefreshToken, User, UserProfile, Team, TeamMember
 from app.services.auth_service import (
     ALGORITHM,
     create_access_token,
@@ -66,6 +66,16 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(new_user)
 
+    if new_user.role == "Marketing Team":
+        # Create a default team for this marketing user
+        team_name = f"{new_user.full_name}'s Workspace"
+        default_team = Team(name=team_name, owner_id=new_user.id)
+        db.add(default_team)
+        db.commit()
+        db.refresh(default_team)
+        # Add themselves as a member
+        db.add(TeamMember(team_id=default_team.id, user_id=new_user.id, role="Marketing Team"))
+
     db.add_all(
         [
             ActivityLog(user_id=new_user.id, activity="Account created"),
@@ -99,6 +109,18 @@ def login_user(user: UserLogin, db: Session = Depends(get_db)):
             detail="Invalid email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
+
+    # Bootstrap default team if they are a Marketing Team user and have no teams
+    if db_user.role == "Marketing Team":
+        existing_team = db.query(Team).filter(Team.owner_id == db_user.id).first()
+        if not existing_team:
+            team_name = f"{db_user.full_name}'s Workspace"
+            default_team = Team(name=team_name, owner_id=db_user.id)
+            db.add(default_team)
+            db.commit()
+            db.refresh(default_team)
+            db.add(TeamMember(team_id=default_team.id, user_id=db_user.id, role="Marketing Team"))
+            db.commit()
 
     db.add(ActivityLog(user_id=db_user.id, activity="Signed in"))
     db.commit()

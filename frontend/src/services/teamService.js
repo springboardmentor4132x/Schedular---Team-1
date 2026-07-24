@@ -39,3 +39,8 @@ export async function revokeCollaborationRequest(requestId) {
   const { data } = await api.post(`/collaboration-requests/${requestId}/revoke`);
   return data;
 }
+
+export async function discoverBusinesses() {
+  const { data } = await api.get('/clients/discover');
+  return data;
+}

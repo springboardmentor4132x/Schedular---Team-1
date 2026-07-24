@@ -5,7 +5,7 @@
  * Restricts operational mutations for readOnly users.
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import {
   MdArrowBack, MdFlag, MdTimeline, MdAssignment,
@@ -36,32 +36,35 @@ const PLATFORM_COLORS = {
 export default function CampaignDetails({ campaignId, onBack, readOnly }) {
   const { campaignId: paramCampaignId } = useParams();
   const activeId = campaignId || paramCampaignId;
-  const campaign = campaignRepository.getCampaign(activeId);
+  const [campaign, setCampaign] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [showAddPostModal, setShowAddPostModal] = useState(false);
   const [revision, setRevision] = useState(0);
 
-  // Merge legacy assignedPosts and new repository posts dynamically
+  useEffect(() => {
+    campaignRepository.getCampaign(activeId)
+      .then((data) => {
+        setCampaign(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error('Failed to load campaign:', err);
+        setLoading(false);
+      });
+  }, [activeId, revision]);
+
   const assignedPosts = useMemo(() => {
-    revision; // track force update
     if (!campaign) return [];
+    return campaign.posts || [];
+  }, [campaign]);
 
-    const fromRepo = contentRepository.getPosts({ campaignId: activeId });
-    const legacy = campaign.assignedPosts || [];
-
-    const merged = [...fromRepo];
-    legacy.forEach((leg) => {
-      if (!merged.some((p) => p.id === leg.id)) {
-        merged.push({
-          id: leg.id,
-          caption: leg.caption,
-          platform: leg.platform,
-          status: leg.status,
-          scheduledTime: leg.scheduledTime,
-        });
-      }
-    });
-    return merged;
-  }, [campaign, activeId, revision]);
+  if (loading) {
+    return (
+      <div className="cd-details-empty">
+        <h3>Loading Campaign Details...</h3>
+      </div>
+    );
+  }
 
   if (!campaign) {
     return (
@@ -74,22 +77,17 @@ export default function CampaignDetails({ campaignId, onBack, readOnly }) {
     );
   }
 
-  const handleRemovePost = (postId) => {
+  const handleRemovePost = async (postId) => {
     if (readOnly) return;
     const confirm = window.confirm('Are you sure you want to remove this post from the campaign?');
     if (!confirm) return;
 
-    const repoPost = contentRepository.getPostById(postId);
-    if (repoPost) {
-      contentRepository.removeCampaign(postId);
-    } else {
-      const updatedLegacy = (campaign.assignedPosts || []).filter((p) => p.id !== postId);
-      campaignRepository.updateCampaign(activeId, {
-        assignedPosts: updatedLegacy,
-      });
+    try {
+      await contentRepository.removeCampaign(postId);
+      setRevision((prev) => prev + 1);
+    } catch {
+      alert('Failed to remove post from campaign.');
     }
-
-    setRevision((prev) => prev + 1);
   };
 
   // Determine timeline milestone states

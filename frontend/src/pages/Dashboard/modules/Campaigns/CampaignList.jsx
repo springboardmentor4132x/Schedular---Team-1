@@ -5,7 +5,7 @@
  * and button to create new campaigns (adapted by role permissions).
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { MdSearch, MdFolder, MdCheckCircle, MdSchedule, MdTimeline, MdAdd } from 'react-icons/md';
 import StatsCard from '../../components/StatsCard/StatsCard';
 import SectionTitle from '../../components/SectionTitle/SectionTitle';
@@ -30,17 +30,20 @@ export default function CampaignList({
   // Reload campaigns list on save
   const [listRevision, setListRevision] = useState(0);
 
-  const rawCampaigns = useMemo(() => {
-    // Force refresh tracking
-    listRevision; 
-    const all = campaignRepository.getCampaigns();
-    if (clientId) {
-      return all.filter((c) => c.clientId === clientId);
-    }
-    if (ownerId) {
-      return all.filter((c) => c.ownerId === ownerId);
-    }
-    return all;
+  const [rawCampaigns, setRawCampaigns] = useState([]);
+
+  useEffect(() => {
+    campaignRepository.getCampaigns()
+      .then((all) => {
+        if (clientId) {
+          setRawCampaigns(all.filter((c) => String(c.clientId) === String(clientId) || String(c.client_id) === String(clientId)));
+        } else if (ownerId) {
+          setRawCampaigns(all.filter((c) => String(c.ownerId) === String(ownerId) || String(c.owner_id) === String(ownerId)));
+        } else {
+          setRawCampaigns(all);
+        }
+      })
+      .catch((err) => console.error('Failed to load campaigns:', err));
   }, [clientId, ownerId, listRevision]);
 
   // KPI calculations
