@@ -1,0 +1,22 @@
+/* ── StatusBadge ────────────────────────────────────────────────────── */
+
+.sp-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border-radius: 999px;
+  font-weight: 600;
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+}
+
+.sp-status-badge--sm { font-size: 11px; padding: 2px 8px; }
+.sp-status-badge--md { font-size: 12px; padding: 3px 10px; }
+.sp-status-badge--lg { font-size: 13px; padding: 4px 12px; }
+
+.sp-status-badge__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}

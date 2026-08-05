@@ -1,0 +1,193 @@
+/* ── PlatformStatus ──────────────────────────────────────────────────── */
+
+/* Overview summary bar */
+.ps-overview {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  padding: 20px 24px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.05);
+}
+
+.ps-overview__stat {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ps-overview__icon { font-size: 28px; }
+.ps-overview__icon--success { color: #10b981; }
+.ps-overview__icon--muted   { color: #94a3b8; }
+.ps-overview__icon--warn    { color: #f59e0b; }
+
+.ps-overview__val {
+  display: block;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-h);
+  line-height: 1;
+}
+
+.ps-overview__lbl {
+  display: block;
+  font-size: 12px;
+  color: var(--text);
+  margin-top: 2px;
+}
+
+/* Grid */
+.ps-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+@media (max-width: 1200px) { .ps-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 640px)  { .ps-grid { grid-template-columns: 1fr; } }
+
+/* Card */
+.ps-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-top: 3px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.05);
+  transition: box-shadow 0.15s;
+}
+.ps-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.08); }
+
+.ps-card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.ps-card__identity {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ps-card__icon {
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.ps-card__name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-h);
+}
+
+.ps-card__user {
+  font-size: 12px;
+  color: var(--text);
+}
+
+.ps-card__health-badge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.ps-card__health-icon { font-size: 14px; }
+
+/* Metrics row */
+.ps-card__metrics {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  justify-content: space-around;
+  padding: 14px 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.ps-card__metric {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  flex: 1;
+}
+
+.ps-card__metric-val {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-h);
+  line-height: 1;
+}
+
+.ps-card__metric-lbl {
+  font-size: 10px;
+  color: var(--text);
+  text-align: center;
+}
+
+.ps-card__divider {
+  width: 1px;
+  height: 36px;
+  background: var(--border);
+}
+
+.ps-card__sync {
+  font-size: 12px;
+  color: var(--text);
+}
+
+/* Actions */
+.ps-card__actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.ps-card__btn {
+  flex: 1;
+  min-width: 120px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 9px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  border: 1px solid transparent;
+}
+
+.ps-card__btn--refresh {
+  background: var(--bg);
+  color: #4f46e5;
+  border-color: var(--border);
+}
+.ps-card__btn--refresh:hover { background: var(--accent-bg); border-color: #4f46e5; }
+.ps-card__btn--refresh:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.ps-card__btn--view {
+  background: var(--bg);
+  color: #ef4444;
+  border-color: rgba(239,68,68,0.3);
+}
+.ps-card__btn--view:hover { background: #ef4444; color: #fff; border-color: #ef4444; }
+
+.ps-card__btn--connect {
+  background: #4f46e5;
+  color: #fff;
+  border-color: #4f46e5;
+}
+.ps-card__btn--connect:hover { background: #4338ca; }
+
+@keyframes ps-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.ps-spin { animation: ps-spin 1s linear infinite; }

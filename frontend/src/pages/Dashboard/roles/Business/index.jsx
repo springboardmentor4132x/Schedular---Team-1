@@ -2,8 +2,6 @@
  * roles/Business/index.jsx
  *
  * Business role router.
- * /business/dashboard → BusinessDashboard (full 10-section page)
- * Other routes        → ComingSoon stubs (built in later prompts)
  */
 
 import { Routes, Route, useNavigate } from 'react-router-dom';
@@ -17,6 +15,19 @@ import CampaignDetails from '../../modules/Campaigns/CampaignDetails';
 import BusinessPostsPage from '../../modules/Content/BusinessPostsPage';
 import AnalyticsPage from '../../modules/Analytics/AnalyticsPage';
 import ReportsPage from '../../modules/Reports/ReportsPage';
+
+// ── Module 5: Publishing (view-only for Business) ─────────────────────────
+import PublishingDashboard from '../../modules/Publishing/PublishingDashboard';
+import PublishingLogs      from '../../modules/Publishing/PublishingLogs';
+import PlatformStatus      from '../../modules/Publishing/PlatformStatus';
+
+// ── Module 6: Analytics sub-pages ────────────────────────────────────────
+import AnalyticsDashboard  from '../../modules/Analytics/AnalyticsDashboard';
+import ContentAnalytics    from '../../modules/Analytics/ContentAnalytics';
+import AudienceAnalytics   from '../../modules/Analytics/AudienceAnalytics';
+import CampaignAnalytics   from '../../modules/Analytics/CampaignAnalytics';
+import PlatformComparison  from '../../modules/Analytics/PlatformComparison';
+import PerformanceTrends   from '../../modules/Analytics/PerformanceTrends';
 
 // ── Placeholder stub pages ────────────────────────────────────────────────────
 const STUB_PAGES = {};
@@ -77,9 +88,19 @@ export default function BusinessPages() {
       <Route path="published"     element={<BusinessPostsPage mode="published" businessClientId={businessClientId} />} />
       <Route path="analytics"     element={<AnalyticsPage ownerType="business" clientId={businessClientId} clientName={businessClientName} readOnly={true} />} />
       <Route path="reports"       element={<ReportsPage ownerType="business" clientId={businessClientId} clientName={businessClientName} readOnly={true} />} />
-      {Object.entries(STUB_PAGES).map(([path, name]) => (
-        <Route key={path} path={path} element={<PlaceholderPage name={name} />} />
-      ))}
+
+      {/* ── Module 5: Publishing (view-only for Business) ──────────────── */}
+      <Route path="publishing"           element={<PublishingDashboard ownerType="business" />} />
+      <Route path="publishing/logs"      element={<PublishingLogs      ownerType="business" />} />
+      <Route path="publishing/platforms" element={<PlatformStatus      ownerType="business" />} />
+
+      {/* ── Module 6: Analytics sub-pages ─────────────────────────────── */}
+      <Route path="analytics/overview"   element={<AnalyticsDashboard ownerType="business" />} />
+      <Route path="analytics/content"    element={<ContentAnalytics   ownerType="business" />} />
+      <Route path="analytics/audience"   element={<AudienceAnalytics  ownerType="business" />} />
+      <Route path="analytics/campaigns"  element={<CampaignAnalytics  ownerType="business" />} />
+      <Route path="analytics/platforms"  element={<PlatformComparison ownerType="business" />} />
+      <Route path="analytics/trends"     element={<PerformanceTrends  ownerType="business" />} />
     </Routes>
   );
 }

@@ -1,0 +1,17 @@
+/* ── PlatformBadge ──────────────────────────────────────────────────── */
+
+.sp-platform-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.sp-platform-badge--sm { font-size: 11px; padding: 2px 7px; }
+.sp-platform-badge--md { font-size: 12px; padding: 3px 9px; }
+
+.sp-platform-badge__icon { font-size: 13px; line-height: 1; }
+.sp-platform-badge__label { }

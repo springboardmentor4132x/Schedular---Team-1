@@ -1,0 +1,36 @@
+/* ── SubNav ──────────────────────────────────────────────────────────── */
+
+.sp-subnav {
+  display: flex;
+  gap: 8px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 12px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.sp-subnav__tab {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  text-decoration: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  transition: all 0.15s ease;
+}
+
+.sp-subnav__tab:hover {
+  background: var(--code-bg, #f1f5f9);
+  color: var(--text-h);
+}
+
+.sp-subnav__tab--active {
+  background: var(--accent-bg, rgba(79,70,229,0.1));
+  color: #4f46e5;
+}
+
+/* Dark theme overrides */
+:root[data-theme='dark'] .sp-subnav__tab--active {
+  color: #a5b4fc;
+  background: rgba(165,180,252,0.15);
+}
