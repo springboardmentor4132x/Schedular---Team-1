@@ -10,7 +10,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   MdSchedule, MdCheckCircle, MdListAlt, MdErrorOutline,
-  MdPendingActions, MdCancel, MdAdd, MdRefresh, MdTrendingUp,
+  MdPendingActions, MdCancel, MdAdd, MdRefresh,
 } from 'react-icons/md';
 import PageContainer   from '../../components/PageContainer/PageContainer';
 import StatsCard       from '../../components/StatsCard/StatsCard';
@@ -48,7 +48,7 @@ function HealthDot({ health }) {
   );
 }
 
-export default function PublishingDashboard({ ownerType = 'marketing', clientId }) {
+export default function PublishingDashboard({ ownerType = 'marketing' }) {
   const navigate = useNavigate();
   const [loading, setLoading]     = useState(true);
   const [stats, setStats]         = useState(null);
@@ -90,6 +90,7 @@ export default function PublishingDashboard({ ownerType = 'marketing', clientId 
     }
   }, []);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps, react-hooks/set-state-in-effect
   useEffect(() => { load(); }, [load]);
 
   const handleRunDue = async () => {

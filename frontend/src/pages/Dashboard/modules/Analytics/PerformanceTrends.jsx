@@ -6,7 +6,6 @@
  * Includes multi-metric overlay and period-over-period comparison.
  */
 
-import { useState, useMemo } from 'react';
 import {
   ResponsiveContainer, ComposedChart, Area, Line, XAxis, YAxis,
   CartesianGrid, Tooltip, Legend, BarChart, Bar,
@@ -16,7 +15,8 @@ import PageContainer from '../../components/PageContainer/PageContainer';
 import StatsCard     from '../../components/StatsCard/StatsCard';
 import SectionTitle  from '../../components/SectionTitle/SectionTitle';
 import SubNav        from './components/SubNav';
-import { generateTrendData } from './analyticsMockData';
+import { useState, useEffect } from 'react';
+import analyticsService from '../../../../services/analyticsService';
 import './PerformanceTrends.css';
 
 const DATE_RANGES = [
@@ -43,14 +43,29 @@ function formatK(n) {
 }
 
 function sumKey(data, key) { return data.reduce((s, d) => s + (d[key] ?? 0), 0); }
-function avgKey(data, key) { return data.length ? sumKey(data, key) / data.length : 0; }
 
 export default function PerformanceTrends({ ownerType = 'marketing' }) {
   const [range, setRange]       = useState(30);
   const [selected, setSelected] = useState(['reach', 'impressions', 'engagement']);
+  const [currentData, setCurrentData] = useState([]);
+  const [previousData, setPreviousData] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const currentData  = useMemo(() => generateTrendData(range), [range]);
-  const previousData = useMemo(() => generateTrendData(range), []); // simple comparison
+  useEffect(() => {
+    async function fetchData() {
+      setLoading(true);
+      try {
+        const res = await analyticsService.getTrends(range);
+        setCurrentData(res);
+        setPreviousData(res); // using same for now as placeholder for PoP
+      } catch (e) {
+        console.error('Failed to fetch trend analytics', e);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, [range]);
 
   const toggleMetric = (key) => {
     setSelected((prev) =>
@@ -83,6 +98,15 @@ export default function PerformanceTrends({ ownerType = 'marketing' }) {
     const a = document.createElement('a'); a.href = url; a.download = 'performance_trends.csv'; a.click();
     URL.revokeObjectURL(url);
   };
+
+  if (loading) {
+    return (
+      <PageContainer title="Performance Trends" breadcrumb={[ownerType === 'marketing' ? 'Marketing' : 'Creator', 'Analytics', 'Trends']}>
+        <SubNav role={ownerType} />
+        <div style={{ padding: '2rem' }}>Loading trends data...</div>
+      </PageContainer>
+    );
+  }
 
   return (
     <PageContainer

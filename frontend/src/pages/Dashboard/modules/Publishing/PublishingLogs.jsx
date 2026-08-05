@@ -8,7 +8,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { MdSearch, MdFilterList, MdDownload, MdErrorOutline } from 'react-icons/md';
 import PageContainer   from '../../components/PageContainer/PageContainer';
-import SectionTitle    from '../../components/SectionTitle/SectionTitle';
 import LoadingSkeleton from '../../components/LoadingSkeleton/LoadingSkeleton';
 import EmptyState      from '../../components/EmptyState/EmptyState';
 import StatusBadge     from './components/StatusBadge';
@@ -38,7 +37,6 @@ export default function PublishingLogs({ ownerType = 'marketing' }) {
   const [expanded, setExpanded] = useState(null);
 
   useEffect(() => {
-    setLoading(true);
     publishingService.getPublishingLogs()
       .catch(() => mockPublishingLogs)
       .then((data) => {

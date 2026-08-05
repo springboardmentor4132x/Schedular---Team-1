@@ -5,7 +5,7 @@
  * Top performing posts with engagement metrics, sortable table, and sparklines.
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
 } from 'recharts';
@@ -13,7 +13,8 @@ import { MdSort, MdThumbUp, MdChatBubble, MdShare, MdBookmark, MdTouchApp } from
 import PageContainer from '../../components/PageContainer/PageContainer';
 import SectionTitle  from '../../components/SectionTitle/SectionTitle';
 import SubNav        from './components/SubNav';
-import { mockContentAnalytics, PLATFORM_META } from './analyticsMockData';
+import analyticsService from '../../../../services/analyticsService';
+import { PLATFORM_META } from './analyticsMockData';
 import './ContentAnalytics.css';
 
 const SORT_KEYS = [
@@ -46,14 +47,31 @@ function MetricChip({ icon, value, label, color }) {
 
 export default function ContentAnalytics({ ownerType = 'marketing' }) {
   const [sortKey, setSortKey] = useState('reach');
+  const [contentData, setContentData] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchData() {
+      setLoading(true);
+      try {
+        const res = await analyticsService.getContent();
+        setContentData(res);
+      } catch (e) {
+        console.error('Failed to fetch content analytics', e);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, []);
 
   const sorted = useMemo(() => {
-    return [...mockContentAnalytics].sort((a, b) => {
+    return [...contentData].sort((a, b) => {
       const aVal = sortKey === 'engagement' ? a.engagementRate : a[sortKey];
       const bVal = sortKey === 'engagement' ? b.engagementRate : b[sortKey];
       return bVal - aVal;
     });
-  }, [sortKey]);
+  }, [sortKey, contentData]);
 
   // Aggregate metrics for bar chart
   const barChartData = [
@@ -64,12 +82,15 @@ export default function ContentAnalytics({ ownerType = 'marketing' }) {
     { name: 'Clicks',    value: sorted.reduce((s, p) => s + p.clicks, 0)   },
   ];
 
-  const totals = {
-    reach:           sorted.reduce((s, p) => s + p.reach, 0),
-    impressions:     sorted.reduce((s, p) => s + p.impressions, 0),
-    engagement:      sorted.reduce((s, p) => s + p.likes + p.comments + p.shares, 0),
-    engagementRate:  (sorted.reduce((s, p) => s + p.engagementRate, 0) / Math.max(sorted.length, 1)).toFixed(1),
-  };
+
+  if (loading) {
+    return (
+      <PageContainer title="Content Analytics" breadcrumb={[ownerType === 'marketing' ? 'Marketing' : 'Creator', 'Analytics', 'Content']}>
+        <SubNav role={ownerType} />
+        <div style={{ padding: '2rem' }}>Loading content data...</div>
+      </PageContainer>
+    );
+  }
 
   return (
     <PageContainer
