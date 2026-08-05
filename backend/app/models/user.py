@@ -9,6 +9,7 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
 )
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.database import Base
 
@@ -18,22 +19,25 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
-
     full_name = Column(String(100), nullable=False)
-
     email = Column(String(150), unique=True, nullable=False)
-
     phone = Column(String(20), unique=True)
-
     password = Column(String(255), nullable=False)
-
     role = Column(String(50), nullable=False)
-
     country = Column(String(100))
-
     organization = Column(String(150))
-
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    profile = relationship("UserProfile", back_populates="user", uselist=False, cascade="all, delete-orphan")
+    settings = relationship("UserSettings", back_populates="user", uselist=False, cascade="all, delete-orphan")
+    notifications = relationship("Notification", back_populates="user", cascade="all, delete-orphan")
+    notification_preferences = relationship("NotificationPreference", back_populates="user", uselist=False, cascade="all, delete-orphan")
+    social_accounts = relationship("SocialAccount", back_populates="user", cascade="all, delete-orphan")
+    activity_logs = relationship("ActivityLog", back_populates="user", cascade="all, delete-orphan")
+    owned_teams = relationship("Team", back_populates="owner", cascade="all, delete-orphan")
+    team_memberships = relationship("TeamMember", back_populates="user", cascade="all, delete-orphan")
+    refresh_tokens = relationship("RefreshToken", back_populates="user", cascade="all, delete-orphan")
+    client_assignments = relationship("ClientAssignment", back_populates="business_user", cascade="all, delete-orphan")
 
 
 class UserProfile(Base):
@@ -53,6 +57,8 @@ class UserProfile(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
+    user = relationship("User", back_populates="profile")
+
 
 class UserSettings(Base):
     __tablename__ = "user_settings"
@@ -69,6 +75,8 @@ class UserSettings(Base):
     campaign_alerts = Column(Boolean, nullable=False, default=True)
     security_alerts = Column(Boolean, nullable=False, default=True)
 
+    user = relationship("User", back_populates="settings")
+
 
 class Notification(Base):
     __tablename__ = "notifications"
@@ -78,12 +86,41 @@ class Notification(Base):
         Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )
     title = Column(String(200), nullable=False)
-    message = Column(Text, nullable=False)
-    type = Column(String(20), nullable=False, default="info")
+    description = Column(Text, nullable=False)
+    category = Column(String(50), nullable=False, default="System")
+    type = Column(String(50), nullable=False, default="info")
+    delivery_channel = Column(String(20), nullable=False, default="in-app")
     is_read = Column(Boolean, nullable=False, default=False)
     created_at = Column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
+    read_timestamp = Column(DateTime(timezone=True), nullable=True)
+
+    user = relationship("User", back_populates="notifications")
+
+
+class NotificationPreference(Base):
+    __tablename__ = "notification_preferences"
+    id = Column(Integer, primary_key=True)
+    user_id = Column(
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True, unique=True
+    )
+    publishing_notifications = Column(Boolean, nullable=False, default=True)
+    campaign_notifications = Column(Boolean, nullable=False, default=True)
+    account_activity_notifications = Column(Boolean, nullable=False, default=True)
+    team_collaboration_notifications = Column(Boolean, nullable=False, default=True)
+    system_notifications = Column(Boolean, nullable=False, default=True)
+    email_notifications = Column(Boolean, nullable=False, default=True)
+    push_notifications = Column(Boolean, nullable=False, default=False)
+    email_frequency = Column(String(20), nullable=False, default="immediate")
+    created_at = Column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at = Column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+    user = relationship("User", back_populates="notification_preferences")
 
 
 class SocialAccount(Base):
@@ -103,6 +140,8 @@ class SocialAccount(Base):
     refresh_token_encrypted = Column(Text, nullable=True)
     token_expires_at = Column(DateTime(timezone=True), nullable=True)
 
+    user = relationship("User", back_populates="social_accounts")
+
 
 class ActivityLog(Base):
     __tablename__ = "activity_logs"
@@ -117,6 +156,8 @@ class ActivityLog(Base):
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
 
+    user = relationship("User", back_populates="activity_logs")
+
 
 class Team(Base):
     __tablename__ = "teams"
@@ -128,6 +169,10 @@ class Team(Base):
     created_at = Column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
+
+    owner = relationship("User", back_populates="owned_teams")
+    members = relationship("TeamMember", back_populates="team", cascade="all, delete-orphan")
+    client_assignments = relationship("ClientAssignment", back_populates="team", cascade="all, delete-orphan")
 
 
 class TeamMember(Base):
@@ -145,6 +190,9 @@ class TeamMember(Base):
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
 
+    team = relationship("Team", back_populates="members")
+    user = relationship("User", back_populates="team_memberships")
+
 
 class RefreshToken(Base):
     __tablename__ = "refresh_tokens"
@@ -158,6 +206,8 @@ class RefreshToken(Base):
     created_at = Column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
+
+    user = relationship("User", back_populates="refresh_tokens")
 
 
 class ClientAssignment(Base):
@@ -175,6 +225,9 @@ class ClientAssignment(Base):
     created_at = Column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
+
+    team = relationship("Team", back_populates="client_assignments")
+    business_user = relationship("User", back_populates="client_assignments")
 
 
 class CollaborationRequest(Base):
@@ -195,3 +248,7 @@ class CollaborationRequest(Base):
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
     resolved_at = Column(DateTime(timezone=True), nullable=True)
+
+    team = relationship("Team")
+    business_user = relationship("User", foreign_keys=[business_user_id])
+    requested_by_user = relationship("User", foreign_keys=[requested_by_user_id])

@@ -9,7 +9,6 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MdRefresh, MdLinkOff, MdEdit, MdDelete, MdWarning } from 'react-icons/md';
 import PageContainer   from '../../components/PageContainer/PageContainer';
-import SectionTitle    from '../../components/SectionTitle/SectionTitle';
 import LoadingSkeleton from '../../components/LoadingSkeleton/LoadingSkeleton';
 import EmptyState      from '../../components/EmptyState/EmptyState';
 import StatusBadge     from './components/StatusBadge';
@@ -48,6 +47,7 @@ export default function FailedPosts({ ownerType = 'marketing' }) {
       });
   };
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps, react-hooks/set-state-in-effect
   useEffect(() => { load(); }, []);
 
   const handleRetry = async (postId) => {

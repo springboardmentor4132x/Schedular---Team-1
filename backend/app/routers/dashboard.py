@@ -445,7 +445,7 @@ def get_notifications(
         {
             "id": row.id,
             "title": row.title,
-            "message": row.message,
+            "message": row.description,
             "type": row.type,
             "isRead": row.is_read,
             "createdAt": row.created_at,

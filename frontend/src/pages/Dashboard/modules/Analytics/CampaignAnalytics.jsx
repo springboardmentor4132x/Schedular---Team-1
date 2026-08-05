@@ -5,17 +5,17 @@
  * Detailed performance breakdown per campaign with progress, ROI, and metrics.
  */
 
-import { useState } from 'react';
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis,
-  CartesianGrid, Tooltip, Cell,
+  CartesianGrid, Tooltip,
 } from 'recharts';
 import { MdCampaign, MdTrendingUp, MdCheckCircle, MdHourglassBottom } from 'react-icons/md';
 import PageContainer from '../../components/PageContainer/PageContainer';
 import StatsCard     from '../../components/StatsCard/StatsCard';
 import SectionTitle  from '../../components/SectionTitle/SectionTitle';
 import SubNav        from './components/SubNav';
-import { mockCampaignAnalytics } from './analyticsMockData';
+import { useState, useEffect } from 'react';
+import analyticsService from '../../../../services/analyticsService';
 import './CampaignAnalytics.css';
 
 function formatK(n) {
@@ -35,28 +35,53 @@ const BAR_COLORS = ['#4f46e5', '#0ea5e9', '#10b981', '#f59e0b', '#8b5cf6'];
 
 export default function CampaignAnalytics({ ownerType = 'marketing' }) {
   const [selected, setSelected] = useState(null);
+  const [campaignData, setCampaignData] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const totalReach      = mockCampaignAnalytics.reduce((s, c) => s + c.reach, 0);
-  const totalEngagement = mockCampaignAnalytics.reduce((s, c) => s + c.engagement, 0);
-  const totalPosts      = mockCampaignAnalytics.reduce((s, c) => s + c.posts, 0);
-  const activeCampaigns = mockCampaignAnalytics.filter((c) => c.status === 'active').length;
+  useEffect(() => {
+    async function fetchData() {
+      setLoading(true);
+      try {
+        const res = await analyticsService.getCampaigns();
+        setCampaignData(res);
+      } catch (e) {
+        console.error('Failed to fetch campaign analytics', e);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, []);
+
+  const totalReach      = campaignData.reduce((s, c) => s + c.reach, 0);
+  const totalPosts      = campaignData.reduce((s, c) => s + c.posts, 0);
+  const activeCampaigns = campaignData.filter((c) => c.status === 'active').length;
 
   const kpiCards = [
-    { title: 'Total Campaigns',  value: mockCampaignAnalytics.length, icon: <MdCampaign />,          trend: 'neutral', change: 0 },
+    { title: 'Total Campaigns',  value: campaignData.length, icon: <MdCampaign />,          trend: 'neutral', change: 0 },
     { title: 'Active',           value: activeCampaigns,               icon: <MdHourglassBottom />,   trend: 'up',      change: 2 },
     { title: 'Total Reach',      value: formatK(totalReach),           icon: <MdTrendingUp />,        trend: 'up',      change: 18 },
     { title: 'Total Posts',      value: totalPosts,                    icon: <MdCheckCircle />,       trend: 'up',      change: 6 },
   ];
 
   // Bar chart
-  const reachChartData = mockCampaignAnalytics.map((c) => ({
+  const reachChartData = campaignData.map((c) => ({
     name: c.name.split(' ').slice(0, 2).join(' '),
     Reach: c.reach,
     Engagement: c.engagement,
     Clicks: c.clicks,
   }));
 
-  const selectedCamp = selected ? mockCampaignAnalytics.find((c) => c.id === selected) : null;
+  const selectedCamp = selected ? campaignData.find((c) => c.id === selected) : null;
+
+  if (loading) {
+    return (
+      <PageContainer title="Campaign Analytics" breadcrumb={[ownerType === 'marketing' ? 'Marketing' : 'Creator', 'Analytics', 'Campaigns']}>
+        <SubNav role={ownerType} />
+        <div style={{ padding: '2rem' }}>Loading campaign data...</div>
+      </PageContainer>
+    );
+  }
 
   return (
     <PageContainer
@@ -80,7 +105,7 @@ export default function CampaignAnalytics({ ownerType = 'marketing' }) {
             <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
             <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} tickFormatter={formatK} width={55} />
             <Tooltip formatter={(v) => formatK(v)} />
-            <Bar dataKey="Reach"      fill="#4f46e5" radius={[4,4,0,0]} onClick={(d, i) => setSelected(mockCampaignAnalytics[i].id)} cursor="pointer" />
+            <Bar dataKey="Reach"      fill="#4f46e5" radius={[4,4,0,0]} onClick={(d, i) => setSelected(campaignData[i].id)} cursor="pointer" />
             <Bar dataKey="Engagement" fill="#10b981" radius={[4,4,0,0]} />
           </BarChart>
         </ResponsiveContainer>
@@ -154,7 +179,7 @@ export default function CampaignAnalytics({ ownerType = 'marketing' }) {
               </tr>
             </thead>
             <tbody>
-              {mockCampaignAnalytics.map((c, i) => {
+              {campaignData.map((c, i) => {
                 const sc = STATUS_CONFIG[c.status] ?? STATUS_CONFIG.draft;
                 return (
                   <tr

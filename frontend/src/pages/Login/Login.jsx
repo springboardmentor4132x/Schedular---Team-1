@@ -27,6 +27,7 @@ const Login = () => {
     mode: 'onTouched',
   });
 
+  // eslint-disable-next-line react-hooks/incompatible-library
   const emailVal = watch('email');
   const passwordVal = watch('password');
   const isDisabled = !emailVal.trim() || !passwordVal || isLoading;

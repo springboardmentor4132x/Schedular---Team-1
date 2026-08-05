@@ -9,7 +9,6 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MdSearch, MdFilterList, MdEdit, MdDelete, MdRefresh } from 'react-icons/md';
 import PageContainer   from '../../components/PageContainer/PageContainer';
-import SectionTitle    from '../../components/SectionTitle/SectionTitle';
 import LoadingSkeleton from '../../components/LoadingSkeleton/LoadingSkeleton';
 import EmptyState      from '../../components/EmptyState/EmptyState';
 import StatusBadge     from './components/StatusBadge';
@@ -40,7 +39,6 @@ export default function PublishingQueue({ ownerType = 'marketing' }) {
   const [page, setPage]           = useState(1);
 
   useEffect(() => {
-    setLoading(true);
     publishingService.getQueue()
       .catch(() => mockQueuePosts)
       .then((data) => { setItems(data); setLoading(false); });

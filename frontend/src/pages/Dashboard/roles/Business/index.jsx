@@ -6,8 +6,6 @@
 
 import { Routes, Route, useNavigate } from 'react-router-dom';
 import { useApp } from '../../../../context/AppContext';
-import PageContainer     from '../../components/PageContainer/PageContainer';
-import ComingSoon        from '../../components/ComingSoon/ComingSoon';
 import BusinessDashboard from './BusinessDashboard';
 import MarketingTeamsPage from './MarketingTeams/MarketingTeamsPage';
 import CampaignList from '../../modules/Campaigns/CampaignList';
@@ -29,16 +27,7 @@ import CampaignAnalytics   from '../../modules/Analytics/CampaignAnalytics';
 import PlatformComparison  from '../../modules/Analytics/PlatformComparison';
 import PerformanceTrends   from '../../modules/Analytics/PerformanceTrends';
 
-// ── Placeholder stub pages ────────────────────────────────────────────────────
-const STUB_PAGES = {};
 
-function PlaceholderPage({ name }) {
-  return (
-    <PageContainer title={name} breadcrumb={['Business', name]}>
-      <ComingSoon pageName={name} />
-    </PageContainer>
-  );
-}
 
 function BusinessCampaignRoutes() {
   const navigate = useNavigate();

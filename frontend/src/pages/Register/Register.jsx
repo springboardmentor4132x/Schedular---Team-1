@@ -29,6 +29,7 @@ const Register = () => {
     mode: 'onTouched',
   });
 
+  // eslint-disable-next-line react-hooks/incompatible-library
   const agreed = watch('terms');
 
   const onSubmit = async (data) => {
