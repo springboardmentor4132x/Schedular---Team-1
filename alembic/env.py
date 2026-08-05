@@ -2,19 +2,30 @@ from logging.config import fileConfig
 import sys
 import os
 
-# 1. TELL PYTHON WHERE THE ROOT DIRECTORY IS
+# 1. ADD ROOT DIRECTORY TO SYS.PATH
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 from alembic import context
 
-# 2. IMPORT ALL EXISTING MODELS
-import app.user
+# 2. IMPORT ALL USER & PLATFORM MODELS
+import app.user  # Registers User and PlatformConnection models
 
-# 3. IMPORT YOUR NEW MODELS
+# 3. IMPORT BASE AND ALL CONTENT, PUBLISHING & ANALYTICS MODELS
 from app.database import Base
-from app.content_model import Post, PostMedia, PostTarget, Schedule, PublishingQueue, PublishingLog, ActivityLog
+from app.content_model import (
+    Post,
+    PostMedia,
+    PostTarget,
+    Schedule,
+    PublishingQueue,
+    PublishingLog,
+    PostAnalytics,
+    AudienceAnalytics,
+    CampaignAnalytics,
+    PlatformAnalytics,
+)
 
 # This is the Alembic Config object
 config = context.config
@@ -23,7 +34,7 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# Add your model's MetaData object here
+# Add your model's MetaData object here for autogenerate support
 target_metadata = Base.metadata
 
 
@@ -35,7 +46,7 @@ def run_migrations_offline() -> None:
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
-        render_as_batch=True  # Enables SQLite compatibility
+        render_as_batch=True,  # Enables SQLite compatibility for table alterations
     )
 
     with context.begin_transaction():
@@ -54,7 +65,7 @@ def run_migrations_online() -> None:
         context.configure(
             connection=connection,
             target_metadata=target_metadata,
-            render_as_batch=True  # Enables SQLite compatibility
+            render_as_batch=True,  # Enables SQLite compatibility for table alterations
         )
 
         with context.begin_transaction():
