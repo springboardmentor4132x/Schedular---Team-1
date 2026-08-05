@@ -1,0 +1,77 @@
+/* ── AudienceAnalytics ───────────────────────────────────────────────── */
+
+.aud-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+@media (max-width: 900px) { .aud-kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 480px) { .aud-kpi-grid { grid-template-columns: 1fr; } }
+
+.aud-chart-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.05);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.aud-demo-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+@media (max-width: 800px) { .aud-demo-row { grid-template-columns: 1fr; } }
+
+.aud-chart-card--half { /* used in demo row */ }
+
+/* Pie legend */
+.aud-pie-container { display: flex; flex-direction: column; align-items: center; }
+.aud-pie-legend { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; width: 100%; }
+.aud-pie-legend__item { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.aud-pie-legend__dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.aud-pie-legend__name { flex: 1; color: var(--text-h); }
+.aud-pie-legend__val  { font-weight: 700; color: var(--text-h); }
+
+/* Country bars */
+.aud-country-list { display: flex; flex-direction: column; gap: 10px; }
+.aud-country-row { display: grid; grid-template-columns: 140px 1fr 50px; align-items: center; gap: 12px; }
+.aud-country-name { font-size: 13px; font-weight: 500; color: var(--text-h); }
+.aud-country-bar-wrap { height: 8px; background: var(--border); border-radius: 999px; overflow: hidden; }
+.aud-country-bar { height: 100%; background: linear-gradient(90deg, #4f46e5, #818cf8); border-radius: 999px; transition: width 0.5s ease; }
+.aud-country-pct { font-size: 12px; font-weight: 700; color: var(--text-h); text-align: right; }
+
+/* Hourly heatmap */
+.aud-heatmap {
+  display: grid;
+  grid-template-columns: repeat(24, 1fr);
+  gap: 4px;
+}
+@media (max-width: 768px) {
+  .aud-heatmap { grid-template-columns: repeat(12, 1fr); }
+}
+@media (max-width: 480px) {
+  .aud-heatmap { grid-template-columns: repeat(6, 1fr); }
+}
+
+.aud-heatmap__cell {
+  border-radius: 4px;
+  height: 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding-bottom: 4px;
+  transition: transform 0.1s;
+  cursor: default;
+}
+.aud-heatmap__cell:hover { transform: scaleY(1.05); }
+
+.aud-heatmap__hour {
+  font-size: 9px;
+  color: var(--text);
+  font-weight: 600;
+}

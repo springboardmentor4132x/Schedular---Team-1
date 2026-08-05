@@ -1,0 +1,146 @@
+/* ── CampaignAnalytics ───────────────────────────────────────────────── */
+
+.cam-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+@media (max-width: 900px) { .cam-kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 480px) { .cam-kpi-grid { grid-template-columns: 1fr; } }
+
+.cam-chart-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.05);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.cam-chart-hint { font-size: 12px; color: var(--text); text-align: center; }
+
+/* Detail card */
+.cam-detail-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-top: 3px solid #4f46e5;
+  border-radius: 12px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  box-shadow: 0 4px 16px rgba(79,70,229,0.1);
+  animation: cam-slide-in 0.2s ease;
+}
+@keyframes cam-slide-in { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
+
+.cam-detail-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.cam-detail-card__name {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-h);
+  margin: 0 0 8px;
+}
+
+.cam-detail-card__status {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.cam-detail-card__close {
+  width: 28px; height: 28px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--text);
+  display: flex; align-items: center; justify-content: center;
+}
+.cam-detail-card__close:hover { background: #f1f5f9; }
+
+.cam-detail-card__metrics {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 16px;
+}
+@media (max-width: 800px) { .cam-detail-card__metrics { grid-template-columns: repeat(3, 1fr); } }
+
+.cam-detail-metric {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-align: center;
+}
+.cam-detail-metric__val { font-size: 22px; font-weight: 700; color: var(--text-h); line-height: 1; }
+.cam-detail-metric__lbl { font-size: 11px; color: var(--text); }
+
+.cam-detail-card__progress-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+.cam-detail-card__progress-bar { height: 8px; background: var(--border); border-radius: 999px; overflow: hidden; }
+.cam-detail-card__progress-fill { height: 100%; border-radius: 999px; transition: width 0.5s ease; }
+
+/* Table */
+.cam-table-wrap { overflow-x: auto; }
+
+.cam-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.cam-table th {
+  text-align: left;
+  padding: 10px 14px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.cam-table td {
+  padding: 13px 14px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-h);
+  vertical-align: middle;
+}
+
+.cam-table tr:last-child td { border-bottom: none; }
+.cam-table tr:hover td { background: var(--accent-bg); }
+.cam-table__row--selected td { background: rgba(79,70,229,0.05); }
+
+.cam-table__name { font-weight: 600; }
+.cam-table__status {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+.cam-table__roi { font-weight: 700; }
+
+.cam-mini-bar { width: 80px; height: 6px; background: var(--border); border-radius: 999px; overflow: hidden; margin-bottom: 3px; }
+.cam-mini-bar__fill { height: 100%; border-radius: 999px; }
+.cam-mini-pct { font-size: 11px; color: var(--text); }
