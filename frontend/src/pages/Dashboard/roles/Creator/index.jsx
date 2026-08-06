@@ -5,8 +5,6 @@
  */
 
 import { Routes, Route, useNavigate } from 'react-router-dom';
-import PageContainer from '../../components/PageContainer/PageContainer';
-import ComingSoon    from '../../components/ComingSoon/ComingSoon';
 import CreatorDashboard from './CreatorDashboard';
 import CampaignList from '../../modules/Campaigns/CampaignList';
 import CampaignDetails from '../../modules/Campaigns/CampaignDetails';
@@ -32,15 +30,7 @@ import CampaignAnalytics   from '../../modules/Analytics/CampaignAnalytics';
 import PlatformComparison  from '../../modules/Analytics/PlatformComparison';
 import PerformanceTrends   from '../../modules/Analytics/PerformanceTrends';
 
-const pages = {};
 
-function PlaceholderPage({ name }) {
-  return (
-    <PageContainer title={name} breadcrumb={['Creator', name]}>
-      <ComingSoon pageName={name} />
-    </PageContainer>
-  );
-}
 
 function CreatorCampaignRoutes() {
   const navigate = useNavigate();

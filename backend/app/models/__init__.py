@@ -37,3 +37,9 @@ from .content import (
     AnalyticsMetric,
     Report,
 )
+from .analytics import (
+    PostAnalytics,
+    AudienceAnalytics,
+    CampaignAnalytics,
+    PlatformAnalytics,
+)

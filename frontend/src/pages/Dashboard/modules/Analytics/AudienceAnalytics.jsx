@@ -7,14 +7,15 @@
 
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
-  PieChart, Pie, Cell, BarChart, Bar, Legend,
+  PieChart, Pie, Cell, BarChart, Bar,
 } from 'recharts';
 import { MdPeople, MdTrendingUp, MdTrendingDown, MdPerson } from 'react-icons/md';
 import PageContainer from '../../components/PageContainer/PageContainer';
 import StatsCard     from '../../components/StatsCard/StatsCard';
 import SectionTitle  from '../../components/SectionTitle/SectionTitle';
 import SubNav        from './components/SubNav';
-import { mockAudienceAnalytics } from './analyticsMockData';
+import { useState, useEffect } from 'react';
+import analyticsService from '../../../../services/analyticsService';
 import './AudienceAnalytics.css';
 
 const GENDER_COLORS = ['#4f46e5', '#e879f9', '#94a3b8'];
@@ -41,7 +42,32 @@ function CustomPieLegend({ data, colors }) {
 }
 
 export default function AudienceAnalytics({ ownerType = 'marketing' }) {
-  const d = mockAudienceAnalytics;
+  const [d, setD] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchData() {
+      setLoading(true);
+      try {
+        const res = await analyticsService.getAudience();
+        setD(res);
+      } catch (e) {
+        console.error('Failed to fetch audience analytics', e);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, []);
+
+  if (loading || !d) {
+    return (
+      <PageContainer title="Audience Analytics" breadcrumb={[ownerType === 'marketing' ? 'Marketing' : 'Creator', 'Analytics', 'Audience']}>
+        <SubNav role={ownerType} />
+        <div style={{ padding: '2rem' }}>Loading audience data...</div>
+      </PageContainer>
+    );
+  }
 
   const kpiCards = [
     { title: 'Total Followers',  value: formatK(d.followers),    icon: <MdPeople />,      trend: 'up',   change: 2.2 },

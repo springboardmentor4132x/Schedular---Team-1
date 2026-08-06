@@ -10,11 +10,12 @@ import {
   PolarRadiusAxis, Radar, Tooltip, BarChart, Bar, XAxis, YAxis,
   CartesianGrid, Legend,
 } from 'recharts';
-import { MdCompareArrows } from 'react-icons/md';
 import PageContainer from '../../components/PageContainer/PageContainer';
 import SectionTitle  from '../../components/SectionTitle/SectionTitle';
 import SubNav        from './components/SubNav';
-import { mockPlatformComparison, PLATFORM_META } from './analyticsMockData';
+import { useState, useEffect } from 'react';
+import analyticsService from '../../../../services/analyticsService';
+import { PLATFORM_META } from './analyticsMockData';
 import './PlatformComparison.css';
 
 function formatK(n) {
@@ -33,27 +34,45 @@ const METRICS = [
 ];
 
 export default function PlatformComparison({ ownerType = 'marketing' }) {
-  const platforms = Object.keys(mockPlatformComparison);
+  const [platformData, setPlatformData] = useState({});
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchData() {
+      setLoading(true);
+      try {
+        const res = await analyticsService.getPlatforms();
+        setPlatformData(res);
+      } catch (e) {
+        console.error('Failed to fetch platform analytics', e);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, []);
+
+  const platforms = Object.keys(platformData);
 
   // Table data for all metrics
   const tableRows = METRICS.map(({ key, label }) => {
     const row = { metric: label };
-    const values = platforms.map((p) => mockPlatformComparison[p][key] ?? 0);
-    const max = Math.max(...values);
+    const values = platforms.map((p) => platformData[p][key] ?? 0);
+    const max = Math.max(...values, 0);
     platforms.forEach((p) => {
-      row[p] = mockPlatformComparison[p][key] ?? 0;
+      row[p] = platformData[p][key] ?? 0;
       row[`${p}_best`] = (row[p] === max && max > 0);
     });
     return row;
   });
 
   // Radar chart data (normalized 0-100)
-  const getMax = (key) => Math.max(...platforms.map((p) => mockPlatformComparison[p][key] ?? 0));
+  const getMax = (key) => Math.max(...platforms.map((p) => platformData[p][key] ?? 0), 0);
   const radarData = ['reach', 'engagement', 'followers', 'clicks', 'impressions'].map((key) => {
     const maxVal = getMax(key) || 1;
     const entry = { metric: key.charAt(0).toUpperCase() + key.slice(1) };
     platforms.slice(0, 4).forEach((p) => {
-      entry[p] = Math.round(((mockPlatformComparison[p][key] ?? 0) / maxVal) * 100);
+      entry[p] = Math.round(((platformData[p][key] ?? 0) / maxVal) * 100);
     });
     return entry;
   });
@@ -61,12 +80,21 @@ export default function PlatformComparison({ ownerType = 'marketing' }) {
   // Bar chart — reach vs engagement
   const barData = platforms.map((p) => ({
     name: PLATFORM_META[p]?.label ?? p,
-    Reach: mockPlatformComparison[p].reach,
-    Engagement: mockPlatformComparison[p].engagement,
-    Followers: mockPlatformComparison[p].followers,
+    Reach: platformData[p].reach || 0,
+    Engagement: platformData[p].engagement || 0,
+    Followers: platformData[p].followers || 0,
   }));
 
   const PLAT_COLORS = platforms.map((p) => PLATFORM_META[p]?.color ?? '#4f46e5');
+
+  if (loading) {
+    return (
+      <PageContainer title="Platform Comparison" breadcrumb={[ownerType === 'marketing' ? 'Marketing' : 'Creator', 'Analytics', 'Platforms']}>
+        <SubNav role={ownerType} />
+        <div style={{ padding: '2rem' }}>Loading platform comparison...</div>
+      </PageContainer>
+    );
+  }
 
   return (
     <PageContainer
@@ -80,7 +108,7 @@ export default function PlatformComparison({ ownerType = 'marketing' }) {
       <div className="pc-platforms-strip">
         {platforms.map((p) => {
           const meta = PLATFORM_META[p] ?? {};
-          const data = mockPlatformComparison[p];
+          const data = platformData[p] || {};
           return (
             <div key={p} className="pc-plat-card" style={{ borderTopColor: meta.color }}>
               <div className="pc-plat-card__name" style={{ color: meta.color }}>{meta.icon}&nbsp;{meta.label}</div>

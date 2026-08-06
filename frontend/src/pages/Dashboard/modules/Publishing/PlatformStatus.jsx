@@ -13,7 +13,6 @@ import {
   MdRefresh, MdArrowForward,
 } from 'react-icons/md';
 import PageContainer   from '../../components/PageContainer/PageContainer';
-import SectionTitle    from '../../components/SectionTitle/SectionTitle';
 import LoadingSkeleton from '../../components/LoadingSkeleton/LoadingSkeleton';
 import { mockPlatformStatus, PLATFORM_META } from './publishingMockData';
 import SubNav from './components/SubNav';
@@ -58,6 +57,7 @@ export default function PlatformStatus({ ownerType = 'marketing' }) {
       });
   };
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps, react-hooks/set-state-in-effect
   useEffect(() => { load(); }, []);
 
   const handleRefresh = async (platform) => {

@@ -17,6 +17,8 @@ from app.routers.dashboard import router as dashboard_router
 from app.routers.content import router as content_router
 from app.routers.teams import router as teams_router
 from app.routers.insights import router as insights_router
+from app.routers.publishing import router as publishing_router
+from app.routers.analytics import router as analytics_router
 from app.scheduler import start_scheduler, stop_scheduler
 
 app = FastAPI(title="SocialPilot API", version="1.0")
@@ -38,6 +40,8 @@ app.include_router(dashboard_router)
 app.include_router(content_router)
 app.include_router(teams_router)
 app.include_router(insights_router)
+app.include_router(publishing_router)
+app.include_router(analytics_router)
 upload_directory = Path(__file__).resolve().parents[1] / "uploads"
 upload_directory.mkdir(exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=upload_directory), name="uploads")

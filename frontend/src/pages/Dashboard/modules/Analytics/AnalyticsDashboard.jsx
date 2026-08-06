@@ -9,7 +9,7 @@
  * The existing AnalyticsPage.jsx is preserved for backward compatibility.
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid,
   Tooltip, BarChart, Bar, Legend,
@@ -21,14 +21,9 @@ import {
 import PageContainer   from '../../components/PageContainer/PageContainer';
 import StatsCard       from '../../components/StatsCard/StatsCard';
 import SectionTitle    from '../../components/SectionTitle/SectionTitle';
-import {
-  mockAnalyticsOverview,
-  generateTrendData,
-  mockCampaignAnalytics,
-  mockPlatformComparison,
-  PLATFORM_META,
-} from './analyticsMockData';
+import { PLATFORM_META } from './analyticsMockData';
 import SubNav from './components/SubNav';
+import analyticsService from '../../../../services/analyticsService';
 import './AnalyticsDashboard.css';
 
 const DATE_RANGES = [
@@ -72,23 +67,59 @@ function CustomAreaTooltip({ active, payload, label }) {
 export default function AnalyticsDashboard({ ownerType = 'marketing' }) {
   const [range, setRange]   = useState(30);
   const [metric, setMetric] = useState('reach');
+  const [dashboardData, setDashboardData] = useState(null);
+  const [campaignData, setCampaignData] = useState([]);
+  const [platformData, setPlatformData] = useState({});
+  const [trendData, setTrendData] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const trendData = useMemo(() => generateTrendData(range), [range]);
+  useEffect(() => {
+    async function fetchData() {
+      setLoading(true);
+      try {
+        const [dashRes, campRes, platRes, trendRes] = await Promise.all([
+          analyticsService.getDashboard({ days: range }),
+          analyticsService.getCampaigns(),
+          analyticsService.getPlatforms(),
+          analyticsService.getTrends({ days: range })
+        ]);
+        setDashboardData(dashRes);
+        setCampaignData(campRes);
+        setPlatformData(platRes);
+        setTrendData(trendRes);
+      } catch (e) {
+        console.error('Failed to fetch analytics', e);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, [range]);
+
   const metricMeta = METRIC_OPTIONS.find((m) => m.key === metric) ?? METRIC_OPTIONS[0];
 
+  if (loading || !dashboardData) {
+    return (
+      <PageContainer title="Analytics Overview" breadcrumb={[ownerType === 'marketing' ? 'Marketing' : 'Creator', 'Analytics', 'Overview']}>
+        <SubNav role={ownerType} />
+        <div style={{ padding: '2rem' }}>Loading analytics...</div>
+      </PageContainer>
+    );
+  }
+
   const kpiCards = [
-    { title: 'Total Reach',      value: formatK(mockAnalyticsOverview.totalReach),       icon: <MdPeople />,      trend: 'up',    change: 14 },
-    { title: 'Total Impressions',value: formatK(mockAnalyticsOverview.totalImpressions),  icon: <MdTimeline />,    trend: 'up',    change: 9  },
-    { title: 'Engagement',       value: formatK(mockAnalyticsOverview.totalEngagement),   icon: <MdTrendingUp />,  trend: 'up',    change: 6  },
-    { title: 'Engagement Rate',  value: formatPct(mockAnalyticsOverview.overallEngagementRate), icon: <MdCheckCircle />, trend: 'up', change: 1.2 },
-    { title: 'Likes',            value: formatK(mockAnalyticsOverview.totalLikes),         icon: <MdThumbUp />,     trend: 'up',    change: 8  },
-    { title: 'Comments',         value: formatK(mockAnalyticsOverview.totalComments),      icon: <MdChatBubble />,  trend: 'up',    change: 4  },
-    { title: 'Shares',           value: formatK(mockAnalyticsOverview.totalShares),        icon: <MdShare />,       trend: 'up',    change: 3  },
-    { title: 'Link Clicks',      value: formatK(mockAnalyticsOverview.totalClicks),        icon: <MdTouchApp />,       trend: 'neutral', change: 0 },
+    { title: 'Total Reach',      value: formatK(dashboardData.totalReach),       icon: <MdPeople />,      trend: 'up',    change: 14 },
+    { title: 'Total Impressions',value: formatK(dashboardData.totalImpressions),  icon: <MdTimeline />,    trend: 'up',    change: 9  },
+    { title: 'Engagement',       value: formatK(dashboardData.totalEngagement),   icon: <MdTrendingUp />,  trend: 'up',    change: 6  },
+    { title: 'Engagement Rate',  value: formatPct(dashboardData.overallEngagementRate), icon: <MdCheckCircle />, trend: 'up', change: 1.2 },
+    { title: 'Likes',            value: formatK(dashboardData.totalLikes),         icon: <MdThumbUp />,     trend: 'up',    change: 8  },
+    { title: 'Comments',         value: formatK(dashboardData.totalComments),      icon: <MdChatBubble />,  trend: 'up',    change: 4  },
+    { title: 'Shares',           value: formatK(dashboardData.totalShares),        icon: <MdShare />,       trend: 'up',    change: 3  },
+    { title: 'Link Clicks',      value: formatK(dashboardData.totalClicks),        icon: <MdTouchApp />,       trend: 'neutral', change: 0 },
   ];
 
   // Platform comparison data for bar chart
-  const platChartData = Object.entries(mockPlatformComparison).map(([key, val]) => ({
+  const platChartData = Object.entries(platformData).map(([key, val]) => ({
     name: PLATFORM_META[key]?.label ?? key,
     Reach: val.reach,
     Engagement: val.engagement,
@@ -222,7 +253,7 @@ export default function AnalyticsDashboard({ ownerType = 'marketing' }) {
               </tr>
             </thead>
             <tbody>
-              {mockCampaignAnalytics.map((c) => (
+              {campaignData.map((c) => (
                 <tr key={c.id}>
                   <td className="an2-camp-name">{c.name}</td>
                   <td>
