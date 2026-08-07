@@ -7,6 +7,7 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
+    Boolean,
 )
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -138,11 +139,13 @@ class AnalyticsMetric(Base):
         Integer, ForeignKey("posts.id", ondelete="CASCADE"), nullable=False, index=True
     )
     platform = Column(String(30), nullable=False)
-    reach = Column(Integer, nullable=False, default=0)
-    impressions = Column(Integer, nullable=False, default=0)
-    reactions = Column(Integer, nullable=False, default=0)
-    comments = Column(Integer, nullable=False, default=0)
-    shares = Column(Integer, nullable=False, default=0)
+    reach = Column(Integer, nullable=True, default=0)
+    impressions = Column(Integer, nullable=True, default=0)
+    reactions = Column(Integer, nullable=True, default=0)
+    comments = Column(Integer, nullable=True, default=0)
+    shares = Column(Integer, nullable=True, default=0)
+    analytics_available = Column(Boolean, nullable=False, default=True)
+    error_reason = Column(Text, nullable=True)
     recorded_at = Column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

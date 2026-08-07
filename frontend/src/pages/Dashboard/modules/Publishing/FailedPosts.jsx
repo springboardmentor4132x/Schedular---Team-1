@@ -23,6 +23,62 @@ function formatDateTime(iso) {
   return new Date(iso).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
+/**
+ * Classify a backend error string into a user-friendly failure reason.
+ * Mirrors the logic in PostDetailsModal.resolveFailureMessage.
+ */
+function resolveFailureMessage(errorMessage) {
+  if (!errorMessage) return 'Unknown error';
+
+  const msg = String(errorMessage).toLowerCase();
+
+  // ── Network / timeout ────────────────────────────────────────────────────
+  if (msg.includes('readtimeout')) {
+    return 'LinkedIn took too long to respond while uploading media. Please try again.';
+  }
+  if (msg.includes('connecttimeout')) {
+    return 'Unable to reach LinkedIn. Check your internet connection and try again.';
+  }
+  if (msg.includes('timeout')) {
+    return 'LinkedIn took too long to respond. Please try again.';
+  }
+
+  // ── HTTP 401 / token expiry ───────────────────────────────────────────────
+  if (
+    msg.includes('401') ||
+    msg.includes('expired_token') ||
+    msg.includes('invalid_token') ||
+    msg.includes('token expired') ||
+    msg.includes('must reconnect')
+  ) {
+    return 'Your LinkedIn connection has expired. Please reconnect your account.';
+  }
+
+  // ── HTTP 403 — permission denied ─────────────────────────────────────────
+  if (msg.includes('403')) {
+    return "Your LinkedIn account doesn't have permission to perform this action.";
+  }
+
+  // ── HTTP 429 — rate limit ────────────────────────────────────────────────
+  if (msg.includes('429')) {
+    return 'LinkedIn rate limit reached. Please try again later.';
+  }
+
+  // ── HTTP 5xx — LinkedIn server error ─────────────────────────────────────
+  if (
+    msg.includes(' 500') ||
+    msg.includes(' 502') ||
+    msg.includes(' 503') ||
+    msg.includes(' 504') ||
+    msg.includes('error 5')
+  ) {
+    return 'LinkedIn is temporarily unavailable. Please try again in a few minutes.';
+  }
+
+  // ── All other errors — surface the real backend message verbatim ─────────
+  return errorMessage;
+}
+
 export default function FailedPosts({ ownerType = 'marketing' }) {
   const navigate = useNavigate();
   const [posts, setPosts]     = useState([]);
@@ -38,7 +94,7 @@ export default function FailedPosts({ ownerType = 'marketing' }) {
           id: p.id,
           caption: p.caption ?? p.postCaption ?? 'No caption',
           platforms: p.platforms ?? [],
-          failureReason: p.failureReason ?? p.errorMessage ?? 'Unknown error',
+          failureReason: p.failureReason ?? p.errorMessage ?? p.error_message ?? 'Unknown error',
           failedAt: p.failedAt ?? p.updated_at ?? p.scheduled_for,
           retryCount: p.retryCount ?? p.retryAttempts ?? 0,
         }));
@@ -112,7 +168,7 @@ export default function FailedPosts({ ownerType = 'marketing' }) {
                 {/* Error reason */}
                 <div className="fp-card__reason">
                   <MdWarning className="fp-card__reason-icon" />
-                  <span>{post.failureReason}</span>
+                  <span>{resolveFailureMessage(post.failureReason)}</span>
                 </div>
 
                 {/* Metadata */}

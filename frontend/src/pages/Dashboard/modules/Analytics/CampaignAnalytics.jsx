@@ -19,9 +19,13 @@ import analyticsService from '../../../../services/analyticsService';
 import './CampaignAnalytics.css';
 
 function formatK(n) {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000)     return `${(n / 1_000).toFixed(1)}K`;
-  return String(n);
+  if (n === null || n === undefined) return 'N/A';
+  if (typeof n === 'string') return n;
+  if (isNaN(Number(n))) return 'N/A';
+  const num = Number(n);
+  if (num >= 1_000_000) return `${(num / 1_000_000).toFixed(1)}M`;
+  if (num >= 1_000)     return `${(num / 1_000).toFixed(1)}K`;
+  return String(num);
 }
 
 const STATUS_CONFIG = {

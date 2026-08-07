@@ -493,7 +493,7 @@ def request_publish_now(
 
 
 @router.post("/publishing/run-due")
-def run_due_publications(
+async def run_due_publications(
     user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ):
     """Development worker entry point. Deploy this behavior in a real background worker."""
@@ -501,7 +501,7 @@ def run_due_publications(
         raise HTTPException(
             status_code=403, detail="Only administrators can run publishing workers."
         )
-    return {"processed": process_pending_publications(db), "mode": "mock"}
+    return {"processed": await process_pending_publications(db), "mode": "provider"}
 
 
 @router.get("/posts/{post_id}/publishing-logs")

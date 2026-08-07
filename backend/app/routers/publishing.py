@@ -57,6 +57,9 @@ def get_publishing_logs(
     db: Session = Depends(get_db),
 ):
     """Get publishing history and logs."""
+    from app.models.content import PublishingLog
+    from sqlalchemy import desc as _desc
+
     posts = (
         db.query(Post)
         .filter(Post.owner_id == user.id)
@@ -66,7 +69,24 @@ def get_publishing_logs(
         .all()
     )
 
-    # We return the posts format as expected by frontend mock fallback (publishingService.js maps this to an array)
+    # Build a map of post_id → latest PublishingLog so we can surface the real
+    # error_message without an expensive per-row query.
+    post_ids = [p.id for p in posts]
+    if post_ids:
+        latest_logs = (
+            db.query(PublishingLog)
+            .filter(PublishingLog.post_id.in_(post_ids))
+            .order_by(PublishingLog.post_id, _desc(PublishingLog.attempted_at))
+            .all()
+        )
+        # Keep only the most recent log per post
+        log_by_post: dict[int, PublishingLog] = {}
+        for log in latest_logs:
+            if log.post_id not in log_by_post:
+                log_by_post[log.post_id] = log
+    else:
+        log_by_post = {}
+
     return {
         "success": True,
         "message": "Logs retrieved successfully",
@@ -82,7 +102,13 @@ def get_publishing_logs(
                         if isinstance(p.platforms, str)
                         else p.platforms
                     ),
-                    "error_message": None,  # In a full impl, we'd join with PublishingLog
+                    # Surface the real error stored in publishing_logs — never None
+                    # for failed posts that actually went through the provider.
+                    "error_message": (
+                        log_by_post[p.id].error_message
+                        if p.id in log_by_post
+                        else None
+                    ),
                 }
                 for p in posts
             ]
@@ -113,12 +139,12 @@ def get_social_accounts(
 
 
 @router.post("/run-due")
-def trigger_run_due(
+async def trigger_run_due(
     user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ):
     """Trigger the worker to process due posts."""
     try:
-        processed = process_pending_publications(db)
+        processed = await process_pending_publications(db)
         return {
             "success": True,
             "message": f"Publishing worker triggered successfully. Processed {len(processed)} posts.",

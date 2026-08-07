@@ -29,6 +29,67 @@ const PLATFORM_COLORS = {
   pinterest: '#E60023',
 };
 
+/**
+ * Classify a backend error string into a user-friendly message.
+ *
+ * Rules (checked in order):
+ *  1. httpx.ReadTimeout / ConnectTimeout  → network timeout message
+ *  2. 401 / expired_token / invalid_token → token-expired message (and ONLY here)
+ *  3. Everything else                     → show the real error verbatim
+ */
+function resolveFailureMessage(errorMessage) {
+  if (!errorMessage) return 'An unknown error occurred. Please retry or contact support.';
+
+  const msg = String(errorMessage).toLowerCase();
+
+  // ── Network / timeout ────────────────────────────────────────────────────
+  if (msg.includes('readtimeout')) {
+    return 'LinkedIn took too long to respond while uploading media. Please try again.';
+  }
+  if (msg.includes('connecttimeout')) {
+    return 'Unable to reach LinkedIn. Check your internet connection and try again.';
+  }
+  // Generic timeout fallback (covers other httpx timeout variants)
+  if (msg.includes('timeout')) {
+    return 'LinkedIn took too long to respond. Please try again.';
+  }
+
+  // ── HTTP 401 / token expiry ───────────────────────────────────────────────
+  if (
+    msg.includes('401') ||
+    msg.includes('expired_token') ||
+    msg.includes('invalid_token') ||
+    msg.includes('token expired') ||
+    msg.includes('must reconnect')
+  ) {
+    return 'Your LinkedIn connection has expired. Please reconnect your account.';
+  }
+
+  // ── HTTP 403 — permission denied ─────────────────────────────────────────
+  if (msg.includes('403')) {
+    return "Your LinkedIn account doesn't have permission to perform this action.";
+  }
+
+  // ── HTTP 429 — rate limit ────────────────────────────────────────────────
+  if (msg.includes('429')) {
+    return 'LinkedIn rate limit reached. Please try again later.';
+  }
+
+  // ── HTTP 5xx — LinkedIn server error ─────────────────────────────────────
+  if (
+    msg.includes(' 500') ||
+    msg.includes(' 502') ||
+    msg.includes(' 503') ||
+    msg.includes(' 504') ||
+    msg.includes('error 5')
+  ) {
+    return 'LinkedIn is temporarily unavailable. Please try again in a few minutes.';
+  }
+
+  // ── All other errors — surface the real backend message verbatim ─────────
+  return errorMessage;
+}
+
 export default function PostDetailsModal({
   post,
   onClose,
@@ -181,11 +242,11 @@ export default function PostDetailsModal({
               </div>
             )}
 
-            {/* Mock Error Widget for Failed posts */}
+            {/* Error box for failed posts — shows the real backend error, not a hardcoded string */}
             {post.status === 'failed' && (
               <div className="cs-details-modal__error-box">
                 <strong>⚠️ Publishing Failed:</strong>
-                <p>Social token expired. Please reconnect the channel profiles settings and retry posting.</p>
+                <p>{resolveFailureMessage(post.errorMessage ?? post.error_message ?? post.failureReason)}</p>
               </div>
             )}
 

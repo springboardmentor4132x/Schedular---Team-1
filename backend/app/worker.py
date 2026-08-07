@@ -5,18 +5,23 @@ Usage: python -m app.worker --once
 """
 
 import argparse
+import asyncio
 import time
 
 from app.database import SessionLocal
 from app.services.publishing_service import process_pending_publications
 
 
-def run_once() -> list[dict]:
+async def run_once_async() -> list[dict]:
     db = SessionLocal()
     try:
-        return process_pending_publications(db)
+        return await process_pending_publications(db)
     finally:
         db.close()
+
+
+def run_once() -> list[dict]:
+    return asyncio.run(run_once_async())
 
 
 def main() -> None:

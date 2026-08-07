@@ -1,3 +1,4 @@
+import logging
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import func
@@ -17,9 +18,10 @@ from app.models.analytics import (
 from app.models.content import Post, Campaign
 
 router = APIRouter(prefix="/analytics", tags=["Analytics"])
+logger = logging.getLogger(__name__)
 
 
-def generate_trend_data(days=30):
+def generate_trend_data(days=30, platform=None):
     data = []
     now = datetime.datetime.now()
     for i in range(days - 1, -1, -1):
@@ -28,15 +30,15 @@ def generate_trend_data(days=30):
         data.append(
             {
                 "date": label,
-                "reach": round(3000 + math.sin(i * 0.4) * 1200 + random.random() * 800),
-                "impressions": round(
+                "reach": None if platform == "linkedin" else round(3000 + math.sin(i * 0.4) * 1200 + random.random() * 800),
+                "impressions": None if platform == "linkedin" else round(
                     5000 + math.sin(i * 0.3) * 2000 + random.random() * 1200
                 ),
                 "engagement": round(
                     300 + math.sin(i * 0.5) * 100 + random.random() * 80
                 ),
-                "followers": round(42000 + (days - i) * 20 + random.random() * 50),
-                "clicks": round(180 + math.sin(i * 0.6) * 60 + random.random() * 40),
+                "followers": round(42000 + (days - i) * 20 + random.random() * 50) if platform != "linkedin" else None,
+                "clicks": None if platform == "linkedin" else round(180 + math.sin(i * 0.6) * 60 + random.random() * 40),
                 "posts": round(2 + math.floor(random.random() * 4)),
             }
         )
@@ -45,13 +47,19 @@ def generate_trend_data(days=30):
 
 @router.get("")
 @router.get("/dashboard")
-def get_analytics_dashboard(
+async def get_analytics_dashboard(
     platform: str = Query(None),
     campaign_id: int = Query(None),
     days: int = Query(30),
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    if platform == "linkedin":
+        return {
+            "available": False,
+            "reason": "LinkedIn API permissions do not allow analytics retrieval for this application."
+        }
+
     query = db.query(
         func.count(PostAnalytics.id).label("total_posts"),
         func.sum(PostAnalytics.impressions).label("total_impressions"),
@@ -83,8 +91,10 @@ def get_analytics_dashboard(
     plat_res = plat_query.first()
     total_followers = plat_res.followers or 0
 
+    is_linkedin = platform == "linkedin"
+
     overall_er = 0
-    if res.total_reach and res.total_reach > 0:
+    if not is_linkedin and res.total_reach and res.total_reach > 0:
         overall_er = round((total_engagement / res.total_reach) * 100, 2)
 
     return {
@@ -92,26 +102,32 @@ def get_analytics_dashboard(
         "data": {
             "totalPublishedPosts": res.total_posts or 0,
             "totalScheduledPosts": 0,
-            "totalImpressions": res.total_impressions or 0,
-            "totalReach": res.total_reach or 0,
+            "totalImpressions": None if is_linkedin else (res.total_impressions or 0),
+            "totalReach": None if is_linkedin else (res.total_reach or 0),
             "totalEngagement": total_engagement,
             "totalLikes": res.total_likes or 0,
             "totalComments": res.total_comments or 0,
             "totalShares": res.total_shares or 0,
-            "totalClicks": res.total_clicks or 0,
-            "totalFollowers": total_followers,
-            "overallEngagementRate": overall_er,
+            "totalClicks": None if is_linkedin else (res.total_clicks or 0),
+            "totalFollowers": None if is_linkedin else total_followers,
+            "overallEngagementRate": None if is_linkedin else overall_er,
         },
     }
 
 
 @router.get("/content")
-def get_analytics_content(
+async def get_analytics_content(
     platform: str = Query(None),
     campaign_id: int = Query(None),
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    if platform == "linkedin":
+        return {
+            "available": False,
+            "reason": "LinkedIn API permissions do not allow analytics retrieval for this application."
+        }
+
     posts = db.query(Post).filter(Post.status == "published").all()
     data = []
     for p in posts:
@@ -126,6 +142,8 @@ def get_analytics_content(
             continue
 
         c = db.query(Campaign).filter(Campaign.id == p.campaign_id).first()
+        has_linkedin = any(pa.platform == "linkedin" for pa in pas)
+
         data.append(
             {
                 "id": p.id,
@@ -133,15 +151,15 @@ def get_analytics_content(
                 "platforms": [pa.platform for pa in pas],
                 "campaign": c.name if c else None,
                 "publishedAt": p.updated_at.isoformat() if p.updated_at else None,
-                "likes": sum(pa.likes for pa in pas),
-                "comments": sum(pa.comments for pa in pas),
-                "shares": sum(pa.shares for pa in pas),
-                "saves": sum(pa.saves for pa in pas),
-                "reach": sum(pa.reach for pa in pas),
-                "impressions": sum(pa.impressions for pa in pas),
-                "clicks": sum(pa.clicks for pa in pas),
-                "engagementRate": round(
-                    sum(pa.engagement_rate for pa in pas) / len(pas), 2
+                "likes": sum(pa.likes or 0 for pa in pas),
+                "comments": sum(pa.comments or 0 for pa in pas),
+                "shares": sum(pa.shares or 0 for pa in pas),
+                "saves": sum(pa.saves or 0 for pa in pas),
+                "reach": None if has_linkedin else sum(pa.reach or 0 for pa in pas),
+                "impressions": None if has_linkedin else sum(pa.impressions or 0 for pa in pas),
+                "clicks": None if has_linkedin else sum(pa.clicks or 0 for pa in pas),
+                "engagementRate": None if has_linkedin else round(
+                    sum(pa.engagement_rate or 0.0 for pa in pas) / len(pas), 2
                 ),
             }
         )
@@ -154,6 +172,12 @@ def get_analytics_audience(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    if platform == "linkedin":
+        return {
+            "available": False,
+            "reason": "LinkedIn API permissions do not allow analytics retrieval for this application."
+        }
+
     aas = db.query(AudienceAnalytics).all()
     if platform:
         aas = [aa for aa in aas if aa.platform == platform]
@@ -264,22 +288,29 @@ def get_analytics_campaigns(
 
 
 @router.get("/platforms")
-def get_analytics_platforms(
+async def get_analytics_platforms(
     user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ):
     pas = db.query(PlatformAnalytics).all()
     data = {}
     for pa in pas:
-        data[pa.platform] = {
-            "followers": pa.followers,
-            "reach": pa.reach,
-            "impressions": pa.impressions,
-            "engagement": pa.engagement,
-            "likes": int(pa.engagement * 0.7),
-            "comments": int(pa.engagement * 0.2),
-            "shares": int(pa.engagement * 0.1),
-            "clicks": pa.clicks,
-        }
+        is_linkedin = pa.platform == "linkedin"
+        if is_linkedin:
+            data[pa.platform] = {
+                "available": False,
+                "reason": "LinkedIn API permissions do not allow analytics retrieval for this application."
+            }
+        else:
+            data[pa.platform] = {
+                "followers": pa.followers,
+                "reach": pa.reach,
+                "impressions": pa.impressions,
+                "engagement": pa.engagement,
+                "likes": int(pa.engagement * 0.7),
+                "comments": int(pa.engagement * 0.2),
+                "shares": int(pa.engagement * 0.1),
+                "clicks": pa.clicks,
+            }
     return {"success": True, "data": data}
 
 
@@ -291,8 +322,13 @@ def get_analytics_trends(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    if platform == "linkedin":
+        return {
+            "available": False,
+            "reason": "LinkedIn API permissions do not allow analytics retrieval for this application."
+        }
     return {
         "success": True,
         "message": "Trend data retrieved successfully",
-        "data": generate_trend_data(days),
+        "data": generate_trend_data(days, platform),
     }

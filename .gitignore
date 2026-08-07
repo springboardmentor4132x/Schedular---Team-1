@@ -1,3 +1,10 @@
 backend/.env
 .env
 backend/uploads/
+
+venv/
+venv-mac/
+__pycache__/
+*.pyc
+.env
+.DS_Store

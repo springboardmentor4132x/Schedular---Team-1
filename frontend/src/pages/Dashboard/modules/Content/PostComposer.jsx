@@ -13,16 +13,18 @@ import Avatar from '../../components/Avatar/Avatar';
 import { campaignRepository } from '../Campaigns/campaignRepository';
 import { contentRepository } from './contentRepository';
 import * as teamService from '../../../../services/teamService';
+import { getConnectedAccounts } from '../../../../services/socialService';
 import './PostComposer.css';
 
-const PLATFORM_OPTIONS = [
-  { id: 'facebook', label: 'Facebook', connected: true },
-  { id: 'instagram', label: 'Instagram', connected: true },
-  { id: 'linkedin', label: 'LinkedIn', connected: true },
-  { id: 'youtube', label: 'YouTube', connected: true },
-  { id: 'x', label: 'X (Twitter)', connected: false },
-  { id: 'pinterest', label: 'Pinterest', connected: false },
-];
+/** Human-readable labels for each platform id returned by the API. */
+const PLATFORM_LABELS = {
+  facebook: 'Facebook',
+  instagram: 'Instagram',
+  linkedin: 'LinkedIn',
+  youtube: 'YouTube',
+  x: 'X (Twitter)',
+  pinterest: 'Pinterest',
+};
 
 export default function PostComposer({
   postId,
@@ -38,6 +40,10 @@ export default function PostComposer({
   const [clientOptions, setClientOptions] = useState([]);
   const [campaignsList, setCampaignsList] = useState([]);
 
+  // Dynamic platform list — fetched from /social/accounts
+  const [platformOptions, setPlatformOptions] = useState([]);
+  const [platformsLoading, setPlatformsLoading] = useState(true);
+
   const [selectedClientId, setSelectedClientId] = useState('');
   const [caption, setCaption] = useState('');
   const [mediaFiles, setMediaFiles] = useState([]);
@@ -51,6 +57,30 @@ export default function PostComposer({
   const [activePreviewTab, setActivePreviewTab] = useState('facebook');
 
   const isSubmitDisabled = ownerType === 'marketing' && !clientId && clientOptions.length === 0;
+
+  // Fetch connected social accounts and build platform selector options
+  useEffect(() => {
+    setPlatformsLoading(true);
+    getConnectedAccounts()
+      .then((accounts) => {
+        // The API always returns all 6 platforms with status='disconnected'
+        // for platforms the user has not connected. Filter to only show
+        // platforms the user has actually connected.
+        const options = accounts
+          .filter((acct) => acct.status === 'connected')
+          .map((acct) => ({
+            id: acct.platform,
+            label: PLATFORM_LABELS[acct.platform] || acct.platform,
+            accountName: acct.accountName || acct.account_name || null,
+          }));
+        setPlatformOptions(options);
+      })
+      .catch((err) => {
+        console.error('Failed to load connected accounts:', err);
+        setPlatformOptions([]);
+      })
+      .finally(() => setPlatformsLoading(false));
+  }, []);
 
   // Fetch client list
   useEffect(() => {
@@ -186,12 +216,7 @@ export default function PostComposer({
     });
   };
 
-  const handlePlatformToggle = (platformId, connected) => {
-    if (!connected) {
-      alert(`${platformId.toUpperCase()} account is disconnected. Please connect the channel in social service profiles settings.`);
-      return;
-    }
-
+  const handlePlatformToggle = (platformId) => {
     setSelectedPlatforms((prev) => {
       const active = prev.includes(platformId);
       const updated = active ? prev.filter((p) => p !== platformId) : [...prev, platformId];
@@ -404,25 +429,37 @@ export default function PostComposer({
             {errors.caption && <span className="cs-composer__err-text">{errors.caption}</span>}
           </div>
 
-          {/* S3: Platform Selectors */}
+          {/* S3: Platform Selectors — built dynamically from /social/accounts */}
           <div className="cs-composer__section">
             <h4 className="cs-composer__section-lbl">Step 3 — Select Platforms</h4>
-            <div className="cs-platforms-list">
-              {PLATFORM_OPTIONS.map((plat) => {
-                const active = selectedPlatforms.includes(plat.id);
-                return (
-                  <button
-                    key={plat.id}
-                    type="button"
-                    onClick={() => handlePlatformToggle(plat.id, plat.connected)}
-                    className={`cs-platform-btn${active ? ' cs-platform-btn--active' : ''}${!plat.connected ? ' cs-platform-btn--disabled' : ''}`}
-                  >
-                    <span>{plat.label}</span>
-                    {!plat.connected && <span className="cs-platform-btn__badge">Disconnect</span>}
-                  </button>
-                );
-              })}
-            </div>
+
+            {platformsLoading ? (
+              <p style={{ fontSize: '13px', color: '#64748b' }}>Loading connected accounts…</p>
+            ) : platformOptions.length === 0 ? (
+              <p style={{ fontSize: '13px', color: '#ef4444' }}>
+                ⚠️ No platforms connected. Go to{' '}
+                <a href="/connect-apps" style={{ color: '#4f46e5', fontWeight: 600 }}>Connect Apps</a>{' '}
+                to link your social accounts.
+              </p>
+            ) : (
+              <div className="cs-platforms-list">
+                {platformOptions.map((plat) => {
+                  const active = selectedPlatforms.includes(plat.id);
+                  return (
+                    <button
+                      key={plat.id}
+                      type="button"
+                      onClick={() => handlePlatformToggle(plat.id)}
+                      title={plat.accountName ? `Connected as ${plat.accountName}` : `${plat.label} — connected`}
+                      className={`cs-platform-btn${active ? ' cs-platform-btn--active' : ''}`}
+                    >
+                      <span>{plat.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
             {errors.platforms && <span className="cs-composer__err-text">{errors.platforms}</span>}
 
             {/* Platform-specific warnings */}

@@ -50,7 +50,7 @@ export default function PublishingLogs({ ownerType = 'marketing' }) {
           apiResponse: item.apiResponse ?? '200 OK',
           duration: item.duration ?? '—',
           retryAttempts: item.retryAttempts ?? 0,
-          errorMessage: item.errorMessage ?? null,
+          errorMessage: item.errorMessage ?? item.error_message ?? null,
         }));
         setItems(normalized);
         setLoading(false);

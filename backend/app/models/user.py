@@ -86,15 +86,12 @@ class Notification(Base):
         Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )
     title = Column(String(200), nullable=False)
-    description = Column(Text, nullable=False)
-    category = Column(String(50), nullable=False, default="System")
+    message = Column(Text, nullable=False)
     type = Column(String(50), nullable=False, default="info")
-    delivery_channel = Column(String(20), nullable=False, default="in-app")
     is_read = Column(Boolean, nullable=False, default=False)
     created_at = Column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
-    read_timestamp = Column(DateTime(timezone=True), nullable=True)
 
     user = relationship("User", back_populates="notifications")
 

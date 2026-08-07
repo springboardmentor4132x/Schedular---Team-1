@@ -40,9 +40,13 @@ const METRIC_OPTIONS = [
 ];
 
 function formatK(n) {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000)     return `${(n / 1_000).toFixed(1)}K`;
-  return String(n);
+  if (n === null || n === undefined) return 'N/A';
+  if (typeof n === 'string') return n;
+  if (isNaN(Number(n))) return 'N/A';
+  const num = Number(n);
+  if (num >= 1_000_000) return `${(num / 1_000_000).toFixed(1)}M`;
+  if (num >= 1_000)     return `${(num / 1_000).toFixed(1)}K`;
+  return String(num);
 }
 
 function formatPct(n) { return `${n.toFixed(1)}%`; }
@@ -103,6 +107,21 @@ export default function AnalyticsDashboard({ ownerType = 'marketing' }) {
       <PageContainer title="Analytics Overview" breadcrumb={[ownerType === 'marketing' ? 'Marketing' : 'Creator', 'Analytics', 'Overview']}>
         <SubNav role={ownerType} />
         <div style={{ padding: '2rem' }}>Loading analytics...</div>
+      </PageContainer>
+    );
+  }
+
+  if (dashboardData.available === false) {
+    return (
+      <PageContainer title="Analytics Overview" breadcrumb={[ownerType === 'marketing' ? 'Marketing' : 'Creator', 'Analytics', 'Overview']}>
+        <SubNav role={ownerType} />
+        <div style={{ padding: '3rem 2rem', textAlign: 'center', background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0', margin: '2rem 0' }}>
+          <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>⚠️</div>
+          <h3 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#0f172a', marginBottom: '0.5rem' }}>LinkedIn Analytics Unavailable</h3>
+          <p style={{ color: '#64748b', maxWidth: '500px', margin: '0 auto' }}>
+            {dashboardData.reason || 'LinkedIn API permissions do not allow analytics retrieval for this application.'}
+          </p>
+        </div>
       </PageContainer>
     );
   }
