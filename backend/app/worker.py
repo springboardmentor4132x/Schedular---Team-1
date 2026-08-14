@@ -1,40 +1,16 @@
-"""Run scheduled publishing work outside HTTP requests.
+"""Run scheduled publishing work and background tasks via Celery.
 
-Usage: python -m app.worker --once
-       python -m app.worker --interval 30
+Usage: celery -A app.core.celery_app worker --loglevel=info
 """
 
-import argparse
-import time
-
-from app.database import SessionLocal
-from app.services.publishing_service import process_pending_publications
-
-
-def run_once() -> list[dict]:
-    db = SessionLocal()
-    try:
-        return process_pending_publications(db)
-    finally:
-        db.close()
-
+import sys
+from app.core.celery_app import celery_app
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Run SocialPilot publishing work.")
-    parser.add_argument(
-        "--once", action="store_true", help="Process the queue once and exit."
-    )
-    parser.add_argument(
-        "--interval", type=int, default=30, help="Polling interval in seconds."
-    )
-    args = parser.parse_args()
-    if args.once:
-        run_once()
-        return
-    while True:
-        run_once()
-        time.sleep(max(args.interval, 1))
-
+    # Run the Celery worker programmatically if executed directly
+    argv = ["worker", "--loglevel=info"]
+    celery_app.worker_main(argv)
 
 if __name__ == "__main__":
     main()
+

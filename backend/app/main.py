@@ -19,7 +19,8 @@ from app.routers.teams import router as teams_router
 from app.routers.insights import router as insights_router
 from app.routers.publishing import router as publishing_router
 from app.routers.analytics import router as analytics_router
-from app.scheduler import start_scheduler, stop_scheduler
+from app.routers.social_accounts import router as social_accounts_router
+from app.routers.reports import router as reports_router
 
 app = FastAPI(title="SocialPilot API", version="1.0")
 app.add_exception_handler(HTTPException, http_error_handler)
@@ -42,6 +43,8 @@ app.include_router(teams_router)
 app.include_router(insights_router)
 app.include_router(publishing_router)
 app.include_router(analytics_router)
+app.include_router(social_accounts_router)
+app.include_router(reports_router)
 upload_directory = Path(__file__).resolve().parents[1] / "uploads"
 upload_directory.mkdir(exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=upload_directory), name="uploads")
@@ -77,11 +80,10 @@ def backfill_marketing_teams():
 @app.on_event("startup")
 async def startup_event():
     backfill_marketing_teams()
-    start_scheduler()
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    stop_scheduler()
+    pass
 
 
 

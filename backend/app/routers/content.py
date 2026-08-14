@@ -485,11 +485,7 @@ def request_publish_now(
     db.add(ActivityLog(user_id=user.id, activity="Requested immediate publication"))
     db.commit()
     db.refresh(post)
-    return {
-        "post": _post_payload(post),
-        "mode": "mock",
-        "message": "Publication was queued for the development adapter.",
-    }
+    return {"post": _post_payload(post)}
 
 
 @router.post("/publishing/run-due")
@@ -501,7 +497,7 @@ def run_due_publications(
         raise HTTPException(
             status_code=403, detail="Only administrators can run publishing workers."
         )
-    return {"processed": process_pending_publications(db), "mode": "mock"}
+    return {"processed": process_pending_publications(db)}
 
 
 @router.get("/posts/{post_id}/publishing-logs")

@@ -12,6 +12,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.database import Base
+from app.core.security import EncryptedType
 
 
 class User(Base):
@@ -136,8 +137,8 @@ class SocialAccount(Base):
     account_email = Column(String(150), nullable=True)
     permissions = Column(Text, nullable=False, default="")
     last_sync = Column(DateTime(timezone=True), nullable=True)
-    access_token_encrypted = Column(Text, nullable=True)
-    refresh_token_encrypted = Column(Text, nullable=True)
+    access_token_encrypted = Column(EncryptedType, nullable=True)
+    refresh_token_encrypted = Column(EncryptedType, nullable=True)
     token_expires_at = Column(DateTime(timezone=True), nullable=True)
 
     user = relationship("User", back_populates="social_accounts")

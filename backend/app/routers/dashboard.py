@@ -706,20 +706,11 @@ def connect_social_account(
     try:
         client_id, _ = _oauth_configuration(platform)
     except HTTPException:
-        # A local provider adapter keeps the complete scheduling workflow usable
-        # until production OAuth credentials are configured.
-        _save_oauth_account(
-            db,
-            user.id,
-            platform,
-            {"access_token": f"mock-{secrets.token_urlsafe(24)}", "expires_in": 86400},
-            {"name": f"{user.full_name} ({platform.title()})", "email": user.email},
+        # Strict production enforcement: Do not fall back to local demo providers.
+        raise HTTPException(
+            status_code=501, 
+            detail=f"{platform.title()} OAuth credentials are not configured on this server."
         )
-        return {
-            "success": True,
-            "message": f"{platform.title()} connected using the local demo provider.",
-            "mode": "mock",
-        }
     code_verifier = secrets.token_urlsafe(64) if platform == "x" else None
     state = _oauth_state(user.id, platform, code_verifier)
     params = {

@@ -19,25 +19,36 @@ from app.models.content import Post, Campaign
 router = APIRouter(prefix="/analytics", tags=["Analytics"])
 
 
-def generate_trend_data(days=30):
+def generate_trend_data(db: Session, user: User, days=30):
+    from sqlalchemy import func
+    from datetime import datetime, timedelta
+    
+    # We query the AnalyticsMetric table grouped by date
+    # This assumes we are aggregating reach, impressions across all user's posts
+    end_date = datetime.now(timezone.utc)
+    start_date = end_date - timedelta(days=days)
+    
+    # In a fully implemented version, we'd join Post and filter by owner_id
+    # For now we'll do a simple summation per day if data exists
+    
+    # Placeholder structure returning 0s where we'd normally aggregate DB rows:
     data = []
-    now = datetime.datetime.now()
     for i in range(days - 1, -1, -1):
-        date = now - datetime.timedelta(days=i)
+        date = end_date - timedelta(days=i)
         label = date.strftime("%b %d")
+        
+        # Here we would filter the analytics from DB that match the date
+        # E.g. db.query(func.sum(AnalyticsMetric.reach)).filter(...)
+        
         data.append(
             {
                 "date": label,
-                "reach": round(3000 + math.sin(i * 0.4) * 1200 + random.random() * 800),
-                "impressions": round(
-                    5000 + math.sin(i * 0.3) * 2000 + random.random() * 1200
-                ),
-                "engagement": round(
-                    300 + math.sin(i * 0.5) * 100 + random.random() * 80
-                ),
-                "followers": round(42000 + (days - i) * 20 + random.random() * 50),
-                "clicks": round(180 + math.sin(i * 0.6) * 60 + random.random() * 40),
-                "posts": round(2 + math.floor(random.random() * 4)),
+                "reach": 0,
+                "impressions": 0,
+                "engagement": 0,
+                "followers": 0,
+                "clicks": 0,
+                "posts": 0,
             }
         )
     return data
@@ -294,5 +305,5 @@ def get_analytics_trends(
     return {
         "success": True,
         "message": "Trend data retrieved successfully",
-        "data": generate_trend_data(days),
+        "data": generate_trend_data(db, user, days),
     }

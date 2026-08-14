@@ -23,6 +23,10 @@ class Settings(BaseSettings):
     PINTEREST_CLIENT_ID: str | None = None
     PINTEREST_CLIENT_SECRET: str | None = None
 
+    REDIS_URL: str = "redis://localhost:6379/0"
+    CELERY_BROKER_URL: str = "redis://localhost:6379/0"
+    ENCRYPTION_KEY: str = "your-32-byte-fernet-key-here-must-be-secure="
+
     model_config = SettingsConfigDict(
         env_file=Path(__file__).resolve().parents[1] / ".env",
         extra="ignore",
