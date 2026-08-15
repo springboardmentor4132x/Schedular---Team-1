@@ -7,7 +7,7 @@ import json
 
 from app.database import get_db
 from app.models.user import User, SocialAccount
-from app.models.content import Post
+from app.models.content import Post, PublishingLog
 from app.services.auth_service import get_current_user
 from app.services.publishing_service import process_pending_publications
 
@@ -57,34 +57,33 @@ def get_publishing_logs(
     db: Session = Depends(get_db),
 ):
     """Get publishing history and logs."""
-    posts = (
-        db.query(Post)
+    # Get actual publishing logs joined with their posts
+    logs = (
+        db.query(PublishingLog, Post)
+        .join(Post, PublishingLog.post_id == Post.id)
         .filter(Post.owner_id == user.id)
-        .order_by(desc(Post.updated_at))
+        .order_by(desc(PublishingLog.attempted_at))
         .offset(skip)
         .limit(limit)
         .all()
     )
 
-    # We return the posts format as expected by frontend mock fallback (publishingService.js maps this to an array)
     return {
         "success": True,
         "message": "Logs retrieved successfully",
         "data": {
             "items": [
                 {
-                    "id": p.id,
-                    "caption": p.caption,
-                    "status": p.status,
-                    "published_at": p.updated_at if p.status == "published" else None,
-                    "platforms": (
-                        json.loads(p.platforms)
-                        if isinstance(p.platforms, str)
-                        else p.platforms
-                    ),
-                    "error_message": None,  # In a full impl, we'd join with PublishingLog
+                    "id": log.id,
+                    "time": log.attempted_at.isoformat() if log.attempted_at else None,
+                    "platform": log.platform,
+                    "postCaption": post.caption,
+                    "status": log.status,
+                    "duration": "1s",  # Mocked duration since we don't track it
+                    "retryAttempts": 0,  # We don't track retries currently
+                    "errorMessage": log.error_message,
                 }
-                for p in posts
+                for log, post in logs
             ]
         },
     }
@@ -133,7 +132,7 @@ def trigger_run_due(
 def retry_failed_post(
     post_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ):
-    """Retry a failed post by setting it back to scheduled."""
+    """Retry only failed platform targets; successful targets are not duplicated."""
     post = db.query(Post).filter(Post.id == post_id, Post.owner_id == user.id).first()
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
@@ -141,14 +140,15 @@ def retry_failed_post(
     if post.status != "failed":
         raise HTTPException(status_code=400, detail="Only failed posts can be retried")
 
-    post.status = "scheduled"
-    post.scheduled_for = datetime.now(timezone.utc)
+    post.status = "publishing"
     db.commit()
+
+    processed = process_pending_publications(db)
 
     return {
         "success": True,
-        "message": "Post rescheduled for publishing",
-        "data": {"id": post.id, "status": post.status},
+        "message": "Failed publishing targets were queued for retry.",
+        "data": {"id": post.id, "status": post.status, "processed": processed},
     }
 
 

@@ -219,6 +219,27 @@ export default function PostComposer({
       }
       if (selectedPlatforms.length === 0) {
         newErrors.platforms = 'Select at least one connected publishing platform.';
+      } else {
+        if (selectedPlatforms.includes('youtube')) {
+          if (!mediaFiles.some(f => f.type === 'video')) {
+            newErrors.media = 'YouTube requires at least one video file.';
+          }
+        }
+        if (selectedPlatforms.includes('instagram')) {
+          if (mediaFiles.length === 0) {
+            newErrors.media = 'Instagram requires at least one media file (image or video).';
+          }
+        }
+        if (selectedPlatforms.includes('pinterest')) {
+          if (!mediaFiles.some(f => f.type === 'image')) {
+            newErrors.media = 'Pinterest requires at least one image file.';
+          }
+        }
+        if (selectedPlatforms.includes('x')) {
+          if (caption.length > 280) {
+            newErrors.caption = 'X (Twitter) caption must be 280 characters or fewer.';
+          }
+        }
       }
       if (scheduleMode === 'schedule') {
         if (!scheduleDate || !scheduleTime) {

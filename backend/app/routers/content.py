@@ -1,4 +1,4 @@
-"""Scheduling and campaign APIs. Publishing is intentionally not implemented."""
+"""Content, scheduling, queue, and campaign APIs backed by persisted state."""
 
 import json
 import shutil
@@ -10,7 +10,14 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models.content import Campaign, CampaignPost, MediaAsset, Post, PublishingLog
-from app.models.user import ActivityLog, ClientAssignment, SocialAccount, Team, User
+from app.models.user import (
+    ActivityLog,
+    ClientAssignment,
+    Notification,
+    SocialAccount,
+    Team,
+    User,
+)
 from app.schemas.content_schema import (
     AssignPosts,
     CampaignAssignment,
@@ -53,6 +60,8 @@ def _post_payload(post: Post):
         "contentType": post.content_type,
         "mediaUrls": json.loads(post.media_urls),
         "platforms": json.loads(post.platforms),
+        "platformAccountIds": json.loads(post.platform_account_ids or "{}"),
+        "platformOptions": json.loads(post.platform_options or "{}"),
         "status": post.status,
         "scheduledFor": post.scheduled_for,
         "timezone": post.timezone,
@@ -159,6 +168,107 @@ def _validate_media_references(media_urls: list[str], user: User, db: Session) -
                 raise HTTPException(
                     status_code=422, detail="One or more media assets are unavailable."
                 )
+
+
+def _validate_platform_account_ids(
+    platform_account_ids: dict[str, int], platforms: list[str], user: User, db: Session
+) -> None:
+    """Ensure explicitly selected connected accounts belong to the caller."""
+    if set(platform_account_ids) - set(platforms):
+        raise HTTPException(
+            status_code=422, detail="Account selections must match selected platforms."
+        )
+    for platform, account_id in platform_account_ids.items():
+        account = db.get(SocialAccount, account_id)
+        if (
+            account is None
+            or account.user_id != user.id
+            or account.platform != platform
+            or account.status != "connected"
+        ):
+            raise HTTPException(
+                status_code=422,
+                detail=f"Selected {platform.title()} account is unavailable.",
+            )
+
+
+def _resolve_platform_accounts(post: Post, user: User, db: Session) -> dict[str, int]:
+    """Resolve a connected account for every platform before queueing work.
+
+    A single connected account is selected automatically for compatibility with
+    existing posts.  When a user has connected multiple accounts for a platform,
+    the post must contain an explicit account selection.
+    """
+    platforms = json.loads(post.platforms or "[]")
+    selections = json.loads(post.platform_account_ids or "{}")
+    resolved: dict[str, int] = {}
+    for platform in platforms:
+        candidates = (
+            db.query(SocialAccount)
+            .filter(
+                SocialAccount.user_id == user.id,
+                SocialAccount.platform == platform,
+                SocialAccount.status == "connected",
+            )
+            .order_by(SocialAccount.id.asc())
+            .all()
+        )
+        selected_id = selections.get(platform)
+        selected = next((row for row in candidates if row.id == selected_id), None)
+        if selected_id is not None and selected is None:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Selected {platform.title()} account is no longer connected.",
+            )
+        if selected is None and len(candidates) == 1:
+            selected = candidates[0]
+        if selected is None:
+            if not candidates:
+                detail = f"Connect a {platform.title()} account before scheduling."
+            else:
+                detail = f"Select one of the connected {platform.title()} accounts."
+            raise HTTPException(status_code=422, detail=detail)
+        resolved[platform] = selected.id
+    post.platform_account_ids = json.dumps(resolved)
+    return resolved
+
+
+def _validate_campaign_reference(
+    campaign_id: int | None, client_id: int | None, user: User, db: Session
+) -> None:
+    if campaign_id is None:
+        return
+    campaign = db.get(Campaign, campaign_id)
+    if campaign is None or campaign.owner_id != user.id or campaign.client_id != client_id:
+        raise HTTPException(
+            status_code=422,
+            detail="Select a campaign in the same authorized workspace.",
+        )
+
+
+def _validate_platform_content_for_publication(post: Post) -> None:
+    """Validate platform-specific requirements only when content leaves draft."""
+    platforms = json.loads(post.platforms or "[]")
+    media_urls = json.loads(post.media_urls or "[]")
+    if post.content_type != "text" and not media_urls:
+        raise HTTPException(status_code=422, detail="Media is required for this content type.")
+    if any(platform in {"instagram", "pinterest", "youtube"} for platform in platforms) and not media_urls:
+        raise HTTPException(
+            status_code=422,
+            detail="Instagram, Pinterest, and YouTube require media before publication.",
+        )
+    if "youtube" in platforms and (
+        post.content_type != "video"
+        or not any(url.lower().split("?")[0].endswith((".mp4", ".webm", ".mov")) for url in media_urls)
+    ):
+        raise HTTPException(status_code=422, detail="YouTube publishing requires an MP4, WebM, or MOV video.")
+    if post.content_type == "carousel" and len(media_urls) < 2:
+        raise HTTPException(status_code=422, detail="Carousel posts require at least two media files.")
+    if post.content_type in {"story", "reel"} and "instagram" not in platforms:
+        raise HTTPException(
+            status_code=422,
+            detail="Stories and reels currently require Instagram as a selected platform.",
+        )
 
 
 @router.post("/media", status_code=status.HTTP_201_CREATED)
@@ -290,6 +400,10 @@ def create_post(
             status_code=403, detail="Choose a client assigned to your marketing team."
         )
     _validate_media_references(payload.media_urls, user, db)
+    _validate_platform_account_ids(
+        payload.platform_account_ids, payload.platforms, user, db
+    )
+    _validate_campaign_reference(payload.campaign_id, payload.client_id, user, db)
     post = Post(
         owner_id=user.id,
         client_id=payload.client_id,
@@ -297,6 +411,8 @@ def create_post(
         content_type=payload.content_type,
         media_urls=json.dumps(payload.media_urls),
         platforms=json.dumps(payload.platforms),
+        platform_account_ids=json.dumps(payload.platform_account_ids),
+        platform_options=json.dumps(payload.platform_options),
         timezone=payload.timezone,
         campaign_id=payload.campaign_id,
         recurrence_interval=payload.recurrence_interval,
@@ -328,22 +444,28 @@ def update_post(
             status_code=403, detail="Choose a client assigned to your marketing team."
         )
     _validate_media_references(payload.media_urls, user, db)
+    _validate_platform_account_ids(
+        payload.platform_account_ids, payload.platforms, user, db
+    )
+    _validate_campaign_reference(payload.campaign_id, payload.client_id, user, db)
     for name, value in {
         "caption": payload.caption,
         "content_type": payload.content_type,
         "media_urls": json.dumps(payload.media_urls),
         "platforms": json.dumps(payload.platforms),
+        "platform_account_ids": json.dumps(payload.platform_account_ids),
+        "platform_options": json.dumps(payload.platform_options),
         "timezone": payload.timezone,
         "client_id": payload.client_id,
         "campaign_id": payload.campaign_id,
         "recurrence_interval": payload.recurrence_interval,
     }.items():
         setattr(post, name, value)
-    
+
     db.query(CampaignPost).filter(CampaignPost.post_id == post.id).delete()
     if payload.campaign_id:
         db.add(CampaignPost(campaign_id=payload.campaign_id, post_id=post.id))
-    
+
     db.commit()
     db.refresh(post)
     return _post_payload(post)
@@ -369,11 +491,26 @@ def patch_post(
         )
     if "media_urls" in changes:
         _validate_media_references(changes["media_urls"], user, db)
+    effective_platforms = changes.get("platforms", json.loads(post.platforms))
+    effective_accounts = changes.get(
+        "platform_account_ids", json.loads(post.platform_account_ids or "{}")
+    )
+    if "platform_account_ids" in changes or "platforms" in changes:
+        _validate_platform_account_ids(effective_accounts, effective_platforms, user, db)
+    if "campaign_id" in changes or "client_id" in changes:
+        _validate_campaign_reference(
+            changes.get("campaign_id", post.campaign_id),
+            changes.get("client_id", post.client_id),
+            user,
+            db,
+        )
     for name, value in changes.items():
         setattr(
             post,
             name,
-            json.dumps(value) if name in {"media_urls", "platforms"} else value,
+            json.dumps(value)
+            if name in {"media_urls", "platforms", "platform_account_ids", "platform_options"}
+            else value,
         )
     if "campaign_id" in changes:
         db.query(CampaignPost).filter(CampaignPost.post_id == post.id).delete()
@@ -415,18 +552,8 @@ def schedule_post(
         raise HTTPException(
             status_code=422, detail="Select at least one platform before scheduling."
         )
-    connected = {
-        row.platform
-        for row in db.query(SocialAccount)
-        .filter(SocialAccount.user_id == user.id, SocialAccount.status == "connected")
-        .all()
-    }
-    unavailable = set(platforms) - connected
-    if unavailable:
-        raise HTTPException(
-            status_code=422,
-            detail=f"Connect the selected account(s) before scheduling: {', '.join(sorted(unavailable))}.",
-        )
+    _validate_platform_content_for_publication(post)
+    _resolve_platform_accounts(post, user, db)
     if payload.scheduled_for <= datetime.now(timezone.utc):
         raise HTTPException(
             status_code=422, detail="Schedule time must be in the future."
@@ -459,8 +586,64 @@ def cancel_schedule(
         raise HTTPException(
             status_code=409, detail="Only scheduled posts can be cancelled."
         )
-    post.status, post.scheduled_for, post.queue_position = "draft", None, None
+    post.status, post.scheduled_for, post.queue_position = "cancelled", None, None
     db.add(ActivityLog(user_id=user.id, activity="Cancelled post schedule"))
+    db.commit()
+    db.refresh(post)
+    return _post_payload(post)
+
+
+@router.post("/posts/{post_id}/request-approval")
+def request_post_approval(
+    post_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)
+):
+    """Move a client post into the explicit Pending Approval state."""
+    _require_content_access(user)
+    post = _owned_post(post_id, user, db)
+    if post.client_id is None:
+        raise HTTPException(
+            status_code=422,
+            detail="Only content in a client workspace can be submitted for approval.",
+        )
+    if post.status in {"published", "publishing"}:
+        raise HTTPException(status_code=409, detail="Published content cannot be submitted.")
+    post.status = "pending_approval"
+    db.add(
+        Notification(
+            user_id=post.client_id,
+            title="Post approval requested",
+            description=f"A post is ready for your approval: {post.caption[:120]}",
+            category="Publishing",
+            type="approval_requested",
+        )
+    )
+    db.add(ActivityLog(user_id=user.id, activity="Requested post approval"))
+    db.commit()
+    db.refresh(post)
+    return _post_payload(post)
+
+
+@router.post("/posts/{post_id}/approve")
+def approve_post(
+    post_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)
+):
+    """Allow the assigned business client (or an administrator) to approve content."""
+    post = db.get(Post, post_id)
+    if post is None or post.status != "pending_approval":
+        raise HTTPException(status_code=404, detail="Pending approval post not found.")
+    if user.role != "Administrator" and post.client_id != user.id:
+        raise HTTPException(status_code=404, detail="Pending approval post not found.")
+    post.status = "draft"
+    db.add(
+        Notification(
+            user_id=post.owner_id,
+            title="Post approved",
+            description=f"A client approved your post: {post.caption[:120]}",
+            category="Publishing",
+            type="approval_granted",
+        )
+    )
+    db.add(ActivityLog(user_id=user.id, activity="Approved post"))
     db.commit()
     db.refresh(post)
     return _post_payload(post)
@@ -472,7 +655,7 @@ def request_publish_now(
 ):
     _require_content_access(user)
     post = _owned_post(post_id, user, db)
-    if post.status in {"published", "publishing"}:
+    if post.status in {"published", "publishing", "pending_approval"}:
         raise HTTPException(
             status_code=409,
             detail="This post is already being published or has been published.",
@@ -481,10 +664,16 @@ def request_publish_now(
         raise HTTPException(
             status_code=422, detail="Select at least one platform before publishing."
         )
+    _validate_platform_content_for_publication(post)
+    _resolve_platform_accounts(post, user, db)
     post.status = "publishing"
     db.add(ActivityLog(user_id=user.id, activity="Requested immediate publication"))
     db.commit()
     db.refresh(post)
+
+    # Process immediately since Windows doesn't easily run celery beat natively
+    process_pending_publications(db)
+
     return {"post": _post_payload(post)}
 
 

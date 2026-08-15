@@ -10,7 +10,15 @@ from app.schemas.auth_schema import (
 )
 from app.schemas.dashboard_schema import PasswordChange
 import base64
-from app.models.user import ActivityLog, Notification, RefreshToken, User, UserProfile, Team, TeamMember
+from app.models.user import (
+    ActivityLog,
+    Notification,
+    RefreshToken,
+    User,
+    UserProfile,
+    Team,
+    TeamMember,
+)
 from app.services.auth_service import (
     ALGORITHM,
     create_access_token,
@@ -74,7 +82,11 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
         db.commit()
         db.refresh(default_team)
         # Add themselves as a member
-        db.add(TeamMember(team_id=default_team.id, user_id=new_user.id, role="Marketing Team"))
+        db.add(
+            TeamMember(
+                team_id=default_team.id, user_id=new_user.id, role="Marketing Team"
+            )
+        )
 
     db.add_all(
         [
@@ -82,13 +94,13 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
             Notification(
                 user_id=new_user.id,
                 title="Welcome to SocialPilot!",
-                message="Your account has been created successfully.",
+                description="Your account has been created successfully.",
                 type="info",
             ),
             Notification(
                 user_id=new_user.id,
                 title="Connect Your Platforms",
-                message="Link your social accounts to start scheduling content.",
+                description="Link your social accounts to start scheduling content.",
                 type="info",
                 is_read=True,
             ),
@@ -119,7 +131,11 @@ def login_user(user: UserLogin, db: Session = Depends(get_db)):
             db.add(default_team)
             db.commit()
             db.refresh(default_team)
-            db.add(TeamMember(team_id=default_team.id, user_id=db_user.id, role="Marketing Team"))
+            db.add(
+                TeamMember(
+                    team_id=default_team.id, user_id=db_user.id, role="Marketing Team"
+                )
+            )
             db.commit()
 
     db.add(ActivityLog(user_id=db_user.id, activity="Signed in"))
@@ -128,8 +144,9 @@ def login_user(user: UserLogin, db: Session = Depends(get_db)):
 
 
 def _token_response(user: User, db: Session):
-    access_token = create_access_token(data={"sub": user.email})
-    refresh_token = create_refresh_token(data={"sub": user.email})
+    claims = {"sub": user.email, "sv": user.session_version}
+    access_token = create_access_token(data=claims)
+    refresh_token = create_refresh_token(data=claims)
     db.add(
         RefreshToken(
             user_id=user.id,
@@ -181,7 +198,12 @@ def refresh_access_token(payload: RefreshRequest, db: Session = Depends(get_db))
         .first()
     )
     user = db.query(User).filter(User.email == email).first() if email else None
-    if not token or not user or token.expires_at < datetime.now(timezone.utc):
+    if (
+        not token
+        or not user
+        or claims.get("sv") != user.session_version
+        or token.expires_at < datetime.now(timezone.utc)
+    ):
         raise HTTPException(status_code=401, detail="Invalid or expired refresh token")
     token.revoked_at = datetime.now(timezone.utc)
     return _token_response(user, db)
@@ -202,13 +224,18 @@ def change_password(
     db: Session = Depends(get_db),
 ):
     if not verify_password(payload.currentPassword, user.password):
-        return {"success": False, "message": "Current password is incorrect."}
+        raise HTTPException(status_code=400, detail="Current password is incorrect.")
     user.password = get_password_hash(payload.newPassword)
+    user.session_version += 1
+    db.query(RefreshToken).filter(
+        RefreshToken.user_id == user.id, RefreshToken.revoked_at.is_(None)
+    ).update({"revoked_at": datetime.now(timezone.utc)})
     db.add(ActivityLog(user_id=user.id, activity="Changed password"))
     db.commit()
     return {"success": True, "message": "Password changed successfully."}
 
 
+@router.post("/logout")
 @router.post("/logout-all")
 def logout_other_devices(
     user: User = Depends(get_current_user), db: Session = Depends(get_db)
@@ -216,6 +243,7 @@ def logout_other_devices(
     db.query(RefreshToken).filter(
         RefreshToken.user_id == user.id, RefreshToken.revoked_at.is_(None)
     ).update({"revoked_at": datetime.now(timezone.utc)})
-    db.add(ActivityLog(user_id=user.id, activity="Requested logout from other devices"))
+    user.session_version += 1
+    db.add(ActivityLog(user_id=user.id, activity="Signed out of all sessions"))
     db.commit()
-    return {"success": True, "message": "All other sessions have been terminated."}
+    return {"success": True, "message": "All sessions have been terminated."}

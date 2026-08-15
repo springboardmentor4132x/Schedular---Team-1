@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Dict, Any, Tuple
 
+
 class SocialProvider(ABC):
     @abstractmethod
     def get_authorization_url(self, state: str, redirect_uri: str) -> str:
@@ -10,7 +11,7 @@ class SocialProvider(ABC):
     @abstractmethod
     def exchange_code(self, code: str, redirect_uri: str) -> Tuple[str, str, int]:
         """Exchange the authorization code for an access token and refresh token.
-        
+
         Returns:
             Tuple[str, str, int]: (access_token, refresh_token, expires_in_seconds)
         """
@@ -29,7 +30,7 @@ class SocialProvider(ABC):
     @abstractmethod
     def publish_post(self, access_token: str, content: Dict[str, Any]) -> str:
         """Publish a post to the social platform.
-        
+
         Returns:
             str: The external post ID.
         """

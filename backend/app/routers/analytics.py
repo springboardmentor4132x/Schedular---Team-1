@@ -20,32 +20,55 @@ router = APIRouter(prefix="/analytics", tags=["Analytics"])
 
 
 def generate_trend_data(db: Session, user: User, days=30):
-    from sqlalchemy import func
-    from datetime import datetime, timedelta
-    
-    # We query the AnalyticsMetric table grouped by date
-    # This assumes we are aggregating reach, impressions across all user's posts
+    from sqlalchemy import func, cast, Date
+    from datetime import datetime, timedelta, timezone
+    from app.models.content import (
+        AnalyticsMetric,
+    )  # ensure this is imported or accessible, but it's already imported above
+
     end_date = datetime.now(timezone.utc)
     start_date = end_date - timedelta(days=days)
-    
-    # In a fully implemented version, we'd join Post and filter by owner_id
-    # For now we'll do a simple summation per day if data exists
-    
-    # Placeholder structure returning 0s where we'd normally aggregate DB rows:
+
+    # Query aggregated stats grouped by date
+    results = (
+        db.query(
+            cast(AnalyticsMetric.recorded_at, Date).label("date"),
+            func.sum(AnalyticsMetric.reach).label("reach"),
+            func.sum(AnalyticsMetric.impressions).label("impressions"),
+            func.sum(
+                AnalyticsMetric.reactions
+                + AnalyticsMetric.comments
+                + AnalyticsMetric.shares
+            ).label("engagement"),
+        )
+        .join(Post, Post.id == AnalyticsMetric.post_id)
+        .filter(
+            Post.owner_id == user.id,
+            AnalyticsMetric.recorded_at >= start_date,
+            AnalyticsMetric.recorded_at <= end_date,
+        )
+        .group_by(cast(AnalyticsMetric.recorded_at, Date))
+        .all()
+    )
+
+    # Create a dictionary for fast lookup
+    stats_by_date = {res.date: res for res in results}
+
     data = []
     for i in range(days - 1, -1, -1):
-        date = end_date - timedelta(days=i)
-        label = date.strftime("%b %d")
-        
-        # Here we would filter the analytics from DB that match the date
-        # E.g. db.query(func.sum(AnalyticsMetric.reach)).filter(...)
-        
+        target_date = (end_date - timedelta(days=i)).date()
+        label = target_date.strftime("%b %d")
+
+        stat = stats_by_date.get(target_date)
+
         data.append(
             {
                 "date": label,
-                "reach": 0,
-                "impressions": 0,
-                "engagement": 0,
+                "reach": int(stat.reach) if stat and stat.reach else 0,
+                "impressions": (
+                    int(stat.impressions) if stat and stat.impressions else 0
+                ),
+                "engagement": int(stat.engagement) if stat and stat.engagement else 0,
                 "followers": 0,
                 "clicks": 0,
                 "posts": 0,

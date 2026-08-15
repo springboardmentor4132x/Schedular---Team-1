@@ -54,10 +54,7 @@ const Dashboard = () => {
           )}
         </div>
 
-        {/* Placeholder notice */}
-        <p className="dashboard-placeholder">
-          This page is a temporary placeholder until the Dashboard module is implemented.
-        </p>
+
 
         {/* Logout */}
         <button className="dashboard-logout-btn" onClick={handleLogout}>

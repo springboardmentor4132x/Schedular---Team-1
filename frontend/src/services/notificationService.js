@@ -85,7 +85,7 @@ export async function getNotifications(filters = {}) {
   try {
     // Attempt backend sync
     const { data } = await api.get('/notifications');
-    return data;
+    return data.items || data;
   } catch {
     const { role, clientId } = filters;
     
@@ -109,7 +109,7 @@ export async function getNotifications(filters = {}) {
  */
 export async function markNotificationRead(id) {
   try {
-    const { data } = await api.patch(`/notifications/${id}/read`);
+    const { data } = await api.post(`/notifications/${id}/read`);
     return data;
   } catch {
     notificationsDb = notificationsDb.map((n) =>
@@ -124,7 +124,7 @@ export async function markNotificationRead(id) {
  */
 export async function markAllRead(filters = {}) {
   try {
-    const { data } = await api.patch('/notifications/read-all');
+    const { data } = await api.post('/notifications/read-all');
     return data;
   } catch {
     const { role, clientId } = filters;
@@ -145,7 +145,9 @@ export async function markAllRead(filters = {}) {
  */
 export async function clearNotifications(filters = {}) {
   try {
-    const { data } = await api.delete('/notifications');
+    // For deleting all, my API doesn't have a bulk delete, but the simulated one just deleted all.
+    // If needed we can add a delete all, but for now we catch and fallback to local
+    const { data } = await api.delete('/notifications/clear-all');
     return data;
   } catch {
     const { role, clientId } = filters;

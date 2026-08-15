@@ -26,6 +26,13 @@ class Post(Base):
     content_type = Column(String(20), nullable=False, default="text")
     media_urls = Column(Text, nullable=False, default="[]")
     platforms = Column(Text, nullable=False, default="[]")
+    # JSON map of platform -> connected social-account ID.  This preserves the
+    # existing multi-platform post API while allowing a user to select between
+    # multiple connected pages, boards, channels, or profiles.
+    platform_account_ids = Column(Text, nullable=False, default="{}")
+    # Provider-specific, non-secret publishing options (for example a
+    # Pinterest board ID or a YouTube privacy status).
+    platform_options = Column(Text, nullable=False, default="{}")
     status = Column(String(20), nullable=False, default="draft", index=True)
     scheduled_for = Column(DateTime(timezone=True), nullable=True, index=True)
     timezone = Column(String(100), nullable=False, default="UTC")
@@ -115,14 +122,25 @@ class MediaAsset(Base):
 
 class PublishingLog(Base):
     __tablename__ = "publishing_logs"
+    __table_args__ = (
+        UniqueConstraint(
+            "post_id", "platform", "attempt_number", name="uq_publishing_log_attempt"
+        ),
+    )
     id = Column(Integer, primary_key=True)
     post_id = Column(
         Integer, ForeignKey("posts.id", ondelete="CASCADE"), nullable=False, index=True
     )
     platform = Column(String(30), nullable=False)
+    social_account_id = Column(
+        Integer, ForeignKey("social_accounts.id", ondelete="SET NULL"), nullable=True, index=True
+    )
     status = Column(String(20), nullable=False, index=True)
     external_post_id = Column(String(255), nullable=True)
     error_message = Column(Text, nullable=True)
+    provider_response = Column(Text, nullable=True)
+    attempt_number = Column(Integer, nullable=False, default=1)
+    duration_ms = Column(Integer, nullable=True)
     attempted_at = Column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

@@ -14,7 +14,7 @@ import EmptyState      from '../../components/EmptyState/EmptyState';
 import StatusBadge     from './components/StatusBadge';
 import PlatformBadge   from './components/PlatformBadge';
 import SubNav          from './components/SubNav';
-import { mockFailedPosts } from './publishingMockData';
+
 import publishingService from '../../../../services/publishingService';
 import './FailedPosts.css';
 
@@ -32,7 +32,7 @@ export default function FailedPosts({ ownerType = 'marketing' }) {
   const load = () => {
     setLoading(true);
     publishingService.getFailedPosts()
-      .catch(() => mockFailedPosts)
+      .catch(() => [])
       .then((data) => {
         const normalized = data.map((p) => ({
           id: p.id,

@@ -1,5 +1,6 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from decimal import Decimal
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 PLATFORMS = {"facebook", "instagram", "linkedin", "pinterest", "youtube", "x"}
@@ -12,18 +13,30 @@ class PostWrite(BaseModel):
     )
     media_urls: list[str] = Field(default_factory=list, max_length=10)
     platforms: list[str] = Field(default_factory=list, max_length=6)
+    platform_account_ids: dict[str, int] = Field(default_factory=dict)
+    platform_options: dict[str, dict] = Field(default_factory=dict)
     scheduled_for: datetime | None = None
     timezone: str = Field(default="UTC", max_length=100)
     client_id: int | None = None
     campaign_id: int | None = None
-    recurrence_interval: str | None = Field(default=None, pattern="^(daily|weekly|monthly)$")
+    recurrence_interval: str | None = Field(
+        default=None, pattern="^(daily|weekly|monthly)$"
+    )
 
     @model_validator(mode="after")
     def validate_content(self):
         if set(self.platforms) - PLATFORMS:
             raise ValueError("Unsupported platform selected.")
+        if len(set(self.platforms)) != len(self.platforms):
+            raise ValueError("Each platform may only be selected once.")
+        if set(self.platform_account_ids) - set(self.platforms):
+            raise ValueError("Account selections must match selected platforms.")
+        if set(self.platform_options) - set(self.platforms):
+            raise ValueError("Platform options must match selected platforms.")
         if self.content_type != "text" and not self.media_urls:
             raise ValueError("Media is required for this content type.")
+        if not self.caption.strip() and not self.media_urls:
+            raise ValueError("Enter a caption or attach media before saving content.")
         return self
 
 
@@ -34,10 +47,14 @@ class PostUpdate(BaseModel):
     )
     media_urls: list[str] | None = Field(default=None, max_length=10)
     platforms: list[str] | None = Field(default=None, max_length=6)
+    platform_account_ids: dict[str, int] | None = None
+    platform_options: dict[str, dict] | None = None
     timezone: str | None = Field(default=None, max_length=100)
     client_id: int | None = None
     campaign_id: int | None = None
-    recurrence_interval: str | None = Field(default=None, pattern="^(daily|weekly|monthly)$")
+    recurrence_interval: str | None = Field(
+        default=None, pattern="^(daily|weekly|monthly)$"
+    )
 
     @field_validator("platforms")
     @classmethod
@@ -50,6 +67,17 @@ class PostUpdate(BaseModel):
 class ScheduleWrite(BaseModel):
     scheduled_for: datetime
     timezone: str = Field(default="UTC", max_length=100)
+
+    @model_validator(mode="after")
+    def normalize_time(self):
+        try:
+            zone = ZoneInfo(self.timezone)
+        except ZoneInfoNotFoundError as exc:
+            raise ValueError("Use a valid IANA timezone, such as Asia/Kolkata.") from exc
+        if self.scheduled_for.tzinfo is None:
+            self.scheduled_for = self.scheduled_for.replace(tzinfo=zone)
+        self.scheduled_for = self.scheduled_for.astimezone(timezone.utc)
+        return self
 
 
 class QueueReorder(BaseModel):

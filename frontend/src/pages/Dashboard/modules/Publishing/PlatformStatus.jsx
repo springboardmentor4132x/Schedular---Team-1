@@ -14,8 +14,9 @@ import {
 } from 'react-icons/md';
 import PageContainer   from '../../components/PageContainer/PageContainer';
 import LoadingSkeleton from '../../components/LoadingSkeleton/LoadingSkeleton';
-import { mockPlatformStatus, PLATFORM_META } from './publishingMockData';
-import SubNav from './components/SubNav';
+import SectionTitle from '../../components/SectionTitle/SectionTitle';
+import SubNav       from './components/SubNav';
+import { PLATFORM_META } from '../../shared/constants';
 import publishingService from '../../../../services/publishingService';
 import './PlatformStatus.css';
 
@@ -40,7 +41,7 @@ export default function PlatformStatus({ ownerType = 'marketing' }) {
   const load = () => {
     setLoading(true);
     publishingService.getSocialAccounts()
-      .catch(() => mockPlatformStatus)
+      .catch(() => [])
       .then((data) => {
         const normalized = data.length > 0 ? data.map((a) => ({
           platform: a.platform,
@@ -51,7 +52,7 @@ export default function PlatformStatus({ ownerType = 'marketing' }) {
           lastSync: a.lastSync ?? a.last_sync,
           health: a.health ?? (a.status === 'connected' ? 'healthy' : 'disconnected'),
           username: a.username ?? null,
-        })) : mockPlatformStatus;
+        })) : [];
         setPlatforms(normalized);
         setLoading(false);
       });

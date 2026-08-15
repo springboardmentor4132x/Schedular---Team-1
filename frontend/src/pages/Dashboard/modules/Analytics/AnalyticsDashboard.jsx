@@ -21,7 +21,7 @@ import {
 import PageContainer   from '../../components/PageContainer/PageContainer';
 import StatsCard       from '../../components/StatsCard/StatsCard';
 import SectionTitle    from '../../components/SectionTitle/SectionTitle';
-import { PLATFORM_META } from './analyticsMockData';
+import { PLATFORM_META } from '../../shared/constants';
 import SubNav from './components/SubNav';
 import analyticsService from '../../../../services/analyticsService';
 import './AnalyticsDashboard.css';

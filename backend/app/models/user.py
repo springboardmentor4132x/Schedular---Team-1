@@ -27,18 +27,48 @@ class User(Base):
     role = Column(String(50), nullable=False)
     country = Column(String(100))
     organization = Column(String(150))
+    session_version = Column(Integer, nullable=False, default=0)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    profile = relationship("UserProfile", back_populates="user", uselist=False, cascade="all, delete-orphan")
-    settings = relationship("UserSettings", back_populates="user", uselist=False, cascade="all, delete-orphan")
-    notifications = relationship("Notification", back_populates="user", cascade="all, delete-orphan")
-    notification_preferences = relationship("NotificationPreference", back_populates="user", uselist=False, cascade="all, delete-orphan")
-    social_accounts = relationship("SocialAccount", back_populates="user", cascade="all, delete-orphan")
-    activity_logs = relationship("ActivityLog", back_populates="user", cascade="all, delete-orphan")
-    owned_teams = relationship("Team", back_populates="owner", cascade="all, delete-orphan")
-    team_memberships = relationship("TeamMember", back_populates="user", cascade="all, delete-orphan")
-    refresh_tokens = relationship("RefreshToken", back_populates="user", cascade="all, delete-orphan")
-    client_assignments = relationship("ClientAssignment", back_populates="business_user", cascade="all, delete-orphan")
+    profile = relationship(
+        "UserProfile",
+        back_populates="user",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
+    settings = relationship(
+        "UserSettings",
+        back_populates="user",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
+    notifications = relationship(
+        "Notification", back_populates="user", cascade="all, delete-orphan"
+    )
+    notification_preferences = relationship(
+        "NotificationPreference",
+        back_populates="user",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
+    social_accounts = relationship(
+        "SocialAccount", back_populates="user", cascade="all, delete-orphan"
+    )
+    activity_logs = relationship(
+        "ActivityLog", back_populates="user", cascade="all, delete-orphan"
+    )
+    owned_teams = relationship(
+        "Team", back_populates="owner", cascade="all, delete-orphan"
+    )
+    team_memberships = relationship(
+        "TeamMember", back_populates="user", cascade="all, delete-orphan"
+    )
+    refresh_tokens = relationship(
+        "RefreshToken", back_populates="user", cascade="all, delete-orphan"
+    )
+    client_assignments = relationship(
+        "ClientAssignment", back_populates="business_user", cascade="all, delete-orphan"
+    )
 
 
 class UserProfile(Base):
@@ -104,7 +134,11 @@ class NotificationPreference(Base):
     __tablename__ = "notification_preferences"
     id = Column(Integer, primary_key=True)
     user_id = Column(
-        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True, unique=True
+        Integer,
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+        unique=True,
     )
     publishing_notifications = Column(Boolean, nullable=False, default=True)
     campaign_notifications = Column(Boolean, nullable=False, default=True)
@@ -118,7 +152,10 @@ class NotificationPreference(Base):
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
     updated_at = Column(
-        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
     )
 
     user = relationship("User", back_populates="notification_preferences")
@@ -132,14 +169,24 @@ class SocialAccount(Base):
         Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )
     platform = Column(String(30), nullable=False)
+    external_account_id = Column(String(255), nullable=True, index=True)
     status = Column(String(20), nullable=False, default="disconnected")
     account_name = Column(String(150), nullable=True)
     account_email = Column(String(150), nullable=True)
     permissions = Column(Text, nullable=False, default="")
+    metadata_json = Column(Text, nullable=False, default="{}")
+    last_error = Column(Text, nullable=True)
+    connected_at = Column(DateTime(timezone=True), nullable=True)
     last_sync = Column(DateTime(timezone=True), nullable=True)
     access_token_encrypted = Column(EncryptedType, nullable=True)
     refresh_token_encrypted = Column(EncryptedType, nullable=True)
     token_expires_at = Column(DateTime(timezone=True), nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint(
+            "user_id", "platform", "external_account_id", name="uq_social_account_identity"
+        ),
+    )
 
     user = relationship("User", back_populates="social_accounts")
 
@@ -172,8 +219,12 @@ class Team(Base):
     )
 
     owner = relationship("User", back_populates="owned_teams")
-    members = relationship("TeamMember", back_populates="team", cascade="all, delete-orphan")
-    client_assignments = relationship("ClientAssignment", back_populates="team", cascade="all, delete-orphan")
+    members = relationship(
+        "TeamMember", back_populates="team", cascade="all, delete-orphan"
+    )
+    client_assignments = relationship(
+        "ClientAssignment", back_populates="team", cascade="all, delete-orphan"
+    )
 
 
 class TeamMember(Base):

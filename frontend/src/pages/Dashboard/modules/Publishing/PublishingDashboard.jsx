@@ -19,15 +19,8 @@ import LoadingSkeleton from '../../components/LoadingSkeleton/LoadingSkeleton';
 import EmptyState      from '../../components/EmptyState/EmptyState';
 import StatusBadge     from './components/StatusBadge';
 import PlatformBadge   from './components/PlatformBadge';
-import {
-  mockPublishingStats,
-  mockPublishingTimeline,
-  mockQueuePosts,
-  mockPublishingLogs,
-  mockPlatformStatus,
-  PLATFORM_META,
-} from './publishingMockData';
 import SubNav from './components/SubNav';
+import { PLATFORM_META, POST_STATUSES } from '../../shared/constants';
 import publishingService from '../../../../services/publishingService';
 import './PublishingDashboard.css';
 
@@ -61,15 +54,27 @@ export default function PublishingDashboard({ ownerType = 'marketing' }) {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      // Try real API first, fall back to mock
       const [queueData, logsData] = await Promise.all([
-        publishingService.getQueue().catch(() => mockQueuePosts),
-        publishingService.getPublishingLogs().catch(() => mockPublishingLogs),
+        publishingService.getQueue().catch(() => []),
+        publishingService.getPublishingLogs().catch(() => []),
       ]);
       const socialAccounts = await publishingService.getSocialAccounts().catch(() => []);
 
-      setStats(mockPublishingStats);
-      setTimeline(mockPublishingTimeline);
+      setStats({
+        scheduledPosts: queueData.filter(q => q.status === 'scheduled').length,
+        publishedToday: logsData.filter(l => l.status === 'published' && new Date(l.time).toDateString() === new Date().toDateString()).length,
+        queueSize: queueData.length,
+        failedPosts: logsData.filter(l => l.status === 'failed').length,
+        pendingApproval: 0,
+        cancelledPosts: logsData.filter(l => l.status === 'cancelled').length
+      });
+      setTimeline(logsData.map(l => ({
+        id: l.id,
+        time: formatDateTime(l.time),
+        platform: l.platform,
+        caption: l.postCaption,
+        status: l.status
+      })));
       setQueue(queueData.slice(0, 5));
       setLogs(logsData.slice(0, 6));
       setPlatforms(
@@ -83,7 +88,7 @@ export default function PublishingDashboard({ ownerType = 'marketing' }) {
               lastSync: a.last_sync,
               health: a.status === 'connected' ? 'healthy' : 'disconnected',
             }))
-          : mockPlatformStatus
+          : []
       );
     } finally {
       setLoading(false);

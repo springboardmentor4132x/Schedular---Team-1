@@ -2,6 +2,7 @@ import sys
 import os
 import random
 from datetime import datetime, timezone, timedelta
+
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
 from app.database import SessionLocal
@@ -32,7 +33,7 @@ def seed_analytics():
                     clicks=int(reach * 0.05),
                 )
                 db.add(pa)
-            
+
             if not db.query(AudienceAnalytics).filter_by(platform=plat).first():
                 aa = AudienceAnalytics(
                     platform=plat,
@@ -42,17 +43,17 @@ def seed_analytics():
                     gender_distribution=[
                         {"name": "Female", "value": random.randint(30, 60)},
                         {"name": "Male", "value": random.randint(30, 50)},
-                        {"name": "Other", "value": random.randint(1, 10)}
+                        {"name": "Other", "value": random.randint(1, 10)},
                     ],
                     age_distribution=[
                         {"range": "18-24", "value": random.randint(10, 30)},
                         {"range": "25-34", "value": random.randint(30, 50)},
-                        {"range": "35-44", "value": random.randint(10, 20)}
+                        {"range": "35-44", "value": random.randint(10, 20)},
                     ],
                     country_distribution=[
                         {"country": "United States", "value": random.randint(40, 60)},
                         {"country": "United Kingdom", "value": random.randint(10, 20)},
-                        {"country": "India", "value": random.randint(5, 15)}
+                        {"country": "India", "value": random.randint(5, 15)},
                     ],
                     most_active_hours=[random.randint(10, 100) for _ in range(24)],
                     most_active_days=[
@@ -63,7 +64,7 @@ def seed_analytics():
                         {"day": "Fri", "value": random.randint(50, 100)},
                         {"day": "Sat", "value": random.randint(50, 100)},
                         {"day": "Sun", "value": random.randint(50, 100)},
-                    ]
+                    ],
                 )
                 db.add(aa)
 
@@ -71,11 +72,18 @@ def seed_analytics():
         posts = db.query(Post).filter(Post.status == "published").all()
         for p in posts:
             import json
-            plats = json.loads(p.platforms) if isinstance(p.platforms, str) else p.platforms
+
+            plats = (
+                json.loads(p.platforms) if isinstance(p.platforms, str) else p.platforms
+            )
             if not plats:
                 plats = ["linkedin"]
             for plat in plats:
-                if not db.query(PostAnalytics).filter_by(post_id=p.id, platform=plat).first():
+                if (
+                    not db.query(PostAnalytics)
+                    .filter_by(post_id=p.id, platform=plat)
+                    .first()
+                ):
                     reach = random.randint(100, 10000)
                     pa = PostAnalytics(
                         post_id=p.id,
@@ -87,10 +95,10 @@ def seed_analytics():
                         reach=reach,
                         impressions=int(reach * 1.2),
                         clicks=int(reach * 0.02),
-                        engagement_rate=round(random.uniform(1.5, 10.0), 2)
+                        engagement_rate=round(random.uniform(1.5, 10.0), 2),
                     )
                     db.add(pa)
-        
+
         # Seed Campaign Analytics
         campaigns = db.query(Campaign).all()
         for c in campaigns:
@@ -104,7 +112,7 @@ def seed_analytics():
                     engagement=int(reach * 0.08),
                     clicks=int(reach * 0.04),
                     roi=round(random.uniform(50, 500), 2),
-                    completion_percentage=round(random.uniform(10, 100), 1)
+                    completion_percentage=round(random.uniform(10, 100), 1),
                 )
                 db.add(ca)
 
@@ -115,6 +123,7 @@ def seed_analytics():
         print(f"Error seeding analytics: {e}")
     finally:
         db.close()
+
 
 if __name__ == "__main__":
     seed_analytics()

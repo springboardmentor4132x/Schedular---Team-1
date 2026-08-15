@@ -5,10 +5,10 @@
  * Props: platform (string), size ('sm'|'md'), showLabel (bool)
  */
 
-import { PLATFORM_META } from '../publishingMockData';
+import { PLATFORM_META } from '../../../shared/constants';
 import './PlatformBadge.css';
 
-export default function PlatformBadge({ platform, size = 'md', showLabel = true }) {
+export default function PlatformBadge({ platform, size = 'sm', showLabel = true }) {
   const meta = PLATFORM_META[platform] ?? { label: platform, color: '#6b7280', bgColor: '#f1f5f9', icon: '?' };
   return (
     <span

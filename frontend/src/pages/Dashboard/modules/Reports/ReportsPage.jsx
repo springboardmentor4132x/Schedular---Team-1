@@ -6,7 +6,7 @@
  * and opens printable detailed summaries inside overlay modals.
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import {
   MdDescription, MdDateRange, MdFileDownload, MdVisibility,
@@ -15,9 +15,8 @@ import {
 import PageContainer from '../../components/PageContainer/PageContainer';
 import SectionTitle from '../../components/SectionTitle/SectionTitle';
 import EmptyState from '../../components/EmptyState/EmptyState';
+import reportsService from '../../../../services/reportsService';
 import './ReportsPage.css';
-
-const FALLBACK_REPORTS = [];
 
 export default function ReportsPage({
   clientId: propClientId,
@@ -29,12 +28,24 @@ export default function ReportsPage({
   const clientId = propClientId || paramClientId;
 
   // Local repository reports
-  const [reportsList, setReportsList] = useState(FALLBACK_REPORTS);
+  const [reportsList, setReportsList] = useState([]);
   const [filterType, setFilterType] = useState('All');
   const [filterClientId, setFilterClientId] = useState('All');
   const [activeReportId, setActiveReportId] = useState(null);
 
-  // Filter report lists
+  useEffect(() => {
+    async function loadReports() {
+      try {
+        // In a real app we'd fetch all reports here
+        // The backend GET /reports doesn't exist yet but we assume it will
+        const data = await reportsService.getReports().catch(() => []);
+        setReportsList(data);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    loadReports();
+  }, []);
   const filteredReports = useMemo(() => {
     return reportsList.filter((r) => {
       // 1. Scopes
@@ -76,25 +87,44 @@ export default function ReportsPage({
   }, [activeReport]);
 
   const handleDownload = () => {
-    alert('PDF Export Engine simulation activated. Production build integration scheduled.');
+    if (activeReportId) {
+      reportsService.downloadPdf(activeReportId);
+    }
   };
 
-  const handleGenerate = () => {
+  const handleDownloadExcel = () => {
+    if (activeReportId) {
+      reportsService.downloadExcel(activeReportId);
+    }
+  };
+
+  const handleGenerate = async () => {
     const reportTitle = window.prompt('Enter Report Title:', 'August Campaign Audit');
     if (!reportTitle) return;
 
-    const newReport = {
-      id: `rep-${Date.now()}`,
-      title: reportTitle,
-      type: 'Campaign Performance',
-      period: 'August 2026',
-      generatedAt: new Date().toISOString(),
-      clientId: ownerType === 'creator' ? null : (clientId || (filterClientId !== 'All' ? filterClientId : 'nike')),
-      ownerType,
-      status: 'ready',
-    };
+    try {
+      const newReportData = await reportsService.generateReport({
+        name: reportTitle,
+        start_date: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString(),
+        end_date: new Date().toISOString()
+      });
 
-    setReportsList((prev) => [newReport, ...prev]);
+      const newReport = {
+        id: newReportData.id,
+        title: reportTitle,
+        type: 'Campaign Performance',
+        period: 'Recent',
+        generatedAt: new Date().toISOString(),
+        clientId: ownerType === 'creator' ? null : (clientId || (filterClientId !== 'All' ? filterClientId : 'nike')),
+        ownerType,
+        status: newReportData.status,
+      };
+
+      setReportsList((prev) => [newReport, ...prev]);
+    } catch (e) {
+      alert('Failed to generate report');
+      console.error(e);
+    }
   };
 
   return (
@@ -263,8 +293,8 @@ export default function ReportsPage({
             </div>
 
             <div className="rp-modal__footer">
-              <button className="rp-modal-btn rp-modal-btn--secondary" onClick={() => window.print()}>
-                <MdPrint /> Print Report
+              <button className="rp-modal-btn rp-modal-btn--secondary" onClick={handleDownloadExcel}>
+                <MdPrint /> Download Excel
               </button>
               <button className="rp-modal-btn rp-modal-btn--secondary" onClick={() => alert('Emailing report briefs...')}>
                 <MdMailOutline /> Share Report

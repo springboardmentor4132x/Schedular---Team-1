@@ -4,12 +4,12 @@ import base64
 import hashlib
 import secrets
 from datetime import datetime, timedelta, timezone
-from json import loads
+from json import dumps, loads
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 import httpx
 
-from cryptography.fernet import Fernet
+from cryptography.fernet import Fernet, InvalidToken
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from fastapi.responses import RedirectResponse
 from jose import JWTError, jwt
@@ -79,7 +79,7 @@ def _oauth_state(user_id: int, platform: str, code_verifier: str | None = None) 
     if code_verifier:
         # State is sent through the browser. Keep the X PKCE verifier encrypted
         # even though the state itself is signed.
-        payload["pkce"] = _encrypt_token(code_verifier)
+        payload["pkce"] = _encrypt_state_value(code_verifier)
     return jwt.encode(
         payload,
         settings.SECRET_KEY,
@@ -93,7 +93,7 @@ def _read_oauth_json(
     request_headers = {"Accept": "application/json", **(headers or {})}
     if data is not None:
         request_headers["Content-Type"] = "application/x-www-form-urlencoded"
-    
+
     try:
         with httpx.Client(timeout=15) as client:
             if data is not None:
@@ -108,27 +108,28 @@ def _read_oauth_json(
         ) from exc
 
 
-def _token_cipher() -> Fernet:
+def _oauth_state_cipher() -> Fernet:
     key = base64.urlsafe_b64encode(
         hashlib.sha256(settings.SECRET_KEY.encode("utf-8")).digest()
     )
     return Fernet(key)
 
 
-def _encrypt_token(value: str | None) -> str | None:
+def _encrypt_state_value(value: str | None) -> str | None:
     return (
-        _token_cipher().encrypt(value.encode("utf-8")).decode("utf-8")
+        _oauth_state_cipher().encrypt(value.encode("utf-8")).decode("utf-8")
         if value
         else None
     )
 
 
-def _decrypt_token(value: str | None) -> str | None:
-    return (
-        _token_cipher().decrypt(value.encode("utf-8")).decode("utf-8")
-        if value
-        else None
-    )
+def _decrypt_state_value(value: str | None) -> str | None:
+    if not value:
+        return None
+    try:
+        return _oauth_state_cipher().decrypt(value.encode("utf-8")).decode("utf-8")
+    except (InvalidToken, ValueError) as exc:
+        raise HTTPException(status_code=400, detail="Invalid OAuth state.") from exc
 
 
 def _identity_fields(platform: str, identity: dict) -> tuple[str | None, str | None]:
@@ -156,21 +157,34 @@ def _identity_fields(platform: str, identity: dict) -> tuple[str | None, str | N
 def _save_oauth_account(
     db: Session, user_id: int, platform: str, token_data: dict, identity: dict
 ) -> None:
+    external_account_id = str(
+        identity.get("id") or identity.get("user_id") or identity.get("sub") or ""
+    ) or None
     account = (
         db.query(SocialAccount)
-        .filter(SocialAccount.user_id == user_id, SocialAccount.platform == platform)
+        .filter(
+            SocialAccount.user_id == user_id,
+            SocialAccount.platform == platform,
+        )
         .first()
     )
     if account is None:
         account = SocialAccount(user_id=user_id, platform=platform)
         db.add(account)
     account.status = "connected"
+    account.external_account_id = external_account_id
     account.account_name, account.account_email = _identity_fields(platform, identity)
-    account.permissions = "authenticated"
+    account.permissions = ",".join(token_data.get("scope", "authenticated").split())
+    account.metadata_json = dumps(
+        {key: value for key, value in identity.items() if key not in {"email"}},
+        default=str,
+    )
+    account.last_error = None
+    account.connected_at = datetime.now(timezone.utc)
     account.last_sync = datetime.now(timezone.utc)
-    account.access_token_encrypted = _encrypt_token(token_data.get("access_token"))
+    account.access_token_encrypted = token_data.get("access_token")
     account.refresh_token_encrypted = (
-        _encrypt_token(token_data.get("refresh_token"))
+        token_data.get("refresh_token")
         or account.refresh_token_encrypted
     )
     expires_in = token_data.get("expires_in")
@@ -297,11 +311,14 @@ def _account_payload(account: SocialAccount | None, platform: str) -> dict:
     ]
     return {
         "platform": platform,
+        "id": account.id if account else None,
+        "externalAccountId": account.external_account_id if account else None,
         "status": account.status if account else "disconnected",
         "accountName": account.account_name if account else None,
         "accountEmail": account.account_email if account else None,
         "lastSync": account.last_sync if account else None,
         "permissions": permissions,
+        "lastError": account.last_error if account else None,
     }
 
 
@@ -383,7 +400,7 @@ def get_dashboard_summary(
     )
     posts = db.query(Post).filter(post_scope)
     campaigns = db.query(Campaign).filter(campaign_scope)
-    
+
     clients_count = 0
     if user.role == "Marketing Team":
         clients_count = (
@@ -676,13 +693,20 @@ def update_settings(
 def get_social_accounts(
     user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ):
-    saved = {
-        row.platform: row
-        for row in db.query(SocialAccount)
+    saved = (
+        db.query(SocialAccount)
         .filter(SocialAccount.user_id == user.id)
+        .order_by(SocialAccount.platform, SocialAccount.id)
         .all()
-    }
-    return [_account_payload(saved.get(platform), platform) for platform in PLATFORMS]
+    )
+    payloads = [_account_payload(account, account.platform) for account in saved]
+    connected_platforms = {account.platform for account in saved}
+    payloads.extend(
+        _account_payload(None, platform)
+        for platform in PLATFORMS
+        if platform not in connected_platforms
+    )
+    return payloads
 
 
 @router.get("/social/accounts/{platform}")
@@ -690,12 +714,17 @@ def get_social_account(
     platform: str, user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ):
     _validate_platform(platform)
-    row = (
+    rows = (
         db.query(SocialAccount)
         .filter(SocialAccount.user_id == user.id, SocialAccount.platform == platform)
-        .first()
+        .order_by(SocialAccount.id.asc())
+        .all()
     )
-    return _account_payload(row, platform) | {"history": []}
+    return {
+        "platform": platform,
+        "accounts": [_account_payload(row, platform) for row in rows],
+        "history": [],
+    }
 
 
 @router.post("/social/connect/{platform}")
@@ -708,8 +737,8 @@ def connect_social_account(
     except HTTPException:
         # Strict production enforcement: Do not fall back to local demo providers.
         raise HTTPException(
-            status_code=501, 
-            detail=f"{platform.title()} OAuth credentials are not configured on this server."
+            status_code=501,
+            detail=f"{platform.title()} OAuth credentials are not configured on this server.",
         )
     code_verifier = secrets.token_urlsafe(64) if platform == "x" else None
     state = _oauth_state(user.id, platform, code_verifier)
@@ -795,7 +824,7 @@ def social_oauth_callback(
         raise HTTPException(status_code=400, detail="OAuth user no longer exists.")
     client_id, client_secret = _oauth_configuration(platform)
     token_data = _exchange_authorization_code(
-        platform, code, client_id, client_secret, _decrypt_token(payload.get("pkce"))
+        platform, code, client_id, client_secret, _decrypt_state_value(payload.get("pkce"))
     )
     access_token = token_data.get("access_token")
     if not access_token:
@@ -814,12 +843,12 @@ def disconnect_social_account(
     platform: str, user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ):
     _validate_platform(platform)
-    row = (
+    rows = (
         db.query(SocialAccount)
         .filter(SocialAccount.user_id == user.id, SocialAccount.platform == platform)
-        .first()
+        .all()
     )
-    if row:
+    for row in rows:
         (
             row.status,
             row.account_name,
@@ -830,6 +859,7 @@ def disconnect_social_account(
         row.access_token_encrypted = row.refresh_token_encrypted = (
             row.token_expires_at
         ) = None
+    if rows:
         _activity(db, user.id, "Disconnected account", platform)
         db.commit()
     return {
@@ -853,7 +883,9 @@ def refresh_social_account(
             "success": False,
             "message": "No connected account is available to refresh.",
         }
-    refresh_token = _decrypt_token(account.refresh_token_encrypted)
+    # EncryptedType decrypts database values on load.  Do not decrypt it a
+    # second time with an unrelated cipher.
+    refresh_token = account.refresh_token_encrypted
     if not refresh_token or platform not in {"youtube", "x", "pinterest"}:
         return {
             "success": False,
@@ -874,9 +906,9 @@ def refresh_social_account(
         "pinterest": "https://api.pinterest.com/v5/oauth/token",
     }[platform]
     token_data = _read_oauth_json(token_url, data=data, headers=headers)
-    account.access_token_encrypted = _encrypt_token(token_data.get("access_token"))
+    account.access_token_encrypted = token_data.get("access_token")
     if token_data.get("refresh_token"):
-        account.refresh_token_encrypted = _encrypt_token(token_data["refresh_token"])
+        account.refresh_token_encrypted = token_data["refresh_token"]
     if token_data.get("expires_in"):
         account.token_expires_at = datetime.now(timezone.utc) + timedelta(
             seconds=int(token_data["expires_in"])

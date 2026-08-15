@@ -169,11 +169,10 @@ def discover_business_users(
     team = db.query(Team).filter(Team.owner_id == user.id).first()
     if not team:
         return []
-    
+
     # Get business users already assigned to this team
-    assigned_user_ids = (
-        db.query(ClientAssignment.business_user_id)
-        .filter(ClientAssignment.team_id == team.id)
+    assigned_user_ids = db.query(ClientAssignment.business_user_id).filter(
+        ClientAssignment.team_id == team.id
     )
     # Get business users
     businesses = (
@@ -262,9 +261,8 @@ def discover_marketing_teams(
         raise HTTPException(
             status_code=403, detail="Only Business Users can discover Marketing Teams."
         )
-    assigned_team_ids = (
-        db.query(ClientAssignment.team_id)
-        .filter(ClientAssignment.business_user_id == user.id)
+    assigned_team_ids = db.query(ClientAssignment.team_id).filter(
+        ClientAssignment.business_user_id == user.id
     )
     teams = (
         db.query(Team)
@@ -292,18 +290,28 @@ def create_collaboration_request(
         if team is None or db.get(User, team.owner_id).role != "Marketing Team":
             raise HTTPException(status_code=404, detail="Marketing Team not found.")
         if team.owner_id == user.id:
-            raise HTTPException(status_code=400, detail="Cannot request collaboration with yourself.")
+            raise HTTPException(
+                status_code=400, detail="Cannot request collaboration with yourself."
+            )
         business_user_id = user.id
         target_notify_user_id = team.owner_id
     elif user.role == "Marketing Team":
         if payload.business_user_id is None:
             raise HTTPException(status_code=422, detail="business_user_id is required.")
         if payload.business_user_id == user.id:
-            raise HTTPException(status_code=400, detail="Cannot request collaboration with yourself.")
+            raise HTTPException(
+                status_code=400, detail="Cannot request collaboration with yourself."
+            )
         team = db.query(Team).filter(Team.owner_id == user.id).first()
         if not team:
-            raise HTTPException(status_code=404, detail="You do not have a team workspace.")
-        business = db.query(User).filter(User.id == payload.business_user_id, User.role == "Business User").first()
+            raise HTTPException(
+                status_code=404, detail="You do not have a team workspace."
+            )
+        business = (
+            db.query(User)
+            .filter(User.id == payload.business_user_id, User.role == "Business User")
+            .first()
+        )
         if not business:
             raise HTTPException(status_code=404, detail="Business User not found.")
         business_user_id = business.id
@@ -356,13 +364,11 @@ def create_collaboration_request(
         Notification(
             user_id=target_notify_user_id,
             title="New collaboration request",
-            message=f"{user.full_name} requested collaboration.",
+            description=f"{user.full_name} requested collaboration.",
             type="collaboration",
         )
     )
-    db.add(
-        ActivityLog(user_id=user.id, activity="Requested collaboration")
-    )
+    db.add(ActivityLog(user_id=user.id, activity="Requested collaboration"))
     db.commit()
     db.refresh(row)
     return _request_payload(row, db)
@@ -408,17 +414,17 @@ def decide_collaboration_request(
     row = db.get(CollaborationRequest, request_id)
     if row is None:
         raise HTTPException(status_code=404, detail="Collaboration request not found.")
-    
+
     team = db.get(Team, row.team_id)
     if not team:
         raise HTTPException(status_code=404, detail="Team not found.")
 
     if row.requested_by_user_id == row.business_user_id:
         # Requested by Business User -> Marketing Team recipient decides (team owner)
-        is_recipient = (team.owner_id == user.id)
+        is_recipient = team.owner_id == user.id
     else:
         # Requested by Marketing Team -> Business User recipient decides
-        is_recipient = (row.business_user_id == user.id)
+        is_recipient = row.business_user_id == user.id
 
     if not is_recipient and user.role != "Administrator":
         raise HTTPException(
@@ -442,7 +448,7 @@ def decide_collaboration_request(
             db.add(
                 ClientAssignment(team_id=team.id, business_user_id=row.business_user_id)
             )
-        
+
         if row.requested_by_user_id == row.business_user_id:
             message = f"{team.name} accepted your collaboration request."
         else:
@@ -459,7 +465,7 @@ def decide_collaboration_request(
         Notification(
             user_id=row.requested_by_user_id,
             title="Collaboration request updated",
-            message=message,
+            description=message,
             type="collaboration",
         )
     )
@@ -500,7 +506,7 @@ def revoke_collaboration_request(
         Notification(
             user_id=counterpart,
             title="Collaboration revoked",
-            message="The client workspace is no longer accessible to this Marketing Team.",
+            description="The client workspace is no longer accessible to this Marketing Team.",
             type="collaboration",
         )
     )

@@ -14,7 +14,7 @@ import PageContainer from '../../components/PageContainer/PageContainer';
 import SectionTitle  from '../../components/SectionTitle/SectionTitle';
 import SubNav        from './components/SubNav';
 import analyticsService from '../../../../services/analyticsService';
-import { PLATFORM_META } from './analyticsMockData';
+import { PLATFORM_META } from '../../shared/constants';
 import './ContentAnalytics.css';
 
 const SORT_KEYS = [

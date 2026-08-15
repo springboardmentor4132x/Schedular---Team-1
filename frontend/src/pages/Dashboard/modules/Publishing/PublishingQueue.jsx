@@ -14,7 +14,7 @@ import EmptyState      from '../../components/EmptyState/EmptyState';
 import StatusBadge     from './components/StatusBadge';
 import PlatformBadge   from './components/PlatformBadge';
 import SubNav          from './components/SubNav';
-import { mockQueuePosts } from './publishingMockData';
+
 import publishingService from '../../../../services/publishingService';
 import './PublishingQueue.css';
 
@@ -40,7 +40,7 @@ export default function PublishingQueue({ ownerType = 'marketing' }) {
 
   useEffect(() => {
     publishingService.getQueue()
-      .catch(() => mockQueuePosts)
+      .catch(() => [])
       .then((data) => { setItems(data); setLoading(false); });
   }, []);
 
@@ -61,7 +61,7 @@ export default function PublishingQueue({ ownerType = 'marketing' }) {
   const handleRetry = async (postId) => {
     try {
       await publishingService.retryPost(postId);
-      const refreshed = await publishingService.getQueue().catch(() => mockQueuePosts);
+      const refreshed = await publishingService.getQueue().catch(() => []);
       setItems(refreshed);
     } catch (e) { console.error(e); }
   };

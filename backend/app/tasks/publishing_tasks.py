@@ -1,90 +1,199 @@
-import logging
-from datetime import datetime, timezone
-from sqlalchemy.orm import Session
-from celery import shared_task
+"""Celery tasks for real provider publication.
 
+Unit tests may replace provider classes or enable Celery eager mode, but this
+task never inserts a synthetic provider ID or declares a post published without
+an actual adapter result.
+"""
+
+from __future__ import annotations
+
+import json
+import logging
+import time
+from pathlib import Path
+
+import httpx
+from celery import shared_task
+from sqlalchemy.orm import Session
+
+from app.config import settings
 from app.database import SessionLocal
+from app.integrations.social.facebook import FacebookProvider
+from app.integrations.social.instagram import InstagramProvider
+from app.integrations.social.linkedin import LinkedInProvider
+from app.integrations.social.pinterest import PinterestProvider
+from app.integrations.social.x import XProvider
+from app.integrations.social.youtube import YouTubeProvider
 from app.models.content import Post, PublishingLog
-from app.services.publishing_service import process_pending_publications
+from app.models.user import SocialAccount
+from app.services.publishing_service import finalize_post_publication, process_pending_publications
 
 logger = logging.getLogger(__name__)
+UPLOAD_DIRECTORY = Path(__file__).resolve().parents[2] / "uploads"
+
 
 @shared_task(name="app.tasks.publishing_tasks.poll_scheduled_posts")
 def poll_scheduled_posts():
-    """Polls the database for scheduled posts and enqueues them for publishing."""
+    """Poll for due posts; Celery Beat invokes this task once per minute."""
     db: Session = SessionLocal()
     try:
-        # We delegate to the publishing service which handles claiming and processing
-        processed = process_pending_publications(db)
-        if processed:
-            logger.info(f"Polled and processed {len(processed)} posts.")
-    except Exception as e:
-        logger.error(f"Error in poll_scheduled_posts: {e}")
+        return process_pending_publications(db)
+    except Exception:
+        logger.exception("Scheduled publication poll failed")
+        raise
     finally:
         db.close()
 
-import json
-from app.models.user import SocialAccount
-from app.integrations.social.linkedin import LinkedInProvider
 
-@shared_task(name="app.tasks.publishing_tasks.publish_post_task", bind=True, max_retries=3)
-def publish_post_task(self, post_id: int):
-    """Specific task for publishing a single post to allow fine-grained retries."""
+def get_provider(platform: str):
+    providers = {
+        "linkedin": LinkedInProvider,
+        "facebook": FacebookProvider,
+        "instagram": InstagramProvider,
+        "x": XProvider,
+        "youtube": YouTubeProvider,
+        "pinterest": PinterestProvider,
+    }
+    provider = providers.get(platform)
+    if provider is None:
+        raise ValueError(f"Unsupported publishing platform: {platform}")
+    return provider()
+
+
+def _media_payload(post: Post) -> tuple[list[str], list[str]]:
+    """Return public URLs plus safe local upload paths for provider adapters."""
+    media_urls = json.loads(post.media_urls or "[]")
+    public_urls: list[str] = []
+    local_paths: list[str] = []
+    base_url = (settings.MEDIA_PUBLIC_BASE_URL or settings.APP_BASE_URL).rstrip("/")
+    for url in media_urls:
+        if url.startswith("/uploads/"):
+            storage_key = url.removeprefix("/uploads/")
+            path = (UPLOAD_DIRECTORY / storage_key).resolve()
+            if path.parent != UPLOAD_DIRECTORY.resolve() or not path.exists():
+                raise ValueError("A selected media file is no longer available.")
+            local_paths.append(str(path))
+            public_urls.append(f"{base_url}{url}")
+        else:
+            public_urls.append(url)
+    return public_urls, local_paths
+
+
+def _content_payload(post: Post) -> dict:
+    public_urls, local_paths = _media_payload(post)
+    try:
+        options = json.loads(post.platform_options or "{}")
+    except (TypeError, ValueError):
+        options = {}
+    return {
+        "text": post.caption,
+        "title": post.caption.strip().split("\n", 1)[0][:100] or "SocialPilot video",
+        "content_type": post.content_type,
+        "mediaUrls": public_urls,
+        "media_paths": local_paths,
+        "platform_options": options,
+    }
+
+
+def _set_failure(log: PublishingLog, message: str, duration_ms: int) -> None:
+    log.status = "failed"
+    log.error_message = message[:2000]
+    log.duration_ms = duration_ms
+
+
+@shared_task(
+    name="app.tasks.publishing_tasks.publish_post_task",
+    bind=True,
+    max_retries=3,
+)
+def publish_post_task(self, post_id: int, platform: str, attempt_id: int):
+    """Publish exactly one post-platform attempt and persist its provider result."""
+    started = time.monotonic()
     db: Session = SessionLocal()
     try:
         post = db.get(Post, post_id)
-        if not post:
-            return
-            
-        platforms = json.loads(post.platforms)
-        logs = []
-        success = True
-        
-        for platform in platforms:
-            account = db.query(SocialAccount).filter(
-                SocialAccount.user_id == post.owner_id, 
-                SocialAccount.platform == platform,
-                SocialAccount.status == "connected"
-            ).first()
-            
-            if not account or not account.access_token_encrypted:
-                log = PublishingLog(post_id=post.id, platform=platform, status="failed", error_message="No connected account or missing token.")
-                db.add(log)
-                success = False
-                continue
-                
-            try:
-                external_id = None
-                if platform == "linkedin":
-                    provider = LinkedInProvider()
-                    content = {"text": post.caption}
-                    # We would also attach media here based on post.media_urls if supported
-                    external_id = provider.publish_post(account.access_token_encrypted, content)
-                else:
-                    # Explicit failure for unimplemented production platforms
-                    raise NotImplementedError(f"Publishing to {platform} is not currently implemented in production.")
-                    
-                log = PublishingLog(post_id=post.id, platform=platform, status="published", external_post_id=external_id)
-                db.add(log)
-            except Exception as e:
-                logger.error(f"Failed to publish to {platform}: {e}")
-                log = PublishingLog(post_id=post.id, platform=platform, status="failed", error_message=str(e)[:2000])
-                db.add(log)
-                success = False
-        
-        if success:
-            post.status = "published"
-            post.scheduled_for = None
-            post.queue_position = None
-        else:
-            # Note: if partial success occurs, we leave it as failed so it can be reviewed or retried
-            post.status = "failed"
-            
+        attempt = db.get(PublishingLog, attempt_id)
+        if post is None or attempt is None or attempt.post_id != post_id or attempt.platform != platform:
+            return {"status": "ignored"}
+        if attempt.status == "published":
+            return {"status": "already_published", "externalPostId": attempt.external_post_id}
+        if post.status not in {"publishing", "failed"}:
+            return {"status": "ignored"}
+
+        account = None
+        if attempt.social_account_id:
+            account = db.get(SocialAccount, attempt.social_account_id)
+        if account is None:
+            account = (
+                db.query(SocialAccount)
+                .filter(
+                    SocialAccount.user_id == post.owner_id,
+                    SocialAccount.platform == platform,
+                    SocialAccount.status == "connected",
+                )
+                .order_by(SocialAccount.id.asc())
+                .first()
+            )
+        if account is None or not account.access_token_encrypted:
+            _set_failure(
+                attempt,
+                "No connected account or usable access token is available for this platform.",
+                int((time.monotonic() - started) * 1000),
+            )
+            db.commit()
+            finalize_post_publication(db, post_id)
+            return {"status": "failed"}
+
+        attempt.status = "publishing"
+        attempt.social_account_id = account.id
         db.commit()
-    except Exception as exc:
-        logger.error(f"Publishing task failed: {exc}")
-        db.rollback()
-        # Retry with exponential backoff
-        raise self.retry(exc=exc, countdown=2 ** self.request.retries)
+
+        try:
+            content = _content_payload(post)
+            if platform == "linkedin" and account.external_account_id:
+                account_id = account.external_account_id
+                content["author_urn"] = (
+                    account_id
+                    if account_id.startswith("urn:li:")
+                    else f"urn:li:person:{account_id}"
+                )
+            external_id = get_provider(platform).publish_post(
+                account.access_token_encrypted, content
+            )
+            if not external_id or external_id == "unknown-id":
+                raise ValueError("The provider did not return a published object ID.")
+        except (httpx.TimeoutException, httpx.TransportError) as exc:
+            duration = int((time.monotonic() - started) * 1000)
+            if self.request.retries < settings.PUBLISH_MAX_RETRIES:
+                attempt.status = "retrying"
+                attempt.error_message = f"Temporary provider error: {str(exc)[:1000]}"
+                attempt.duration_ms = duration
+                db.commit()
+                raise self.retry(exc=exc, countdown=settings.PUBLISH_RETRY_SECONDS * (2 ** self.request.retries))
+            _set_failure(attempt, f"Provider connection failed: {exc}", duration)
+            account.last_error = attempt.error_message
+            db.commit()
+            finalize_post_publication(db, post_id)
+            return {"status": "failed"}
+        except Exception as exc:
+            _set_failure(
+                attempt,
+                str(exc),
+                int((time.monotonic() - started) * 1000),
+            )
+            account.last_error = attempt.error_message
+            db.commit()
+            finalize_post_publication(db, post_id)
+            return {"status": "failed"}
+
+        attempt.status = "published"
+        attempt.external_post_id = str(external_id)
+        attempt.provider_response = json.dumps({"provider_object_id": str(external_id)})
+        attempt.error_message = None
+        attempt.duration_ms = int((time.monotonic() - started) * 1000)
+        account.last_error = None
+        db.commit()
+        final_status = finalize_post_publication(db, post_id)
+        return {"status": "published", "externalPostId": str(external_id), "postStatus": final_status}
     finally:
         db.close()

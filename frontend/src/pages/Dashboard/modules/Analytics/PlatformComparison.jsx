@@ -15,7 +15,7 @@ import SectionTitle  from '../../components/SectionTitle/SectionTitle';
 import SubNav        from './components/SubNav';
 import { useState, useEffect } from 'react';
 import analyticsService from '../../../../services/analyticsService';
-import { PLATFORM_META } from './analyticsMockData';
+import { PLATFORM_META } from '../../shared/constants';
 import './PlatformComparison.css';
 
 function formatK(n) {

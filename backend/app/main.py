@@ -19,8 +19,8 @@ from app.routers.teams import router as teams_router
 from app.routers.insights import router as insights_router
 from app.routers.publishing import router as publishing_router
 from app.routers.analytics import router as analytics_router
-from app.routers.social_accounts import router as social_accounts_router
 from app.routers.reports import router as reports_router
+from app.routers.notifications import router as notifications_router
 
 app = FastAPI(title="SocialPilot API", version="1.0")
 app.add_exception_handler(HTTPException, http_error_handler)
@@ -43,15 +43,17 @@ app.include_router(teams_router)
 app.include_router(insights_router)
 app.include_router(publishing_router)
 app.include_router(analytics_router)
-app.include_router(social_accounts_router)
 app.include_router(reports_router)
+app.include_router(notifications_router)
 upload_directory = Path(__file__).resolve().parents[1] / "uploads"
 upload_directory.mkdir(exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=upload_directory), name="uploads")
 
+
 def backfill_marketing_teams():
     from app.database import SessionLocal
     from app.models.user import User, Team, TeamMember
+
     db = SessionLocal()
     try:
         marketing_users = db.query(User).filter(User.role == "Marketing Team").all()
@@ -63,14 +65,22 @@ def backfill_marketing_teams():
                 db.add(default_team)
                 db.commit()
                 db.refresh(default_team)
-                db.add(TeamMember(team_id=default_team.id, user_id=mu.id, role="Marketing Team"))
+                db.add(
+                    TeamMember(
+                        team_id=default_team.id, user_id=mu.id, role="Marketing Team"
+                    )
+                )
                 db.commit()
-                print(f"Backfilled default team '{team_name}' for marketing user '{mu.full_name}'")
+                print(
+                    f"Backfilled default team '{team_name}' for marketing user '{mu.full_name}'"
+                )
             else:
                 if existing_team.name == "SocialPilot":
                     existing_team.name = f"{mu.full_name}'s Workspace"
                     db.commit()
-                    print(f"Updated generic team name to '{existing_team.name}' for marketing user '{mu.full_name}'")
+                    print(
+                        f"Updated generic team name to '{existing_team.name}' for marketing user '{mu.full_name}'"
+                    )
     except Exception as e:
         print(f"Failed backfilling teams: {e}")
     finally:
@@ -81,10 +91,10 @@ def backfill_marketing_teams():
 async def startup_event():
     backfill_marketing_teams()
 
+
 @app.on_event("shutdown")
 async def shutdown_event():
     pass
-
 
 
 @app.get("/")

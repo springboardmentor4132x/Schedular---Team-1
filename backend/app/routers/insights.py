@@ -189,7 +189,7 @@ def create_report(
             Notification(
                 user_id=payload.client_id,
                 title="Report ready",
-                message=f"{payload.name} is ready to view.",
+                description=f"{payload.name} is ready to view.",
                 type="report",
             )
         )

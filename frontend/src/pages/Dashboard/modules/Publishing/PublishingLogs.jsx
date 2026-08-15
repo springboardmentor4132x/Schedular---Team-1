@@ -13,7 +13,7 @@ import EmptyState      from '../../components/EmptyState/EmptyState';
 import StatusBadge     from './components/StatusBadge';
 import PlatformBadge   from './components/PlatformBadge';
 import SubNav          from './components/SubNav';
-import { mockPublishingLogs } from './publishingMockData';
+
 import publishingService from '../../../../services/publishingService';
 import './PublishingLogs.css';
 
@@ -37,8 +37,7 @@ export default function PublishingLogs({ ownerType = 'marketing' }) {
   const [expanded, setExpanded] = useState(null);
 
   useEffect(() => {
-    publishingService.getPublishingLogs()
-      .catch(() => mockPublishingLogs)
+    publishingService.getPublishingLogs(0, 100)
       .then((data) => {
         // Normalize: map post statuses to log entries
         const normalized = data.map((item, i) => ({

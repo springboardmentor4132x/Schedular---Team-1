@@ -1,5 +1,7 @@
 import bcrypt
+import base64
 import hashlib
+import secrets
 from datetime import datetime, timedelta, timezone
 from jose import JWTError, jwt
 from fastapi import Depends, HTTPException, status
@@ -26,17 +28,22 @@ security = HTTPBearer(
 # attribute that newer bcrypt no longer exposes. Calling bcrypt directly
 # sidesteps that broken compatibility shim entirely.
 
-# bcrypt has a hard 72-byte input limit; truncate defensively so long
-# passwords don't raise instead of just being (safely) capped.
-_BCRYPT_MAX_BYTES = 72
-
-
 def _prepare(password: str) -> bytes:
-    return password.encode("utf-8")[:_BCRYPT_MAX_BYTES]
+    """Pre-hash passwords so bcrypt never silently truncates them.
+
+    The application historically used bcrypt's first-72-byte behaviour.  The
+    verifier still accepts that legacy representation so existing users can log
+    in, while newly written hashes use this fixed-length input.
+    """
+    return base64.b64encode(hashlib.sha256(password.encode("utf-8")).digest())
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return bcrypt.checkpw(_prepare(plain_password), hashed_password.encode("utf-8"))
+    encoded = hashed_password.encode("utf-8")
+    if bcrypt.checkpw(_prepare(plain_password), encoded):
+        return True
+    # Backwards-compatible check for records created before password pre-hash.
+    return bcrypt.checkpw(plain_password.encode("utf-8")[:72], encoded)
 
 
 def get_password_hash(password: str) -> str:
@@ -48,7 +55,7 @@ def create_access_token(data: dict):
     to_encode = data.copy()
     now = datetime.now(timezone.utc)
     expire = now + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    to_encode.update({"iat": now, "exp": expire})
+    to_encode.update({"iat": now, "exp": expire, "type": "access", "jti": secrets.token_urlsafe(24)})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
@@ -61,6 +68,7 @@ def create_refresh_token(data: dict):
             "iat": now,
             "exp": now + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS),
             "type": "refresh",
+            "jti": secrets.token_urlsafe(24),
         },
         SECRET_KEY,
         algorithm=ALGORITHM,
@@ -89,7 +97,7 @@ def get_current_user(
         token = token[7:].strip()
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        email = payload.get("sub")
+        email = payload.get("sub") if payload.get("type") == "access" else None
     except JWTError:
         email = None
     if not email:
@@ -103,6 +111,12 @@ def get_current_user(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="The user for this access token no longer exists.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    if payload.get("sv") != user.session_version:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="This session has been signed out. Log in again.",
             headers={"WWW-Authenticate": "Bearer"},
         )
     return user

@@ -5,7 +5,7 @@
  * Props: status (string), size ('sm'|'md'|'lg')
  */
 
-import { POST_STATUSES } from '../publishingMockData';
+import { POST_STATUSES } from '../../../shared/constants';
 import './StatusBadge.css';
 
 export default function StatusBadge({ status = 'draft', size = 'md' }) {
