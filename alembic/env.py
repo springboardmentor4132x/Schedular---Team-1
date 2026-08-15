@@ -3,16 +3,16 @@ import sys
 import os
 
 # 1. ADD ROOT DIRECTORY TO SYS.PATH
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 from alembic import context
 
-# 2. IMPORT ALL USER & PLATFORM MODELS
-import app.user  # Registers User and PlatformConnection models
+# 2. IMPORT ALL USER MODELS
+import app.user
 
-# 3. IMPORT BASE AND ALL CONTENT, PUBLISHING & ANALYTICS MODELS
+# 3. IMPORT BASE AND ALL CONTENT, PUBLISHING, ANALYTICS, NOTIFICATION & REPORT MODELS
 from app.database import Base
 from app.content_model import (
     Post,
@@ -25,6 +25,9 @@ from app.content_model import (
     AudienceAnalytics,
     CampaignAnalytics,
     PlatformAnalytics,
+    Notification,
+    NotificationPreference,
+    GeneratedReport,
 )
 
 # This is the Alembic Config object
@@ -46,7 +49,7 @@ def run_migrations_offline() -> None:
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
-        render_as_batch=True,  # Enables SQLite compatibility for table alterations
+        render_as_batch=True,
     )
 
     with context.begin_transaction():
@@ -65,7 +68,7 @@ def run_migrations_online() -> None:
         context.configure(
             connection=connection,
             target_metadata=target_metadata,
-            render_as_batch=True,  # Enables SQLite compatibility for table alterations
+            render_as_batch=True,
         )
 
         with context.begin_transaction():
