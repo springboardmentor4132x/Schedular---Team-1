@@ -16,11 +16,9 @@ def process_sync():
         for post in posts:
             # We only process scheduled posts that are due
             if post.status == "scheduled":
-                if post.scheduled_for and post.scheduled_for.timestamp() <= now:
-                    post.status = "publishing"
-                    db.commit()
-                else:
-                    continue # Not due yet
+                # Process all scheduled posts without delay
+                post.status = "publishing"
+                db.commit()
 
             platforms = _platforms(post)
             account_ids = _account_ids(post)
@@ -44,7 +42,7 @@ if __name__ == "__main__":
     try:
         while True:
             process_sync()
-            # Wait for 60 seconds before checking again
-            time.sleep(60)
+            # Wait for 1 second before checking again
+            time.sleep(1)
     except KeyboardInterrupt:
         logging.info("Local background worker stopped.")

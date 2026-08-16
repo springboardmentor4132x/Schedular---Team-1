@@ -21,11 +21,10 @@ body{
     justify-content:space-between;
     align-items:center;
     padding:0 8%;
-    background:white;
-    position:sticky;
+    background: transparent;
+    position:absolute;
     top:0;
     z-index:1000;
-    box-shadow:0 2px 15px rgba(0,0,0,.05);
 }
 
 .logo{
@@ -139,30 +138,46 @@ body{
 }
 
 
-.primary-btn{
-    padding:14px 30px;
-    background:#2563eb;
-    color:white;
-    border:none;
-    border-radius:10px;
-    font-size:16px;
-    cursor:pointer;
+.primary-btn {
+    padding: 14px 30px;
+    background: #2563eb;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2);
+    transition: all 0.3s ease;
+}
+.primary-btn:hover {
+    background: #1d4ed8;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(37, 99, 235, 0.3);
 }
 
-.secondary-btn{
-    padding:14px 30px;
-    background:white;
-    border:2px solid #2563eb;
-    color:#2563eb;
-    border-radius:10px;
-    font-size:16px;
-    cursor:pointer;
+.secondary-btn {
+    padding: 14px 30px;
+    background: white;
+    border: 2px solid #2563eb;
+    color: #2563eb;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+.secondary-btn:hover {
+    background: #f8fafc;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
 }
 
 .hero-image{
-    width:40%;
-    display:flex;
-    justify-content:center;
+    width: 40%;
+    display: flex;
+    justify-content: center;
+    transform: translateY(-40px);
 }
 
 .dashboard-card{
@@ -212,37 +227,39 @@ body{
 }
 
 .platform-grid{
-    display:flex;
-    justify-content:center;
-    flex-wrap:wrap;
-    gap:25px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    justify-content: center;
+    gap: 25px;
+    width: 100%;
 }
 
 .platform-card{
-    width:140px;
-    height:120px;
-    background:white;
-    border-radius:18px;
-    box-shadow:0 10px 25px rgba(0,0,0,.08);
-    display:flex;
-    flex-direction:column;
-    justify-content:center;
-    align-items:center;
-    gap:12px;
-    font-size:35px;
-    transition:.3s;
-    cursor:pointer;
+    width: 100%;
+    min-height: 140px;
+    background: white;
+    border-radius: 18px;
+    box-shadow: 0 4px 15px rgba(0,0,0,.04), 0 1px 3px rgba(0,0,0,.02);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    font-size: 35px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    padding: 20px;
 }
 
 .platform-card span{
-    font-size:15px;
+    font-size: 15px;
     color: var(--text-h);
-    font-weight:600;
+    font-weight: 600;
 }
 
 .platform-card:hover{
-    transform:translateY(-8px);
-    box-shadow:0 20px 40px rgba(37,99,235,.18);
+    transform: translateY(-6px);
+    box-shadow: 0 15px 30px rgba(37,99,235,.12);
 }
 .platform-icon{
     font-size:38px;
@@ -304,7 +321,7 @@ body{
 
 .features-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 30px;
     width: 100%;
 }
@@ -314,16 +331,19 @@ body{
     background: white;
     width: 100%;
     box-sizing: border-box;
-    padding: 35px 25px;
+    padding: 40px 30px;
     border-radius: 20px;
-    box-shadow: 0 10px 30px rgba(0,0,0,.06);
-    transition: 0.3s;
+    box-shadow: 0 4px 15px rgba(0,0,0,.04), 0 1px 3px rgba(0,0,0,.02);
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 
 .feature-card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 20px 40px rgba(37,99,235,.15);
+    transform: translateY(-6px);
+    box-shadow: 0 15px 30px rgba(37,99,235,.12);
 }
 
 
@@ -432,75 +452,35 @@ body{
     gap: 20px;
   }
 }
-/* Responsive Design */
-
 @media (max-width: 1024px) {
-
   .hero {
     padding: 60px 5%;
   }
-
-  .feature-grid,
-  .platform-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
 }
 
-
 @media (max-width: 768px) {
-
   .navbar {
     flex-direction: column;
     gap: 20px;
   }
-
   .hero {
     text-align: center;
   }
-
-  .hero h1 {
-    font-size: 36px;
-  }
-
-  .hero p {
-    font-size: 16px;
-  }
-
-
-  .platform-grid,
-  .feature-grid {
-    grid-template-columns: 1fr;
-  }
-
-
   .cta h2 {
     font-size: 28px;
   }
-
-
   .footer-content {
     flex-direction: column;
     gap: 20px;
   }
-
 }
 
-
 @media (max-width: 480px) {
-
-  .hero h1 {
-    font-size: 30px;
-  }
-
   .cta {
     margin: 40px 5%;
     padding: 40px 20px;
   }
-
-  .platform-card,
   .feature-card {
-    padding: 20px;
+    padding: 25px 20px;
   }
-
 }

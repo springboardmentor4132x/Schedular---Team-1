@@ -11,6 +11,27 @@
   gap: 2px;
 }
 
+.an2-filters {
+  display: flex;
+  gap: 8px;
+  margin-right: auto;
+}
+
+.an2-filter-select {
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-h);
+  outline: none;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.an2-filter-select:hover { border-color: #6c5ce7; }
+.an2-filter-select:focus { box-shadow: 0 0 0 2px rgba(108,92,231,0.15); border-color: #6c5ce7; }
+
 .an2-range-btn {
   padding: 7px 16px;
   border-radius: 6px;

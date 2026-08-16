@@ -43,6 +43,12 @@
   transition: background 0.15s;
 }
 
+@media (min-width: 1024px) {
+  .sp-header__hamburger {
+    display: none;
+  }
+}
+
 /* ── Search ────────────────────────────────────────────────── */
 .sp-header__search {
   flex: 1;
@@ -69,8 +75,15 @@
   color: var(--text-h);
   outline: none;
   font-family: inherit;
+  width: 100%;
 }
 .sp-header__search-input::placeholder { color: var(--text); }
+
+@media (max-width: 480px) {
+  .sp-header__search {
+    display: none; /* Hide search on very small mobile to save space */
+  }
+}
 
 /* ── Right cluster ─────────────────────────────────────────── */
 .sp-header__right {

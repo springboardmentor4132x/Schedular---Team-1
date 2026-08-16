@@ -330,3 +330,59 @@ def get_analytics_trends(
         "message": "Trend data retrieved successfully",
         "data": generate_trend_data(db, user, days),
     }
+
+
+@router.get("/top-posts")
+def get_analytics_top_posts(
+    limit: int = Query(5),
+    sort_by: str = Query("engagement"),
+    platform: str = Query(None),
+    campaign_id: int = Query(None),
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    posts = db.query(Post).filter(Post.owner_id == user.id, Post.status == "published").all()
+    data = []
+    for p in posts:
+        if campaign_id and p.campaign_id != campaign_id:
+            continue
+        pas = db.query(PostAnalytics).filter(PostAnalytics.post_id == p.id).all()
+        if platform and not any(pa.platform == platform for pa in pas):
+            continue
+        if not pas:
+            continue
+        c = db.query(Campaign).filter(Campaign.id == p.campaign_id).first()
+        data.append({
+            "id": p.id,
+            "caption": p.caption,
+            "platforms": [pa.platform for pa in pas],
+            "campaign": c.name if c else None,
+            "publishedAt": p.updated_at.isoformat() if p.updated_at else None,
+            "engagement": sum(pa.likes + pa.comments + pa.shares for pa in pas),
+            "reach": sum(pa.reach for pa in pas)
+        })
+    
+    data.sort(key=lambda x: x.get(sort_by, 0) or 0, reverse=True)
+    return {"success": True, "data": data[:limit]}
+
+
+@router.get("/top-campaigns")
+def get_analytics_top_campaigns(
+    limit: int = Query(5),
+    sort_by: str = Query("engagement"),
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    campaigns = db.query(CampaignAnalytics, Campaign).join(Campaign).filter(Campaign.owner_id == user.id).all()
+    data = []
+    for ca, c in campaigns:
+        data.append({
+            "id": c.id,
+            "name": c.name,
+            "engagement": ca.engagement or 0,
+            "roi": ca.roi or 0,
+            "completion": ca.completion_percentage or 0
+        })
+    
+    data.sort(key=lambda x: x.get(sort_by, 0) or 0, reverse=True)
+    return {"success": True, "data": data[:limit]}

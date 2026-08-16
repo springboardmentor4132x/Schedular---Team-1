@@ -33,40 +33,48 @@
 /* ── Tabs ────────────────────────────────────────────────────── */
 .sp-st-tabs {
   display: flex;
-  gap: 2px;
-  background: var(--code-bg);
-  border-radius: 10px;
-  padding: 4px;
-  margin-bottom: 20px;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(0,0,0,0.04);
+  border-radius: 12px;
+  padding: 6px;
+  margin-bottom: 24px;
   flex-wrap: wrap;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.02);
 }
 .sp-st-tab {
   flex: 1;
   min-width: 80px;
-  padding: 7px 14px;
+  padding: 8px 16px;
   border: none;
   background: transparent;
-  border-radius: 7px;
-  font-size: 0.82rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
   font-weight: 500;
   color: var(--text);
   cursor: pointer;
   font-family: inherit;
-  transition: background 0.15s, color 0.15s;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   white-space: nowrap;
 }
-.sp-st-tab:hover { color: var(--text-h); }
-.sp-st-tab--active { background: var(--bg); color: var(--text-h); font-weight: 700; box-shadow: var(--shadow); }
+.sp-st-tab:hover { color: var(--text-h); background: rgba(255,255,255,0.5); }
+.sp-st-tab--active { background: var(--bg); color: var(--text-h); font-weight: 700; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
 
 /* ── Section ─────────────────────────────────────────────────── */
 .sp-st-section {
   background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 24px;
+  border: 1px solid rgba(0,0,0,0.06);
+  border-radius: 16px;
+  padding: 32px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
+  box-shadow: 0 4px 24px -6px rgba(0, 0, 0, 0.04);
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s;
+}
+.sp-st-section:hover {
+  box-shadow: 0 10px 30px -8px rgba(0, 0, 0, 0.08);
 }
 .sp-st-section-title { font-size: 0.9rem; font-weight: 700; color: var(--text-h); margin: 0; }
 .sp-st-divider { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
@@ -87,20 +95,23 @@
 .sp-st-hint  { font-size: 0.78rem; color: var(--text); margin: 0; }
 
 .sp-st-select, .sp-st-input {
-  padding: 8px 12px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
+  padding: 10px 14px;
+  border: 1px solid rgba(0,0,0,0.1);
+  border-radius: 10px;
   font-size: 0.875rem;
   color: var(--text-h);
-  background: var(--bg);
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(8px);
   font-family: inherit;
   outline: none;
   min-width: 180px;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02) inset;
 }
 .sp-st-select:focus, .sp-st-input:focus {
+  background: var(--bg);
   border-color: #6c5ce7;
-  box-shadow: 0 0 0 3px rgba(108,92,231,0.12);
+  box-shadow: 0 0 0 3px rgba(108,92,231,0.15), 0 2px 4px rgba(0, 0, 0, 0.02) inset;
 }
 .sp-st-error { font-size: 0.78rem; color: #dc2626; margin: 0; }
 
@@ -112,24 +123,28 @@
 .sp-st-btn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 9px 18px;
-  border-radius: 8px;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 10px;
   font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
   font-family: inherit;
   border: none;
-  transition: background 0.15s, opacity 0.15s;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   align-self: flex-start;
 }
 .sp-st-btn:disabled { opacity: 0.45; cursor: not-allowed; }
-.sp-st-btn--primary { background: linear-gradient(135deg, #6c5ce7, #00b4d8); color: #fff; }
-.sp-st-btn--primary:hover:not(:disabled) { filter: brightness(1.06); }
+.sp-st-btn--primary { 
+  background: linear-gradient(135deg, #6c5ce7, #00b4d8); 
+  color: #fff; 
+  box-shadow: 0 4px 12px rgba(108, 92, 231, 0.25);
+}
+.sp-st-btn--primary:hover:not(:disabled) { filter: brightness(1.1); transform: translateY(-1px); box-shadow: 0 6px 16px rgba(108, 92, 231, 0.3); }
 .sp-st-btn--outline { background: var(--bg); border: 1px solid var(--border); color: var(--text-h); }
-.sp-st-btn--outline:hover:not(:disabled) { background: var(--code-bg); }
+.sp-st-btn--outline:hover:not(:disabled) { background: var(--code-bg); transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
 .sp-st-btn--danger  { background: var(--bg); border: 1px solid #fca5a5; color: #dc2626; }
-.sp-st-btn--danger:hover:not(:disabled)  { background: #fef2f2; }
+.sp-st-btn--danger:hover:not(:disabled)  { background: #fef2f2; transform: translateY(-1px); box-shadow: 0 4px 10px rgba(220,38,38,0.1); }
 .sp-st-mt { margin-top: 4px; }
 
 /* ── Toggle switch ───────────────────────────────────────────── */

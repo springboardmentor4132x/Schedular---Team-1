@@ -21,6 +21,8 @@ from app.routers.publishing import router as publishing_router
 from app.routers.analytics import router as analytics_router
 from app.routers.reports import router as reports_router
 from app.routers.notifications import router as notifications_router
+from app.routers.profile import router as profile_router
+from app.routers.settings import router as settings_router
 
 app = FastAPI(title="SocialPilot API", version="1.0")
 app.add_exception_handler(HTTPException, http_error_handler)
@@ -45,6 +47,8 @@ app.include_router(publishing_router)
 app.include_router(analytics_router)
 app.include_router(reports_router)
 app.include_router(notifications_router)
+app.include_router(profile_router)
+app.include_router(settings_router)
 upload_directory = Path(__file__).resolve().parents[1] / "uploads"
 upload_directory.mkdir(exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=upload_directory), name="uploads")

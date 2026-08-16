@@ -51,11 +51,11 @@ export async function logoutOtherDevices() {
 }
 
 /**
- * POST /account/export
+ * POST /settings/export
  */
 export async function exportData() {
   try {
-    const { data } = await api.post('/account/export');
+    const { data } = await api.post('/settings/export');
     return { success: true, message: data.message || 'Export request submitted. You will receive an email shortly.' };
   } catch (err) {
     return { success: false, message: err.response?.data?.detail || 'Failed to initiate export.' };
@@ -63,11 +63,11 @@ export async function exportData() {
 }
 
 /**
- * DELETE /account
+ * DELETE /settings/account
  */
 export async function deleteAccount() {
   try {
-    const { data } = await api.delete('/account');
+    const { data } = await api.delete('/settings/account');
     return { success: true, message: data.message || 'Account successfully deleted.' };
   } catch (err) {
     return { success: false, message: err.response?.data?.detail || 'Failed to delete account.' };

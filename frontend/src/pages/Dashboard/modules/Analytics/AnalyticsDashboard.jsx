@@ -67,6 +67,9 @@ function CustomAreaTooltip({ active, payload, label }) {
 export default function AnalyticsDashboard({ ownerType = 'marketing' }) {
   const [range, setRange]   = useState(30);
   const [metric, setMetric] = useState('reach');
+  const [platformFilter, setPlatformFilter] = useState('all');
+  const [campaignFilter, setCampaignFilter] = useState('all');
+  
   const [dashboardData, setDashboardData] = useState(null);
   const [campaignData, setCampaignData] = useState([]);
   const [platformData, setPlatformData] = useState({});
@@ -77,11 +80,15 @@ export default function AnalyticsDashboard({ ownerType = 'marketing' }) {
     async function fetchData() {
       setLoading(true);
       try {
+        const queryParams = { days: range };
+        if (platformFilter !== 'all') queryParams.platform = platformFilter;
+        if (campaignFilter !== 'all') queryParams.campaign_id = campaignFilter;
+        
         const [dashRes, campRes, platRes, trendRes] = await Promise.all([
-          analyticsService.getDashboard({ days: range }),
+          analyticsService.getDashboard(queryParams),
           analyticsService.getCampaigns(),
           analyticsService.getPlatforms(),
-          analyticsService.getTrends({ days: range })
+          analyticsService.getTrends(queryParams)
         ]);
         setDashboardData(dashRes);
         setCampaignData(campRes);
@@ -94,7 +101,7 @@ export default function AnalyticsDashboard({ ownerType = 'marketing' }) {
       }
     }
     fetchData();
-  }, [range]);
+  }, [range, platformFilter, campaignFilter]);
 
   const metricMeta = METRIC_OPTIONS.find((m) => m.key === metric) ?? METRIC_OPTIONS[0];
 
@@ -108,14 +115,16 @@ export default function AnalyticsDashboard({ ownerType = 'marketing' }) {
   }
 
   const kpiCards = [
-    { title: 'Total Reach',      value: formatK(dashboardData.totalReach),       icon: <MdPeople />,      trend: 'up',    change: 14 },
-    { title: 'Total Impressions',value: formatK(dashboardData.totalImpressions),  icon: <MdTimeline />,    trend: 'up',    change: 9  },
-    { title: 'Engagement',       value: formatK(dashboardData.totalEngagement),   icon: <MdTrendingUp />,  trend: 'up',    change: 6  },
+    { title: 'Total Posts',      value: formatK(dashboardData.totalPublishedPosts), icon: <MdCheckCircle />, trend: 'up', change: 5 },
+    { title: 'Total Followers',  value: formatK(dashboardData.totalFollowers),   icon: <MdPeople />,      trend: 'up', change: 2.4 },
+    { title: 'Total Reach',      value: formatK(dashboardData.totalReach),       icon: <MdTimeline />,    trend: 'up',    change: 14 },
+    { title: 'Total Impressions',value: formatK(dashboardData.totalImpressions), icon: <MdTimeline />,    trend: 'up',    change: 9  },
+    { title: 'Engagement',       value: formatK(dashboardData.totalEngagement),  icon: <MdTrendingUp />,  trend: 'up',    change: 6  },
     { title: 'Engagement Rate',  value: formatPct(dashboardData.overallEngagementRate), icon: <MdCheckCircle />, trend: 'up', change: 1.2 },
-    { title: 'Likes',            value: formatK(dashboardData.totalLikes),         icon: <MdThumbUp />,     trend: 'up',    change: 8  },
-    { title: 'Comments',         value: formatK(dashboardData.totalComments),      icon: <MdChatBubble />,  trend: 'up',    change: 4  },
-    { title: 'Shares',           value: formatK(dashboardData.totalShares),        icon: <MdShare />,       trend: 'up',    change: 3  },
-    { title: 'Link Clicks',      value: formatK(dashboardData.totalClicks),        icon: <MdTouchApp />,       trend: 'neutral', change: 0 },
+    { title: 'Likes',            value: formatK(dashboardData.totalLikes),       icon: <MdThumbUp />,     trend: 'up',    change: 8  },
+    { title: 'Comments',         value: formatK(dashboardData.totalComments),    icon: <MdChatBubble />,  trend: 'up',    change: 4  },
+    { title: 'Shares',           value: formatK(dashboardData.totalShares),      icon: <MdShare />,       trend: 'up',    change: 3  },
+    { title: 'Link Clicks',      value: formatK(dashboardData.totalClicks),      icon: <MdTouchApp />,    trend: 'neutral', change: 0 },
   ];
 
   // Platform comparison data for bar chart
@@ -135,8 +144,31 @@ export default function AnalyticsDashboard({ ownerType = 'marketing' }) {
     >
       <SubNav role={ownerType} />
 
-      {/* ── Date Range Picker ──────────────────────────────────────────── */}
+      {/* ── Filters ──────────────────────────────────────────── */}
       <div className="an2-toolbar">
+        <div className="an2-filters">
+          <select 
+            className="an2-filter-select"
+            value={platformFilter} 
+            onChange={(e) => setPlatformFilter(e.target.value)}
+          >
+            <option value="all">All Platforms</option>
+            {Object.keys(PLATFORM_META).map(k => (
+              <option key={k} value={k}>{PLATFORM_META[k].label}</option>
+            ))}
+          </select>
+          <select 
+            className="an2-filter-select"
+            value={campaignFilter} 
+            onChange={(e) => setCampaignFilter(e.target.value)}
+          >
+            <option value="all">All Campaigns</option>
+            {campaignData.map(c => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </select>
+        </div>
+        
         <div className="an2-range-group">
           {DATE_RANGES.map((r) => (
             <button

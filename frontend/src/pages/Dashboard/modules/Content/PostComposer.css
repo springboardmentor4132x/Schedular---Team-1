@@ -183,20 +183,24 @@
 .cs-composer__textarea {
   border: 1px solid #cbd5e1;
   border-radius: 8px;
-  padding: 10px 12px;
-  font-size: 13.5px;
+  padding: 12px 14px;
+  font-size: 14px;
   color: #1e293b;
   outline: none;
   resize: vertical;
+  background-color: #ffffff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) inset;
+  transition: all 0.2s ease;
 }
 
 .cs-composer__textarea:focus {
   border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
 }
 
 .cs-composer__textarea--error {
   border-color: #ef4444;
-  background: #fef2f2;
+  background-color: #fef2f2;
 }
 
 .cs-composer__char-counter {
@@ -223,33 +227,38 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 8px 14px;
+  padding: 10px 14px;
   border-radius: 8px;
   border: 1px solid #cbd5e1;
-  background: var(--bg);
+  background-color: #ffffff;
   color: #475569;
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.15s;
-  min-width: 90px;
-  gap: 2px;
+  transition: all 0.2s ease;
+  min-width: 100px;
+  min-height: 56px;
+  gap: 4px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .cs-platform-btn:hover {
-  background: #f8fafc;
+  background-color: #f8fafc;
   border-color: #94a3b8;
+  transform: translateY(-1px);
 }
 
 .cs-platform-btn--active {
-  background: #f5f3ff;
+  background-color: #f5f3ff;
   border-color: #4f46e5;
   color: #4f46e5;
+  box-shadow: 0 2px 4px rgba(79, 70, 229, 0.1);
 }
 
 .cs-platform-btn--disabled {
-  background: #f8fafc;
+  background-color: #f8fafc;
   opacity: 0.6;
+  transform: none;
 }
 
 .cs-platform-btn__badge {
@@ -300,26 +309,62 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
-.cs-datetime-pickers {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
+.cs-datetime-group {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background-color: var(--bg);
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) inset;
+  transition: all 0.2s ease;
   margin-top: 8px;
+  width: 100%;
+}
+
+.cs-datetime-group:focus-within {
+  border-color: #6c5ce7;
+  box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.15);
+}
+
+.cs-datepicker-wrapper {
+  width: 100%;
+}
+
+.cs-datepicker-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 10px 14px;
+  font-size: 14px;
+  color: var(--text-h);
+  font-family: inherit;
+  outline: none;
+  width: 100%;
+}
+
+.cs-datetime-separator {
+  width: 1px;
+  height: 24px;
+  background: var(--border);
 }
 
 .cs-composer__input {
   border: 1px solid #cbd5e1;
   border-radius: 8px;
-  padding: 8px 12px;
-  font-size: 13.5px;
+  padding: 10px 12px;
+  font-size: 14px;
   color: #1e293b;
   outline: none;
-  background: var(--bg);
+  background-color: #ffffff;
   width: 100%;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) inset;
+  transition: all 0.2s ease;
 }
 
 .cs-composer__input:focus {
   border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
 }
 
 .cs-schedule-preview {
@@ -387,11 +432,11 @@
 }
 
 .cs-preview-frame {
-  background: var(--bg);
+  background-color: #ffffff;
   border: 1px solid #e2e8f0;
-  border-radius: 10px;
+  border-radius: 12px;
   padding: 16px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
 }
 
 .cs-preview-frame__header {
@@ -482,38 +527,45 @@
 }
 
 .cs-composer__btn {
-  padding: 8px 16px;
+  padding: 10px 18px;
   border-radius: 8px;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.12s;
+  transition: all 0.2s ease;
   border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .cs-composer__btn--cancel {
-  background: #f1f5f9;
+  background-color: #f1f5f9;
   color: #475569;
 }
 
 .cs-composer__btn--cancel:hover {
-  background: #e2e8f0;
+  background-color: #e2e8f0;
 }
 
 .cs-composer__btn--draft {
-  background: #eef2ff;
+  background-color: #eef2ff;
   color: #4f46e5;
 }
 
 .cs-composer__btn--draft:hover {
-  background: #e0e7ff;
+  background-color: #e0e7ff;
 }
 
 .cs-composer__btn--submit {
-  background: #4f46e5;
-  color: #fff;
+  background-color: #4f46e5;
+  color: #ffffff;
+  box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2);
 }
 
 .cs-composer__btn--submit:hover {
-  background: #4338ca;
+  background-color: #4338ca;
+  box-shadow: 0 4px 6px rgba(79, 70, 229, 0.3);
+  transform: translateY(-1px);
 }
+

@@ -13,6 +13,8 @@ import Avatar from '../../components/Avatar/Avatar';
 import { campaignRepository } from '../Campaigns/campaignRepository';
 import { contentRepository } from './contentRepository';
 import * as teamService from '../../../../services/teamService';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 import './PostComposer.css';
 
 const PLATFORM_OPTIONS = [
@@ -46,8 +48,7 @@ export default function PostComposer({
   const [recurrenceInterval, setRecurrenceInterval] = useState('');
 
   const [scheduleMode, setScheduleMode] = useState('schedule');
-  const [scheduleDate, setScheduleDate] = useState('');
-  const [scheduleTime, setScheduleTime] = useState('');
+  const [scheduleDateObj, setScheduleDateObj] = useState(null);
   const [activePreviewTab, setActivePreviewTab] = useState('facebook');
 
   const isSubmitDisabled = ownerType === 'marketing' && !clientId && clientOptions.length === 0;
@@ -99,10 +100,7 @@ export default function PostComposer({
             } else if (data.scheduledFor || data.scheduled_for) {
               setScheduleMode('schedule');
               const dt = new Date(data.scheduledFor || data.scheduled_for);
-              setScheduleDate(dt.toISOString().split('T')[0]);
-              const hh = String(dt.getHours()).padStart(2, '0');
-              const mm = String(dt.getMinutes()).padStart(2, '0');
-              setScheduleTime(`${hh}:${mm}`);
+              setScheduleDateObj(dt);
             } else {
               setScheduleMode('now');
             }
@@ -242,11 +240,10 @@ export default function PostComposer({
         }
       }
       if (scheduleMode === 'schedule') {
-        if (!scheduleDate || !scheduleTime) {
+        if (!scheduleDateObj) {
           newErrors.schedule = 'Enter a valid date and time for publication scheduling.';
         } else {
-          const selectedDateTime = new Date(`${scheduleDate}T${scheduleTime}`);
-          if (selectedDateTime <= new Date()) {
+          if (scheduleDateObj <= new Date()) {
             newErrors.schedule = 'Scheduled date/time must be in the future.';
           }
         }
@@ -265,7 +262,7 @@ export default function PostComposer({
 
     if (!isDraftMode) {
       if (scheduleMode === 'schedule') {
-        scheduledAtVal = new Date(`${scheduleDate}T${scheduleTime}`).toISOString();
+        scheduledAtVal = scheduleDateObj ? scheduleDateObj.toISOString() : null;
         finalStatus = 'scheduled';
       } else {
         scheduledAtVal = new Date().toISOString();
@@ -476,22 +473,39 @@ export default function PostComposer({
             </div>
 
             {scheduleMode === 'schedule' && (
-              <div className="cs-datetime-pickers">
-                <input
-                  type="date"
-                  className="cs-composer__input"
-                  value={scheduleDate}
-                  onChange={(e) => {
-                    setScheduleDate(e.target.value);
+              <div className="cs-datetime-group" style={{ padding: '0 12px' }}>
+                <DatePicker
+                  selected={scheduleDateObj}
+                  onChange={(date) => {
+                    if (date && scheduleDateObj) {
+                      date.setHours(scheduleDateObj.getHours(), scheduleDateObj.getMinutes());
+                    } else if (date) {
+                      date.setHours(12, 0, 0, 0);
+                    }
+                    setScheduleDateObj(date);
                     if (errors.schedule) setErrors((prev) => ({ ...prev, schedule: null }));
                   }}
+                  dateFormat="MMMM d, yyyy"
+                  placeholderText="Select Date"
+                  minDate={new Date()}
+                  wrapperClassName="cs-datepicker-wrapper"
+                  className="cs-datepicker-input"
                 />
+                <div className="cs-datetime-separator" />
                 <input
                   type="time"
-                  className="cs-composer__input"
-                  value={scheduleTime}
+                  className="cs-datepicker-input"
+                  value={
+                    scheduleDateObj 
+                      ? `${String(scheduleDateObj.getHours()).padStart(2, '0')}:${String(scheduleDateObj.getMinutes()).padStart(2, '0')}`
+                      : ''
+                  }
                   onChange={(e) => {
-                    setScheduleTime(e.target.value);
+                    if (!e.target.value) return;
+                    const [hh, mm] = e.target.value.split(':');
+                    const newDate = scheduleDateObj ? new Date(scheduleDateObj) : new Date();
+                    newDate.setHours(parseInt(hh, 10), parseInt(mm, 10));
+                    setScheduleDateObj(newDate);
                     if (errors.schedule) setErrors((prev) => ({ ...prev, schedule: null }));
                   }}
                 />
@@ -499,9 +513,9 @@ export default function PostComposer({
             )}
             {errors.schedule && <span className="cs-composer__err-text">{errors.schedule}</span>}
 
-            {scheduleMode === 'schedule' && scheduleDate && scheduleTime && (
+            {scheduleMode === 'schedule' && scheduleDateObj && (
               <span className="cs-schedule-preview">
-                ⏰ Scheduled for: <strong>{scheduleDate}</strong> at <strong>{scheduleTime}</strong>
+                ⏰ Scheduled for: <strong>{scheduleDateObj.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}</strong>
               </span>
             )}
           </div>
@@ -585,7 +599,7 @@ export default function PostComposer({
                 <div>
                   <h5 className="cs-preview-frame__brand">{clientId ? clientId.toUpperCase() : 'Studio Creator'}</h5>
                   <span className="cs-preview-frame__meta">
-                    {scheduleMode === 'now' ? 'Publishing Queue' : `Scheduled: ${scheduleDate || 'No date'} ${scheduleTime}`}
+                    {scheduleMode === 'now' ? 'Publishing Queue' : `Scheduled: ${scheduleDateObj ? scheduleDateObj.toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : 'No date'}`}
                   </span>
                 </div>
               </div>

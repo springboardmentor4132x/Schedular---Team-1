@@ -62,34 +62,49 @@ body {
   font-family: sans-serif;
 }
 
+/* Hide scrollbar for Chrome, Safari and Opera */
+::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+* {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
 /* ─── Sweeti: Typography ───────────────────────────────────── */
 h1,
-h2 {
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-family: var(--heading);
-  font-weight: 500;
+  font-weight: 600;
   color: var(--text-h);
 }
 
 h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
-  }
+  font-size: clamp(32px, 5vw, 56px);
+  letter-spacing: -0.03em;
+  margin: clamp(20px, 3vw, 32px) 0;
 }
 h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
+  font-size: clamp(22px, 3vw, 32px);
+  line-height: 120%;
+  letter-spacing: -0.01em;
+  margin: 0 0 clamp(8px, 2vw, 16px);
+}
+h3 {
+  font-size: clamp(18px, 2.5vw, 24px);
+  line-height: 130%;
+  margin: 0 0 clamp(6px, 1.5vw, 12px);
 }
 p {
   margin: 0;
+  font-size: clamp(15px, 1.5vw, 18px);
+  line-height: 1.6;
 }
 
 code,

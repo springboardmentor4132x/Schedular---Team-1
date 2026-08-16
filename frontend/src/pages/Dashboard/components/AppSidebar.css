@@ -41,6 +41,21 @@
   transform: translateX(0);
 }
 
+@media (min-width: 1024px) {
+  .sp-sidebar {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    transform: translateX(0);
+    border-radius: 0;
+    box-shadow: none;
+    flex-shrink: 0;
+  }
+  .sp-sidebar-backdrop {
+    display: none;
+  }
+}
+
 /* ── Brand ─────────────────────────────────────────────────── */
 .sp-sidebar__brand {
   padding: 20px 20px 16px;

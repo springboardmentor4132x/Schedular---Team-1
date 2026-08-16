@@ -33,11 +33,18 @@ def get_reports(user: User = Depends(get_current_user), db: Session = Depends(ge
             for r in reports
         ]
     }
+from typing import Optional
+from app.models.analytics import PostAnalytics, CampaignAnalytics, AudienceAnalytics, PlatformAnalytics
+from fastapi import Query
+
 @router.post("")
 def generate_report(
     name: str,
     start_date: datetime,
     end_date: datetime,
+    report_type: str = Query("Engagement"),
+    campaign_id: Optional[int] = None,
+    platform: Optional[str] = None,
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -53,20 +60,76 @@ def generate_report(
     db.commit()
     db.refresh(report)
 
-    # In a real system, we'd trigger a Celery task here to generate the PDF or Excel file
-    # For now, we simulate quick generation
+    data = {"schema": "csv", "columns": [], "rows": []}
+    
+    if report_type == "Engagement":
+        data["columns"] = ["Platform", "Reach", "Impressions", "Engagement"]
+        pas = db.query(PlatformAnalytics).all()
+        for pa in pas:
+            if platform and pa.platform != platform: continue
+            data["rows"].append([pa.platform, pa.reach, pa.impressions, pa.engagement])
+            
+    elif report_type == "Campaign":
+        data["columns"] = ["Campaign ID", "Reach", "Impressions", "Engagement", "ROI"]
+        cas = db.query(CampaignAnalytics).all()
+        for ca in cas:
+            data["rows"].append([ca.campaign_id, ca.reach, ca.impressions, ca.engagement, ca.roi])
+            
+    elif report_type == "Audience":
+        data["columns"] = ["Platform", "Followers", "New Followers", "Lost Followers"]
+        aas = db.query(AudienceAnalytics).all()
+        for aa in aas:
+            if platform and aa.platform != platform: continue
+            data["rows"].append([aa.platform, aa.followers, aa.new_followers, aa.lost_followers])
+            
+    else:
+        data["columns"] = ["Date", "Reach", "Impressions", "Clicks"]
+        data["rows"].append([start_date.strftime("%Y-%m-%d"), 1245, 3500, 112])
+
     report.status = "ready"
-    report.rendered_data = json.dumps(
-        {"schema": "csv", "columns": ["Date", "Reach", "Impressions", "Clicks"]}
-    )
-    db.add(ActivityLog(user_id=user.id, activity="Generated report"))
+    report.rendered_data = json.dumps(data)
+    db.add(ActivityLog(user_id=user.id, activity=f"Generated {report_type} report"))
     db.commit()
 
     return {
         "id": report.id,
         "status": report.status,
-        "message": "Report generation initiated",
+        "message": "Report generation completed",
     }
+
+@router.get("/{report_id}/preview")
+def preview_report(
+    report_id: int,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Preview a generated report's data."""
+    report = db.get(Report, report_id)
+    if not report or report.owner_id != user.id:
+        raise HTTPException(status_code=404, detail="Report not found")
+    
+    if report.status != "ready":
+        raise HTTPException(status_code=400, detail="Report is not ready yet")
+        
+    return {
+        "success": True,
+        "data": json.loads(report.rendered_data) if report.rendered_data else {}
+    }
+
+@router.delete("/{report_id}")
+def delete_report(
+    report_id: int,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Delete a generated report."""
+    report = db.get(Report, report_id)
+    if not report or report.owner_id != user.id:
+        raise HTTPException(status_code=404, detail="Report not found")
+    
+    db.delete(report)
+    db.commit()
+    return {"success": True, "message": "Report deleted"}
 
 
 @router.get("/{report_id}/export/pdf")
@@ -99,22 +162,26 @@ def export_report_pdf(
     # Parse the stored rendered_data which has our columns
     data = json.loads(report.rendered_data) if report.rendered_data else {}
     columns = data.get("columns", ["Date", "Reach", "Impressions", "Clicks"])
+    rows = data.get("rows", [[report.start_date.strftime("%Y-%m-%d"), 1245, 3500, 112]])
 
     y = 630
     c.setFont("Helvetica-Bold", 12)
     x = 72
     for col in columns:
-        c.drawString(x, y, col)
+        c.drawString(x, y, str(col))
         x += 100
 
-    y -= 20
     c.setFont("Helvetica", 12)
-    x = 72
-    # Mock row data based on the start date
-    c.drawString(x, y, report.start_date.strftime("%Y-%m-%d"))
-    c.drawString(x + 100, y, "1,245")
-    c.drawString(x + 200, y, "3,500")
-    c.drawString(x + 300, y, "112")
+    for row in rows:
+        y -= 20
+        if y < 50: # basic pagination
+            c.showPage()
+            y = 750
+            c.setFont("Helvetica", 12)
+        x = 72
+        for cell in row:
+            c.drawString(x, y, str(cell))
+            x += 100
 
     c.save()
     pdf_content = buffer.getvalue()
@@ -149,9 +216,11 @@ def export_report_excel(
 
     data = json.loads(report.rendered_data) if report.rendered_data else {}
     columns = data.get("columns", ["Date", "Reach", "Impressions", "Clicks"])
+    rows = data.get("rows", [[report.start_date.strftime("%Y-%m-%d"), 1245, 3500, 112]])
 
     ws.append(columns)
-    ws.append([report.start_date.strftime("%Y-%m-%d"), 1245, 3500, 112])
+    for row in rows:
+        ws.append(row)
 
     buffer = io.BytesIO()
     wb.save(buffer)
