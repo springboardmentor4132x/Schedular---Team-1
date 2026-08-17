@@ -45,8 +45,8 @@ export default function PlatformComparison({ ownerType = 'marketing' }) {
     async function fetchData() {
       setLoading(true);
       try {
-        const res = await analyticsService.getPlatforms();
-        setPlatformData(res);
+        const res = await analyticsService.getPlatforms({ role: ownerType });
+        setPlatformData(res || {});
       } catch (e) {
         console.error('Failed to fetch platform analytics', e);
       } finally {
@@ -54,29 +54,30 @@ export default function PlatformComparison({ ownerType = 'marketing' }) {
       }
     }
     fetchData();
-  }, []);
+  }, [ownerType]);
 
-  const platforms = Object.keys(platformData);
+  const safePlatformData = platformData || {};
+  const platforms = Object.keys(safePlatformData);
 
   // Table data for all metrics
   const tableRows = METRICS.map(({ key, label }) => {
     const row = { metric: label };
-    const values = platforms.map((p) => platformData[p][key] ?? 0);
+    const values = platforms.map((p) => safePlatformData[p]?.[key] ?? 0);
     const max = Math.max(...values, 0);
     platforms.forEach((p) => {
-      row[p] = platformData[p][key] ?? 0;
+      row[p] = safePlatformData[p]?.[key] ?? 0;
       row[`${p}_best`] = (row[p] === max && max > 0);
     });
     return row;
   });
 
   // Radar chart data (normalized 0-100)
-  const getMax = (key) => Math.max(...platforms.map((p) => platformData[p][key] ?? 0), 0);
+  const getMax = (key) => Math.max(...platforms.map((p) => safePlatformData[p]?.[key] ?? 0), 0);
   const radarData = ['reach', 'engagement', 'followers', 'clicks', 'impressions'].map((key) => {
     const maxVal = getMax(key) || 1;
     const entry = { metric: key.charAt(0).toUpperCase() + key.slice(1) };
     platforms.slice(0, 4).forEach((p) => {
-      entry[p] = Math.round(((platformData[p][key] ?? 0) / maxVal) * 100);
+      entry[p] = Math.round(((safePlatformData[p]?.[key] ?? 0) / maxVal) * 100);
     });
     return entry;
   });
@@ -84,16 +85,16 @@ export default function PlatformComparison({ ownerType = 'marketing' }) {
   // Bar chart — reach vs engagement
   const barData = platforms.map((p) => ({
     name: PLATFORM_META[p]?.label ?? p,
-    Reach: platformData[p].reach || 0,
-    Engagement: platformData[p].engagement || 0,
-    Followers: platformData[p].followers || 0,
+    Reach: safePlatformData[p]?.reach || 0,
+    Engagement: safePlatformData[p]?.engagement || 0,
+    Followers: safePlatformData[p]?.followers || 0,
   }));
 
   const PLAT_COLORS = platforms.map((p) => PLATFORM_META[p]?.color ?? '#4f46e5');
 
   if (loading) {
     return (
-      <PageContainer title="Platform Comparison" breadcrumb={[ownerType === 'marketing' ? 'Marketing' : 'Creator', 'Analytics', 'Platforms']}>
+      <PageContainer title="Platform Comparison" breadcrumb={[ownerType === 'marketing' ? 'Marketing' : (ownerType === 'business' ? 'Business' : 'Creator'), 'Analytics', 'Platforms']}>
         <SubNav role={ownerType} />
         <div style={{ padding: '2rem' }}>Loading platform comparison...</div>
       </PageContainer>
@@ -104,7 +105,7 @@ export default function PlatformComparison({ ownerType = 'marketing' }) {
     <PageContainer
       title="Platform Comparison"
       description="Compare performance metrics side-by-side across all your connected social media platforms."
-      breadcrumb={[ownerType === 'marketing' ? 'Marketing' : 'Creator', 'Analytics', 'Platforms']}
+      breadcrumb={[ownerType === 'marketing' ? 'Marketing' : (ownerType === 'business' ? 'Business' : 'Creator'), 'Analytics', 'Platforms']}
     >
       <SubNav role={ownerType} />
 
@@ -112,10 +113,10 @@ export default function PlatformComparison({ ownerType = 'marketing' }) {
       <div className="pc-platforms-strip">
         {platforms.map((p) => {
           const meta = PLATFORM_META[p] ?? {};
-          const data = platformData[p] || {};
+          const data = safePlatformData[p] || {};
           return (
             <div key={p} className="pc-plat-card" style={{ borderTopColor: meta.color }}>
-              <div className="pc-plat-card__name" style={{ color: meta.color }}>{meta.icon}&nbsp;{meta.label}</div>
+              <div className="pc-plat-card__name" style={{ color: meta.color }}>{meta.label || p}</div>
               <div className="pc-plat-card__metrics">
                 <div className="pc-plat-metric"><span>{formatK(data.followers)}</span><small>Followers</small></div>
                 <div className="pc-plat-metric"><span>{formatK(data.reach)}</span><small>Reach</small></div>

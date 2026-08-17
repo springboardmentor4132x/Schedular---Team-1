@@ -58,8 +58,8 @@ export default function ContentAnalytics({ ownerType = 'marketing' }) {
     async function fetchData() {
       setLoading(true);
       try {
-        const res = await analyticsService.getContent();
-        setContentData(res);
+        const res = await analyticsService.getContent({ role: ownerType });
+        setContentData(res || []);
       } catch (e) {
         console.error('Failed to fetch content analytics', e);
       } finally {
@@ -67,44 +67,44 @@ export default function ContentAnalytics({ ownerType = 'marketing' }) {
       }
     }
     fetchData();
-  }, []);
+  }, [ownerType]);
 
   const sorted = useMemo(() => {
-    return [...contentData].sort((a, b) => {
-      const aVal = sortKey === 'engagement' ? a.engagementRate : a[sortKey];
-      const bVal = sortKey === 'engagement' ? b.engagementRate : b[sortKey];
+    const list = Array.isArray(contentData) ? contentData : [];
+    return [...list].sort((a, b) => {
+      const aVal = sortKey === 'engagement' ? (a.engagementRate ?? 0) : (a[sortKey] ?? 0);
+      const bVal = sortKey === 'engagement' ? (b.engagementRate ?? 0) : (b[sortKey] ?? 0);
       return bVal - aVal;
     });
   }, [sortKey, contentData]);
 
   // Aggregate metrics for bar chart
   const barChartData = [
-    { name: 'Likes',     value: sorted.reduce((s, p) => s + p.likes, 0)    },
-    { name: 'Comments',  value: sorted.reduce((s, p) => s + p.comments, 0) },
-    { name: 'Shares',    value: sorted.reduce((s, p) => s + p.shares, 0)   },
-    { name: 'Saves',     value: sorted.reduce((s, p) => s + p.saves, 0)    },
-    { name: 'Clicks',    value: sorted.reduce((s, p) => s + p.clicks, 0)   },
+    { name: 'Likes',     value: sorted.reduce((s, p) => s + (p.likes || 0), 0)    },
+    { name: 'Comments',  value: sorted.reduce((s, p) => s + (p.comments || 0), 0) },
+    { name: 'Shares',    value: sorted.reduce((s, p) => s + (p.shares || 0), 0)   },
+    { name: 'Saves',     value: sorted.reduce((s, p) => s + (p.saves || 0), 0)    },
+    { name: 'Clicks',    value: sorted.reduce((s, p) => s + (p.clicks || 0), 0)   },
   ];
-
 
   if (loading) {
     return (
-      <PageContainer title="Content Analytics" breadcrumb={[ownerType === 'marketing' ? 'Marketing' : 'Creator', 'Analytics', 'Content']}>
+      <PageContainer title="Content Analytics" breadcrumb={[ownerType === 'marketing' ? 'Marketing' : (ownerType === 'business' ? 'Business' : 'Creator'), 'Analytics', 'Content']}>
         <SubNav role={ownerType} />
         <div style={{ padding: '2rem' }}>Loading content data...</div>
       </PageContainer>
     );
   }
 
-  if (posts && posts.available === false) {
+  if (contentData && contentData.available === false) {
     return (
-      <PageContainer title="Content Analytics" breadcrumb={[ownerType === 'marketing' ? 'Marketing' : 'Creator', 'Analytics', 'Content']}>
+      <PageContainer title="Content Analytics" breadcrumb={[ownerType === 'marketing' ? 'Marketing' : (ownerType === 'business' ? 'Business' : 'Creator'), 'Analytics', 'Content']}>
         <SubNav role={ownerType} />
         <div style={{ padding: '3rem 2rem', textAlign: 'center', background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0', margin: '2rem 0' }}>
           <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>⚠️</div>
-          <h3 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#0f172a', marginBottom: '0.5rem' }}>LinkedIn Analytics Unavailable</h3>
+          <h3 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#0f172a', marginBottom: '0.5rem' }}>Analytics Unavailable</h3>
           <p style={{ color: '#64748b', maxWidth: '500px', margin: '0 auto' }}>
-            {posts.reason || 'LinkedIn API permissions do not allow analytics retrieval for this application.'}
+            {contentData.reason || 'API permissions do not allow analytics retrieval for this account.'}
           </p>
         </div>
       </PageContainer>
@@ -115,7 +115,7 @@ export default function ContentAnalytics({ ownerType = 'marketing' }) {
     <PageContainer
       title="Content Analytics"
       description="Performance breakdown for each published post — likes, comments, shares, reach, and more."
-      breadcrumb={[ownerType === 'marketing' ? 'Marketing' : 'Creator', 'Analytics', 'Content']}
+      breadcrumb={[ownerType === 'marketing' ? 'Marketing' : (ownerType === 'business' ? 'Business' : 'Creator'), 'Analytics', 'Content']}
     >
       <SubNav role={ownerType} />
 
@@ -178,17 +178,17 @@ export default function ContentAnalytics({ ownerType = 'marketing' }) {
           </thead>
           <tbody>
             {sorted.map((post, i) => (
-              <tr key={post.id}>
+              <tr key={post.id || i}>
                 <td className="ca-rank">#{i + 1}</td>
                 <td className="ca-caption">{post.caption}</td>
                 <td>
                   <div className="ca-platforms">
-                    {post.platforms.map((p) => (
+                    {(post.platforms || []).map((p) => (
                       <span
                         key={p}
                         className="ca-plat-badge"
-                        style={{ color: PLATFORM_META[p]?.color, background: PLATFORM_META[p]?.color + '18' }}
-                        title={PLATFORM_META[p]?.label}
+                        style={{ color: PLATFORM_META[p]?.color || '#4f46e5', background: (PLATFORM_META[p]?.color || '#4f46e5') + '18' }}
+                        title={PLATFORM_META[p]?.label || p}
                       >
                         {PLATFORM_META[p]?.label?.[0] ?? p[0]}
                       </span>

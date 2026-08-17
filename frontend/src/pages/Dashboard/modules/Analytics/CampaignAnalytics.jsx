@@ -46,8 +46,8 @@ export default function CampaignAnalytics({ ownerType = 'marketing' }) {
     async function fetchData() {
       setLoading(true);
       try {
-        const res = await analyticsService.getCampaigns();
-        setCampaignData(res);
+        const res = await analyticsService.getCampaigns({ role: ownerType });
+        setCampaignData(Array.isArray(res) ? res : []);
       } catch (e) {
         console.error('Failed to fetch campaign analytics', e);
       } finally {
@@ -55,32 +55,33 @@ export default function CampaignAnalytics({ ownerType = 'marketing' }) {
       }
     }
     fetchData();
-  }, []);
+  }, [ownerType]);
 
-  const totalReach      = campaignData.reduce((s, c) => s + c.reach, 0);
-  const totalPosts      = campaignData.reduce((s, c) => s + c.posts, 0);
-  const activeCampaigns = campaignData.filter((c) => c.status === 'active').length;
+  const safeCampaigns   = Array.isArray(campaignData) ? campaignData : [];
+  const totalReach      = safeCampaigns.reduce((s, c) => s + (c.reach || 0), 0);
+  const totalPosts      = safeCampaigns.reduce((s, c) => s + (c.posts || 0), 0);
+  const activeCampaigns = safeCampaigns.filter((c) => c.status === 'active').length;
 
   const kpiCards = [
-    { title: 'Total Campaigns',  value: campaignData.length, icon: <MdCampaign />,          trend: 'neutral', change: 0 },
+    { title: 'Total Campaigns',  value: safeCampaigns.length, icon: <MdCampaign />,          trend: 'neutral', change: 0 },
     { title: 'Active',           value: activeCampaigns,               icon: <MdHourglassBottom />,   trend: 'up',      change: 2 },
     { title: 'Total Reach',      value: formatK(totalReach),           icon: <MdTrendingUp />,        trend: 'up',      change: 18 },
     { title: 'Total Posts',      value: totalPosts,                    icon: <MdCheckCircle />,       trend: 'up',      change: 6 },
   ];
 
   // Bar chart
-  const reachChartData = campaignData.map((c) => ({
-    name: c.name.split(' ').slice(0, 2).join(' '),
-    Reach: c.reach,
-    Engagement: c.engagement,
-    Clicks: c.clicks,
+  const reachChartData = safeCampaigns.map((c) => ({
+    name: (c.name || 'Campaign').split(' ').slice(0, 2).join(' '),
+    Reach: c.reach || 0,
+    Engagement: c.engagement || 0,
+    Clicks: c.clicks || 0,
   }));
 
-  const selectedCamp = selected ? campaignData.find((c) => c.id === selected) : null;
+  const selectedCamp = selected ? safeCampaigns.find((c) => c.id === selected) : null;
 
   if (loading) {
     return (
-      <PageContainer title="Campaign Analytics" breadcrumb={[ownerType === 'marketing' ? 'Marketing' : 'Creator', 'Analytics', 'Campaigns']}>
+      <PageContainer title="Campaign Analytics" breadcrumb={[ownerType === 'marketing' ? 'Marketing' : (ownerType === 'business' ? 'Business' : 'Creator'), 'Analytics', 'Campaigns']}>
         <SubNav role={ownerType} />
         <div style={{ padding: '2rem' }}>Loading campaign data...</div>
       </PageContainer>
@@ -91,7 +92,7 @@ export default function CampaignAnalytics({ ownerType = 'marketing' }) {
     <PageContainer
       title="Campaign Analytics"
       description="Measure the effectiveness of each campaign — reach, engagement, ROI, and completion."
-      breadcrumb={[ownerType === 'marketing' ? 'Marketing' : 'Creator', 'Analytics', 'Campaigns']}
+      breadcrumb={[ownerType === 'marketing' ? 'Marketing' : (ownerType === 'business' ? 'Business' : 'Creator'), 'Analytics', 'Campaigns']}
     >
       <SubNav role={ownerType} />
 
@@ -109,7 +110,7 @@ export default function CampaignAnalytics({ ownerType = 'marketing' }) {
             <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
             <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} tickFormatter={formatK} width={55} />
             <Tooltip formatter={(v) => formatK(v)} />
-            <Bar dataKey="Reach"      fill="#4f46e5" radius={[4,4,0,0]} onClick={(d, i) => setSelected(campaignData[i].id)} cursor="pointer" />
+            <Bar dataKey="Reach"      fill="#4f46e5" radius={[4,4,0,0]} onClick={(d, i) => setSelected(safeCampaigns[i]?.id)} cursor="pointer" />
             <Bar dataKey="Engagement" fill="#10b981" radius={[4,4,0,0]} />
           </BarChart>
         </ResponsiveContainer>
@@ -183,7 +184,7 @@ export default function CampaignAnalytics({ ownerType = 'marketing' }) {
               </tr>
             </thead>
             <tbody>
-              {campaignData.map((c, i) => {
+              {safeCampaigns.map((c, i) => {
                 const sc = STATUS_CONFIG[c.status] ?? STATUS_CONFIG.draft;
                 return (
                   <tr

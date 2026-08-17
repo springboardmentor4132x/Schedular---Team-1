@@ -46,7 +46,10 @@ function formatK(n) {
   return String(num);
 }
 
-function sumKey(data, key) { return data.reduce((s, d) => s + (d[key] ?? 0), 0); }
+function sumKey(data, key) {
+  if (!Array.isArray(data)) return 0;
+  return data.reduce((s, d) => s + (d[key] ?? 0), 0);
+}
 
 export default function PerformanceTrends({ ownerType = 'marketing' }) {
   const [range, setRange]       = useState(30);
@@ -59,9 +62,10 @@ export default function PerformanceTrends({ ownerType = 'marketing' }) {
     async function fetchData() {
       setLoading(true);
       try {
-        const res = await analyticsService.getTrends(range);
-        setCurrentData(res);
-        setPreviousData(res); // using same for now as placeholder for PoP
+        const res = await analyticsService.getTrends({ days: range, role: ownerType });
+        const list = Array.isArray(res) ? res : [];
+        setCurrentData(list);
+        setPreviousData(list); // using same for now as placeholder for PoP
       } catch (e) {
         console.error('Failed to fetch trend analytics', e);
       } finally {
@@ -69,7 +73,7 @@ export default function PerformanceTrends({ ownerType = 'marketing' }) {
       }
     }
     fetchData();
-  }, [range]);
+  }, [range, ownerType]);
 
   const toggleMetric = (key) => {
     setSelected((prev) =>
@@ -93,10 +97,11 @@ export default function PerformanceTrends({ ownerType = 'marketing' }) {
   ];
 
   const activeMetrics = METRICS_CONFIG.filter((m) => selected.includes(m.key));
+  const safeTrendList = Array.isArray(currentData) ? currentData : [];
 
   const handleExport = () => {
     const headers = ['Date', ...METRICS_CONFIG.map((m) => m.label)].join(',');
-    const rows = currentData.map((d) => [d.date, ...METRICS_CONFIG.map((m) => d[m.key] ?? 0)].join(','));
+    const rows = safeTrendList.map((d) => [d.date, ...METRICS_CONFIG.map((m) => d[m.key] ?? 0)].join(','));
     const blob = new Blob([[headers, ...rows].join('\n')], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a'); a.href = url; a.download = 'performance_trends.csv'; a.click();
@@ -105,7 +110,7 @@ export default function PerformanceTrends({ ownerType = 'marketing' }) {
 
   if (loading) {
     return (
-      <PageContainer title="Performance Trends" breadcrumb={[ownerType === 'marketing' ? 'Marketing' : 'Creator', 'Analytics', 'Trends']}>
+      <PageContainer title="Performance Trends" breadcrumb={[ownerType === 'marketing' ? 'Marketing' : (ownerType === 'business' ? 'Business' : 'Creator'), 'Analytics', 'Trends']}>
         <SubNav role={ownerType} />
         <div style={{ padding: '2rem' }}>Loading trends data...</div>
       </PageContainer>
@@ -114,13 +119,13 @@ export default function PerformanceTrends({ ownerType = 'marketing' }) {
 
   if (currentData && currentData.available === false) {
     return (
-      <PageContainer title="Performance Trends" breadcrumb={[ownerType === 'marketing' ? 'Marketing' : 'Creator', 'Analytics', 'Trends']}>
+      <PageContainer title="Performance Trends" breadcrumb={[ownerType === 'marketing' ? 'Marketing' : (ownerType === 'business' ? 'Business' : 'Creator'), 'Analytics', 'Trends']}>
         <SubNav role={ownerType} />
         <div style={{ padding: '3rem 2rem', textAlign: 'center', background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0', margin: '2rem 0' }}>
           <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>⚠️</div>
-          <h3 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#0f172a', marginBottom: '0.5rem' }}>LinkedIn Analytics Unavailable</h3>
+          <h3 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#0f172a', marginBottom: '0.5rem' }}>Analytics Unavailable</h3>
           <p style={{ color: '#64748b', maxWidth: '500px', margin: '0 auto' }}>
-            {currentData.reason || 'LinkedIn API permissions do not allow analytics retrieval for this application.'}
+            {currentData.reason || 'API permissions do not allow analytics retrieval for this account.'}
           </p>
         </div>
       </PageContainer>
@@ -131,7 +136,7 @@ export default function PerformanceTrends({ ownerType = 'marketing' }) {
     <PageContainer
       title="Performance Trends"
       description={`Interactive ${range}-day trend analysis — track reach, impressions, engagement, and growth.`}
-      breadcrumb={[ownerType === 'marketing' ? 'Marketing' : 'Creator', 'Analytics', 'Trends']}
+      breadcrumb={[ownerType === 'marketing' ? 'Marketing' : (ownerType === 'business' ? 'Business' : 'Creator'), 'Analytics', 'Trends']}
     >
       <SubNav role={ownerType} />
 
@@ -185,7 +190,7 @@ export default function PerformanceTrends({ ownerType = 'marketing' }) {
           description={`${range}-day performance across: ${activeMetrics.map((m) => m.label).join(', ')}`}
         />
         <ResponsiveContainer width="100%" height={350}>
-          <ComposedChart data={currentData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+          <ComposedChart data={safeTrendList} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
             <defs>
               {activeMetrics.filter((m) => m.type === 'area').map((m) => (
                 <linearGradient key={m.key} id={`grad-${m.key}`} x1="0" y1="0" x2="0" y2="1">
@@ -200,7 +205,7 @@ export default function PerformanceTrends({ ownerType = 'marketing' }) {
               tick={{ fontSize: 11, fill: '#94a3b8' }}
               tickLine={false}
               axisLine={false}
-              interval={Math.ceil(currentData.length / 8)}
+              interval={Math.max(0, Math.ceil(safeTrendList.length / 8) - 1)}
             />
             <YAxis
               tick={{ fontSize: 11, fill: '#94a3b8' }}
@@ -260,14 +265,14 @@ export default function PerformanceTrends({ ownerType = 'marketing' }) {
       <div className="pt-chart-card">
         <SectionTitle title="Daily Post Volume" description="Number of posts published per day in this period." />
         <ResponsiveContainer width="100%" height={160}>
-          <BarChart data={currentData} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
+          <BarChart data={safeTrendList} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
             <XAxis
               dataKey="date"
               tick={{ fontSize: 11, fill: '#94a3b8' }}
               tickLine={false}
               axisLine={false}
-              interval={Math.ceil(currentData.length / 8)}
+              interval={Math.max(0, Math.ceil(safeTrendList.length / 8) - 1)}
             />
             <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} width={30} />
             <Tooltip />
@@ -288,7 +293,7 @@ export default function PerformanceTrends({ ownerType = 'marketing' }) {
               </tr>
             </thead>
             <tbody>
-              {currentData.slice(-14).reverse().map((d) => (
+              {safeTrendList.slice(-14).reverse().map((d) => (
                 <tr key={d.date}>
                   <td className="pt-table__date">{d.date}</td>
                   {METRICS_CONFIG.map((m) => <td key={m.key}>{formatK(d[m.key] ?? 0)}</td>)}

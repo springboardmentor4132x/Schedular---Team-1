@@ -205,9 +205,6 @@ export default function MarketingTeamsPage() {
                 </span>
                 <span className="bt-my-team-stat__lbl">Last Activity</span>
               </div>
-              <button className="bt-my-team-card__action-btn">
-                View Details
-              </button>
             </div>
           </div>
         </div>

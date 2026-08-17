@@ -49,7 +49,10 @@ function formatK(n) {
   return String(num);
 }
 
-function formatPct(n) { return `${n.toFixed(1)}%`; }
+function formatPct(n) {
+  if (n === null || n === undefined || isNaN(Number(n))) return 'N/A';
+  return `${Number(n).toFixed(1)}%`;
+}
 
 // Custom tooltip for area chart
 function CustomAreaTooltip({ active, payload, label }) {
@@ -82,15 +85,15 @@ export default function AnalyticsDashboard({ ownerType = 'marketing' }) {
       setLoading(true);
       try {
         const [dashRes, campRes, platRes, trendRes] = await Promise.all([
-          analyticsService.getDashboard({ days: range }),
-          analyticsService.getCampaigns(),
-          analyticsService.getPlatforms(),
-          analyticsService.getTrends({ days: range })
+          analyticsService.getDashboard({ days: range, role: ownerType }),
+          analyticsService.getCampaigns({ role: ownerType }),
+          analyticsService.getPlatforms({ role: ownerType }),
+          analyticsService.getTrends({ days: range, role: ownerType })
         ]);
-        setDashboardData(dashRes);
-        setCampaignData(campRes);
-        setPlatformData(platRes);
-        setTrendData(trendRes);
+        setDashboardData(dashRes || {});
+        setCampaignData(Array.isArray(campRes) ? campRes : []);
+        setPlatformData(platRes || {});
+        setTrendData(Array.isArray(trendRes) ? trendRes : []);
       } catch (e) {
         console.error('Failed to fetch analytics', e);
       } finally {
@@ -98,13 +101,13 @@ export default function AnalyticsDashboard({ ownerType = 'marketing' }) {
       }
     }
     fetchData();
-  }, [range]);
+  }, [range, ownerType]);
 
   const metricMeta = METRIC_OPTIONS.find((m) => m.key === metric) ?? METRIC_OPTIONS[0];
 
   if (loading || !dashboardData) {
     return (
-      <PageContainer title="Analytics Overview" breadcrumb={[ownerType === 'marketing' ? 'Marketing' : 'Creator', 'Analytics', 'Overview']}>
+      <PageContainer title="Analytics Overview" breadcrumb={[ownerType === 'marketing' ? 'Marketing' : (ownerType === 'business' ? 'Business' : 'Creator'), 'Analytics', 'Overview']}>
         <SubNav role={ownerType} />
         <div style={{ padding: '2rem' }}>Loading analytics...</div>
       </PageContainer>
@@ -113,13 +116,13 @@ export default function AnalyticsDashboard({ ownerType = 'marketing' }) {
 
   if (dashboardData.available === false) {
     return (
-      <PageContainer title="Analytics Overview" breadcrumb={[ownerType === 'marketing' ? 'Marketing' : 'Creator', 'Analytics', 'Overview']}>
+      <PageContainer title="Analytics Overview" breadcrumb={[ownerType === 'marketing' ? 'Marketing' : (ownerType === 'business' ? 'Business' : 'Creator'), 'Analytics', 'Overview']}>
         <SubNav role={ownerType} />
         <div style={{ padding: '3rem 2rem', textAlign: 'center', background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0', margin: '2rem 0' }}>
           <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>⚠️</div>
-          <h3 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#0f172a', marginBottom: '0.5rem' }}>LinkedIn Analytics Unavailable</h3>
+          <h3 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#0f172a', marginBottom: '0.5rem' }}>Analytics Unavailable</h3>
           <p style={{ color: '#64748b', maxWidth: '500px', margin: '0 auto' }}>
-            {dashboardData.reason || 'LinkedIn API permissions do not allow analytics retrieval for this application.'}
+            {dashboardData.reason || 'API permissions do not allow analytics retrieval for this account.'}
           </p>
         </div>
       </PageContainer>
@@ -138,19 +141,21 @@ export default function AnalyticsDashboard({ ownerType = 'marketing' }) {
   ];
 
   // Platform comparison data for bar chart
-  const platChartData = Object.entries(platformData).map(([key, val]) => ({
+  const platChartData = Object.entries(platformData || {}).map(([key, val]) => ({
     name: PLATFORM_META[key]?.label ?? key,
-    Reach: val.reach,
-    Engagement: val.engagement,
-    Followers: val.followers,
+    Reach: val?.reach ?? 0,
+    Engagement: val?.engagement ?? 0,
+    Followers: val?.followers ?? 0,
     color: PLATFORM_META[key]?.color ?? '#4f46e5',
   }));
+
+  const safeCampaigns = Array.isArray(campaignData) ? campaignData : [];
 
   return (
     <PageContainer
       title="Analytics Overview"
       description="Performance dashboard — reach, engagement, and growth across all platforms."
-      breadcrumb={[ownerType === 'marketing' ? 'Marketing' : 'Creator', 'Analytics', 'Overview']}
+      breadcrumb={[ownerType === 'marketing' ? 'Marketing' : (ownerType === 'business' ? 'Business' : 'Creator'), 'Analytics', 'Overview']}
     >
       <SubNav role={ownerType} />
 
@@ -210,7 +215,7 @@ export default function AnalyticsDashboard({ ownerType = 'marketing' }) {
                 tick={{ fontSize: 11, fill: '#94a3b8' }}
                 tickLine={false}
                 axisLine={false}
-                interval={Math.ceil(trendData.length / 8)}
+                interval={Math.max(0, Math.ceil(trendData.length / 8) - 1)}
               />
               <YAxis
                 tick={{ fontSize: 11, fill: '#94a3b8' }}
@@ -272,7 +277,7 @@ export default function AnalyticsDashboard({ ownerType = 'marketing' }) {
               </tr>
             </thead>
             <tbody>
-              {campaignData.map((c) => (
+              {safeCampaigns.map((c) => (
                 <tr key={c.id}>
                   <td className="an2-camp-name">{c.name}</td>
                   <td>

@@ -31,12 +31,12 @@ function formatK(n) {
   return String(num);
 }
 
-function CustomPieLegend({ data, colors }) {
+function CustomPieLegend({ data = [], colors = [] }) {
   return (
     <div className="aud-pie-legend">
       {data.map((d, i) => (
-        <div key={d.name} className="aud-pie-legend__item">
-          <span className="aud-pie-legend__dot" style={{ background: colors[i] }} />
+        <div key={d.name || i} className="aud-pie-legend__item">
+          <span className="aud-pie-legend__dot" style={{ background: colors[i % colors.length] }} />
           <span className="aud-pie-legend__name">{d.name}</span>
           <span className="aud-pie-legend__val">{d.value}%</span>
         </div>
@@ -53,8 +53,8 @@ export default function AudienceAnalytics({ ownerType = 'marketing' }) {
     async function fetchData() {
       setLoading(true);
       try {
-        const res = await analyticsService.getAudience();
-        setD(res);
+        const res = await analyticsService.getAudience({ role: ownerType });
+        setD(res || {});
       } catch (e) {
         console.error('Failed to fetch audience analytics', e);
       } finally {
@@ -62,11 +62,11 @@ export default function AudienceAnalytics({ ownerType = 'marketing' }) {
       }
     }
     fetchData();
-  }, []);
+  }, [ownerType]);
 
   if (loading || !d) {
     return (
-      <PageContainer title="Audience Analytics" breadcrumb={[ownerType === 'marketing' ? 'Marketing' : 'Creator', 'Analytics', 'Audience']}>
+      <PageContainer title="Audience Analytics" breadcrumb={[ownerType === 'marketing' ? 'Marketing' : (ownerType === 'business' ? 'Business' : 'Creator'), 'Analytics', 'Audience']}>
         <SubNav role={ownerType} />
         <div style={{ padding: '2rem' }}>Loading audience data...</div>
       </PageContainer>
@@ -75,13 +75,13 @@ export default function AudienceAnalytics({ ownerType = 'marketing' }) {
 
   if (d.available === false) {
     return (
-      <PageContainer title="Audience Analytics" breadcrumb={[ownerType === 'marketing' ? 'Marketing' : 'Creator', 'Analytics', 'Audience']}>
+      <PageContainer title="Audience Analytics" breadcrumb={[ownerType === 'marketing' ? 'Marketing' : (ownerType === 'business' ? 'Business' : 'Creator'), 'Analytics', 'Audience']}>
         <SubNav role={ownerType} />
         <div style={{ padding: '3rem 2rem', textAlign: 'center', background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0', margin: '2rem 0' }}>
           <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>⚠️</div>
-          <h3 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#0f172a', marginBottom: '0.5rem' }}>LinkedIn Analytics Unavailable</h3>
+          <h3 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#0f172a', marginBottom: '0.5rem' }}>Analytics Unavailable</h3>
           <p style={{ color: '#64748b', maxWidth: '500px', margin: '0 auto' }}>
-            {d.reason || 'LinkedIn API permissions do not allow analytics retrieval for this application.'}
+            {d.reason || 'API permissions do not allow analytics retrieval for this account.'}
           </p>
         </div>
       </PageContainer>
@@ -89,20 +89,27 @@ export default function AudienceAnalytics({ ownerType = 'marketing' }) {
   }
 
   const kpiCards = [
-    { title: 'Total Followers',  value: formatK(d.followers),    icon: <MdPeople />,      trend: 'up',   change: 2.2 },
-    { title: 'New Followers',    value: formatK(d.newFollowers),  icon: <MdTrendingUp />,  trend: 'up',   change: 8.4 },
-    { title: 'Lost Followers',   value: formatK(d.lostFollowers), icon: <MdTrendingDown />,trend: 'down', change: -3.1 },
-    { title: 'Net Growth',       value: `+${formatK(d.netGrowth)}`, icon: <MdPerson />,   trend: 'up',   change: 5.2 },
+    { title: 'Total Followers',  value: formatK(d.followers ?? 0),    icon: <MdPeople />,      trend: 'up',   change: 2.2 },
+    { title: 'New Followers',    value: formatK(d.newFollowers ?? 0),  icon: <MdTrendingUp />,  trend: 'up',   change: 8.4 },
+    { title: 'Lost Followers',   value: formatK(d.lostFollowers ?? 0), icon: <MdTrendingDown />,trend: 'down', change: -3.1 },
+    { title: 'Net Growth',       value: `+${formatK(d.netGrowth ?? 0)}`, icon: <MdPerson />,   trend: 'up',   change: 5.2 },
   ];
 
+  const genderDistribution = d.genderDistribution || [];
+  const ageDistribution    = d.ageDistribution || [];
+  const countryDistribution= d.countryDistribution || [];
+  const mostActiveDays     = d.mostActiveDays || [];
+  const mostActiveHours    = d.mostActiveHours || [];
+  const followerGrowth     = d.followerGrowth || [];
+
   // Build hour heatmap data (0–23)
-  const MAX_HOUR = Math.max(...d.mostActiveHours);
+  const MAX_HOUR = mostActiveHours.length ? Math.max(...mostActiveHours, 1) : 1;
 
   return (
     <PageContainer
       title="Audience Analytics"
       description="Understand your audience — follower growth, demographics, country reach, and peak activity hours."
-      breadcrumb={[ownerType === 'marketing' ? 'Marketing' : 'Creator', 'Analytics', 'Audience']}
+      breadcrumb={[ownerType === 'marketing' ? 'Marketing' : (ownerType === 'business' ? 'Business' : 'Creator'), 'Analytics', 'Audience']}
     >
       <SubNav role={ownerType} />
 
@@ -115,7 +122,7 @@ export default function AudienceAnalytics({ ownerType = 'marketing' }) {
       <div className="aud-chart-card">
         <SectionTitle title="Follower Growth" description="Monthly follower count over the last 6 months." />
         <ResponsiveContainer width="100%" height={220}>
-          <LineChart data={d.followerGrowth} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
+          <LineChart data={followerGrowth} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
             <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
             <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} tickFormatter={formatK} width={55} domain={['dataMin - 1000', 'dataMax + 500']} />
@@ -134,7 +141,7 @@ export default function AudienceAnalytics({ ownerType = 'marketing' }) {
             <ResponsiveContainer width="100%" height={200}>
               <PieChart>
                 <Pie
-                  data={d.genderDistribution}
+                  data={genderDistribution}
                   dataKey="value"
                   nameKey="name"
                   cx="50%"
@@ -143,14 +150,14 @@ export default function AudienceAnalytics({ ownerType = 'marketing' }) {
                   outerRadius={90}
                   paddingAngle={3}
                 >
-                  {d.genderDistribution.map((_, i) => (
+                  {genderDistribution.map((_, i) => (
                     <Cell key={i} fill={GENDER_COLORS[i % GENDER_COLORS.length]} />
                   ))}
                 </Pie>
                 <Tooltip formatter={(v) => `${v}%`} />
               </PieChart>
             </ResponsiveContainer>
-            <CustomPieLegend data={d.genderDistribution} colors={GENDER_COLORS} />
+            <CustomPieLegend data={genderDistribution} colors={GENDER_COLORS} />
           </div>
         </div>
 
@@ -158,7 +165,7 @@ export default function AudienceAnalytics({ ownerType = 'marketing' }) {
         <div className="aud-chart-card aud-chart-card--half">
           <SectionTitle title="Age Distribution" description="Audience breakdown by age range." />
           <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={d.ageDistribution} layout="vertical" margin={{ top: 5, right: 20, left: 10, bottom: 0 }}>
+            <BarChart data={ageDistribution} layout="vertical" margin={{ top: 5, right: 20, left: 10, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false} />
               <XAxis type="number" tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} tickFormatter={(v) => `${v}%`} />
               <YAxis type="category" dataKey="range" tick={{ fontSize: 12, fill: '#94a3b8' }} tickLine={false} axisLine={false} width={45} />
@@ -173,7 +180,7 @@ export default function AudienceAnalytics({ ownerType = 'marketing' }) {
       <div className="aud-chart-card">
         <SectionTitle title="Country Distribution" description="Top countries by audience size." />
         <div className="aud-country-list">
-          {d.countryDistribution.map((c) => (
+          {countryDistribution.map((c) => (
             <div key={c.country} className="aud-country-row">
               <span className="aud-country-name">{c.country}</span>
               <div className="aud-country-bar-wrap">
@@ -189,7 +196,7 @@ export default function AudienceAnalytics({ ownerType = 'marketing' }) {
       <div className="aud-chart-card">
         <SectionTitle title="Most Active Days" description="When your audience is most engaged during the week." />
         <ResponsiveContainer width="100%" height={160}>
-          <BarChart data={d.mostActiveDays} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
+          <BarChart data={mostActiveDays} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
             <XAxis dataKey="day" tick={{ fontSize: 13, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
             <YAxis hide />
@@ -203,7 +210,7 @@ export default function AudienceAnalytics({ ownerType = 'marketing' }) {
       <div className="aud-chart-card">
         <SectionTitle title="Peak Activity Hours" description="Relative audience activity by hour of the day (UTC)." />
         <div className="aud-heatmap">
-          {d.mostActiveHours.map((val, hour) => {
+          {mostActiveHours.map((val, hour) => {
             const intensity = MAX_HOUR > 0 ? val / MAX_HOUR : 0;
             return (
               <div
