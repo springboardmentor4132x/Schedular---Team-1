@@ -757,7 +757,7 @@ def connect_social_account(
         endpoint = "https://accounts.google.com/o/oauth2/v2/auth"
         params.update(
             {
-                "scope": "openid email profile https://www.googleapis.com/auth/youtube.upload",
+                "scope": "openid email profile https://www.googleapis.com/auth/youtube.upload https://www.googleapis.com/auth/youtube.readonly",
                 "access_type": "offline",
                 "prompt": "consent",
             }

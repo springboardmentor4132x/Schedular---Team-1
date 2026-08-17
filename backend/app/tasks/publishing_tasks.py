@@ -11,6 +11,7 @@ import json
 import logging
 import time
 from pathlib import Path
+from datetime import datetime, timedelta, timezone
 
 import httpx
 from celery import shared_task
@@ -147,6 +148,21 @@ def publish_post_task(self, post_id: int, platform: str, attempt_id: int):
         attempt.status = "publishing"
         attempt.social_account_id = account.id
         db.commit()
+        
+        provider = get_provider(platform)
+        if account.token_expires_at and account.token_expires_at < datetime.now(timezone.utc) + timedelta(minutes=5):
+            if account.refresh_token_encrypted and hasattr(provider, "refresh_token"):
+                try:
+                    new_access, new_refresh, exp_in = provider.refresh_token(account.refresh_token_encrypted)
+                    if new_access:
+                        account.access_token_encrypted = new_access
+                        if new_refresh:
+                            account.refresh_token_encrypted = new_refresh
+                        if exp_in:
+                            account.token_expires_at = datetime.now(timezone.utc) + timedelta(seconds=int(exp_in))
+                        db.commit()
+                except Exception as e:
+                    logger.error(f"Failed to auto-refresh token for {platform}: {e}")
 
         try:
             content = _content_payload(post)

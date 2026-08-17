@@ -213,11 +213,12 @@ export default function AnalyticsDashboard({ ownerType = 'marketing' }) {
             <AreaChart data={trendData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id="an2Grad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%"  stopColor={metricMeta.color} stopOpacity={0.18} />
-                  <stop offset="95%" stopColor={metricMeta.color} stopOpacity={0}    />
+                  <stop offset="0%"  stopColor={metricMeta.color} stopOpacity={0.5} />
+                  <stop offset="50%" stopColor={metricMeta.color} stopOpacity={0.1} />
+                  <stop offset="100%" stopColor={metricMeta.color} stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" strokeOpacity={0.3} vertical={false} />
               <XAxis
                 dataKey="date"
                 tick={{ fontSize: 11, fill: '#94a3b8' }}
@@ -256,7 +257,7 @@ export default function AnalyticsDashboard({ ownerType = 'marketing' }) {
         <div className="an2-chart-body">
           <ResponsiveContainer width="100%" height={260}>
             <BarChart data={platChartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" strokeOpacity={0.3} vertical={false} />
               <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
               <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} tickFormatter={formatK} width={50} />
               <Tooltip formatter={(val) => formatK(val)} />

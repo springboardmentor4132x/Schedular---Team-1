@@ -5,7 +5,7 @@ import shutil
 from pathlib import Path
 from uuid import uuid4
 from datetime import datetime, timezone
-from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
+from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, Query, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -651,7 +651,7 @@ def approve_post(
 
 @router.post("/posts/{post_id}/publish", status_code=status.HTTP_202_ACCEPTED)
 def request_publish_now(
-    post_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)
+    post_id: int, background_tasks: BackgroundTasks, user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ):
     _require_content_access(user)
     post = _owned_post(post_id, user, db)
@@ -671,11 +671,18 @@ def request_publish_now(
     db.commit()
     db.refresh(post)
 
-    # Process immediately since Windows doesn't easily run celery beat natively
-    process_pending_publications(db)
-
+    # Use a new DB session for the background task to avoid session conflicts
+    # after this endpoint returns.
+    def bg_process_publications(pid: int):
+        from app.database import SessionLocal
+        bg_db = SessionLocal()
+        try:
+            process_pending_publications(bg_db)
+        finally:
+            bg_db.close()
+            
+    background_tasks.add_task(bg_process_publications, post.id)
     return {"post": _post_payload(post)}
-
 
 @router.post("/publishing/run-due")
 def run_due_publications(

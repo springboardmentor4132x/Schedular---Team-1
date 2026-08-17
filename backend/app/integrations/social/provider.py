@@ -35,3 +35,11 @@ class SocialProvider(ABC):
             str: The external post ID.
         """
         pass
+
+    def get_analytics(self, access_token: str, external_post_id: str) -> Dict[str, int]:
+        """Get analytics for a specific published post.
+
+        Returns:
+            Dict[str, int]: A dictionary of metrics (e.g. views, likes, comments).
+        """
+        pass

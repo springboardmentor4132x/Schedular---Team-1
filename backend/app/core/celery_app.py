@@ -5,6 +5,11 @@ celery_app = Celery(
     "socialpilot",
     broker=settings.CELERY_BROKER_URL,
     backend=settings.REDIS_URL,
+    include=[
+        "app.tasks.publishing_tasks",
+        "app.tasks.analytics_tasks",
+        "app.tasks.notification_tasks",
+    ],
 )
 
 celery_app.conf.update(
@@ -30,8 +35,9 @@ celery_app.conf.update(
             "task": "app.tasks.notification_tasks.check_upcoming_posts",
             "schedule": 3600.0,  # every hour
         },
+        "sync-analytics": {
+            "task": "app.tasks.analytics_tasks.sync_analytics",
+            "schedule": 60.0,  # every 60 seconds
+        },
     },
 )
-
-# Autodiscover tasks if they are in specific modules
-celery_app.autodiscover_tasks(["app.tasks"])

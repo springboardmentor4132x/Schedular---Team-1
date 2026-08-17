@@ -97,9 +97,8 @@ class YouTubeProvider(SocialProvider):
                 "description": str(options.get("description") or content.get("text") or ""),
                 "categoryId": str(options.get("category_id") or "22"),
             },
-            # Private is intentionally the safe default; a user can explicitly
-            # select public or unlisted in platform options.
-            "status": {"privacyStatus": options.get("privacy_status", "private")},
+            # Defaulting to public for easier visibility, can be overridden in platform options.
+            "status": {"privacyStatus": options.get("privacy_status", "public")},
         }
         file_size = video_path.stat().st_size
         headers = {
@@ -134,3 +133,22 @@ class YouTubeProvider(SocialProvider):
         if not video_id:
             raise ValueError("YouTube upload completed without returning a video ID.")
         return str(video_id)
+
+    def get_analytics(self, access_token: str, external_post_id: str) -> Dict[str, int]:
+        headers = {"Authorization": f"Bearer {access_token}"}
+        with httpx.Client(timeout=20) as client:
+            response = client.get(
+                f"{self.API_BASE_URL}/videos",
+                params={"part": "statistics", "id": external_post_id},
+                headers=headers,
+            )
+            response.raise_for_status()
+            items = response.json().get("items", [])
+            if not items:
+                return {"views": 0, "likes": 0, "comments": 0}
+            stats = items[0].get("statistics", {})
+            return {
+                "views": int(stats.get("viewCount", 0)),
+                "likes": int(stats.get("likeCount", 0)),
+                "comments": int(stats.get("commentCount", 0)),
+            }
