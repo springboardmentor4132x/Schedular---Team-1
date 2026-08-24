@@ -1,0 +1,36 @@
+1. install the docker desktop
+2. install the requirements.txt provided in the backend folder
+3. install celery and redis packages
+4. run the docker
+5. in the project terminal run the followind command to start redis server
+			
+			docker exec -it social-scheduler-redis redis-cli ping
+you will see the redis container in the docker desktop
+next follow the below steps
+
+
+Terminal -1
+
+venv/Scripts/activate
+cd frontend
+npm run dev
+
+
+Terminal-2
+ venv/Scripts/activate
+cd backend
+uvicorn app.main:app --reload
+
+
+Terminal-3
+venv/Scripts/activate
+cd backend
+celery -A app.core.celery_app worker --loglevel=info --pool=solo -Q celery,publishing,analytics,notifications
+
+
+
+
+Terminal-4
+venv/Scripts/activate
+cd backend
+celery -A app.core.celery_app beat --loglevel=info
