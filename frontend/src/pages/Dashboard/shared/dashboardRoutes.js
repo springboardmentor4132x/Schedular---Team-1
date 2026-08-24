@@ -34,12 +34,17 @@ export const CREATOR_ROUTES = [
   { path: '/creator/notifications',  pageKey: 'CreatorNotifications'},
 ];
 
+export const ADMIN_ROUTES = [
+  { path: '/admin/dashboard',        pageKey: 'AdminDashboard'     },
+];
+
 /** Returns the default landing path for a given canonical role. */
 export function getDefaultPath(role) {
   const defaults = {
     business:  '/business/dashboard',
     marketing: '/marketing/dashboard',
     creator:   '/creator/dashboard',
+    admin:     '/admin/dashboard',
   };
   return defaults[role] ?? '/business/dashboard';
 }

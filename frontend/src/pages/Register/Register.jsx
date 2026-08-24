@@ -48,6 +48,8 @@ const Register = () => {
         setServerError('Email already registered. Please use a different email or log in.');
       } else if (err.message === 'PHONE_EXISTS') {
         setServerError('Phone number already registered. Please use a different number.');
+      } else if (err.message && err.message !== 'REGISTRATION_FAILED') {
+        setServerError(err.message);
       } else {
         setServerError('Something went wrong. Please try again.');
       }

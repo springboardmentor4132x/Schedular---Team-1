@@ -20,13 +20,11 @@ def get_publishing_queue(
     user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ):
     """Get all posts currently in the publishing queue (scheduled or queued)."""
-    posts = (
-        db.query(Post)
-        .filter(Post.owner_id == user.id)
-        .filter(Post.status.in_(["scheduled", "queued"]))
-        .order_by(Post.scheduled_for.asc())
-        .all()
-    )
+    query = db.query(Post).filter(Post.status.in_(["scheduled", "queued"]))
+    if user.role != "Administrator":
+        query = query.filter(Post.owner_id == user.id)
+
+    posts = query.order_by(Post.scheduled_for.asc()).all()
 
     return {
         "success": True,
@@ -57,12 +55,12 @@ def get_publishing_logs(
     db: Session = Depends(get_db),
 ):
     """Get publishing history and logs."""
-    # Get actual publishing logs joined with their posts
+    query = db.query(PublishingLog, Post).join(Post, PublishingLog.post_id == Post.id)
+    if user.role != "Administrator":
+        query = query.filter(Post.owner_id == user.id)
+
     logs = (
-        db.query(PublishingLog, Post)
-        .join(Post, PublishingLog.post_id == Post.id)
-        .filter(Post.owner_id == user.id)
-        .order_by(desc(PublishingLog.attempted_at))
+        query.order_by(desc(PublishingLog.attempted_at))
         .offset(skip)
         .limit(limit)
         .all()
@@ -79,8 +77,8 @@ def get_publishing_logs(
                     "platform": log.platform,
                     "postCaption": post.caption,
                     "status": log.status,
-                    "duration": "1s",  # Mocked duration since we don't track it
-                    "retryAttempts": 0,  # We don't track retries currently
+                    "duration": "1s",
+                    "retryAttempts": 0,
                     "errorMessage": log.error_message,
                 }
                 for log, post in logs
@@ -133,7 +131,10 @@ def retry_failed_post(
     post_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ):
     """Retry only failed platform targets; successful targets are not duplicated."""
-    post = db.query(Post).filter(Post.id == post_id, Post.owner_id == user.id).first()
+    query = db.query(Post).filter(Post.id == post_id)
+    if user.role != "Administrator":
+        query = query.filter(Post.owner_id == user.id)
+    post = query.first()
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
 
@@ -157,7 +158,10 @@ def delete_post(
     post_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ):
     """Delete a post from the queue/history."""
-    post = db.query(Post).filter(Post.id == post_id, Post.owner_id == user.id).first()
+    query = db.query(Post).filter(Post.id == post_id)
+    if user.role != "Administrator":
+        query = query.filter(Post.owner_id == user.id)
+    post = query.first()
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
 

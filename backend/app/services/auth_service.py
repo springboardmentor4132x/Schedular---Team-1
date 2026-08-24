@@ -120,3 +120,18 @@ def get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
     return user
+
+
+def require_roles(*allowed_roles: str):
+    """Enforce that the authenticated user possesses one of the allowed roles."""
+    def role_dependency(user: User = Depends(get_current_user)) -> User:
+        if user.role not in allowed_roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Access denied. Role '{user.role}' is not authorized to access this resource.",
+            )
+        return user
+    return role_dependency
+
+
+require_admin = require_roles("Administrator")

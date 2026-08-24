@@ -101,15 +101,17 @@ def _client_is_available(client_id: int | None, user: User, db: Session) -> bool
 def _post_scope(user: User, db: Session):
     if user.role == "Business User":
         return Post.client_id == user.id
+    if user.role == "Administrator":
+        return Post.id.is_not(None)
     return Post.owner_id == user.id
 
 
 def _campaign_scope(user: User):
-    return (
-        Campaign.client_id == user.id
-        if user.role == "Business User"
-        else Campaign.owner_id == user.id
-    )
+    if user.role == "Business User":
+        return Campaign.client_id == user.id
+    if user.role == "Administrator":
+        return Campaign.id.is_not(None)
+    return Campaign.owner_id == user.id
 
 
 def _campaign_payload(campaign: Campaign, db: Session):

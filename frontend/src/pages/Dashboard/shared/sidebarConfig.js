@@ -52,6 +52,15 @@ export const SIDEBAR_CONFIG = {
     { label: 'Profile',            to: '/profile',             icon: 'MdPerson'           },
     { label: 'Settings',           to: '/settings',            icon: 'MdSettings'         },
   ],
+
+  [ROLES.ADMIN]: [
+    { label: 'Dashboard',          to: '/admin/dashboard',     icon: 'MdDashboard'        },
+    { label: 'User Management',    to: '/admin/users',         icon: 'MdPeople'           },
+    { label: 'Team Workspaces',    to: '/admin/teams',         icon: 'MdCampaign'         },
+    { label: 'System Audit Logs',  to: '/admin/logs',          icon: 'MdHistory'          },
+    { label: 'Profile',            to: '/profile',             icon: 'MdPerson'           },
+    { label: 'Settings',           to: '/settings',            icon: 'MdSettings'         },
+  ],
 };
 
 /** Returns the sidebar items for a given canonical role. Falls back to business. */

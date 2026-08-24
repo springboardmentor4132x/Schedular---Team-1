@@ -15,10 +15,14 @@ import SettingsPage  from './pages/Settings/SettingsPage';
 import DashboardLayout from './pages/Dashboard/DashboardLayout';
 import RoleRedirect    from './pages/Dashboard/RoleRedirect';
 
+import { ROLES } from './pages/Dashboard/shared/constants';
+import RoleGuard from './components/RoleGuard/RoleGuard';
+
 // ── Role page bundles (lazy-loaded via standard import is fine for now) ────────
 import BusinessPages   from './pages/Dashboard/roles/Business/index';
 import MarketingPages  from './pages/Dashboard/roles/Marketing/index';
 import CreatorPages    from './pages/Dashboard/roles/Creator/index';
+import AdminPages      from './pages/Dashboard/roles/Admin/index';
 
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -56,13 +60,44 @@ function AppRoutes() {
         <Route path="/dashboard" element={<RoleRedirect />} />
 
         {/* Business routes */}
-        <Route path="/business/*" element={<BusinessPages />} />
+        <Route
+          path="/business/*"
+          element={
+            <RoleGuard allowedRoles={[ROLES.BUSINESS]}>
+              <BusinessPages />
+            </RoleGuard>
+          }
+        />
 
         {/* Marketing routes */}
-        <Route path="/marketing/*" element={<MarketingPages />} />
+        <Route
+          path="/marketing/*"
+          element={
+            <RoleGuard allowedRoles={[ROLES.MARKETING]}>
+              <MarketingPages />
+            </RoleGuard>
+          }
+        />
 
         {/* Creator routes */}
-        <Route path="/creator/*" element={<CreatorPages />} />
+        <Route
+          path="/creator/*"
+          element={
+            <RoleGuard allowedRoles={[ROLES.CREATOR]}>
+              <CreatorPages />
+            </RoleGuard>
+          }
+        />
+
+        {/* Admin routes */}
+        <Route
+          path="/admin/*"
+          element={
+            <RoleGuard allowedRoles={[ROLES.ADMIN]} allowAdmin={true}>
+              <AdminPages />
+            </RoleGuard>
+          }
+        />
 
         {/* Shared pages — still inside DashboardLayout so Sidebar/Navbar render */}
         <Route path="/profile"      element={<ProfilePage />} />

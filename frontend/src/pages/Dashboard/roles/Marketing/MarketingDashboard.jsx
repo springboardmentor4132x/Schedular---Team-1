@@ -36,14 +36,30 @@ import analyticsService from '../../../../services/analyticsService';
 import { getDashboardSummary } from '../../../../services/dashboardService';
 
 const FALLBACK_MKT_STATS = [];
-const FALLBACK_CLIENTS = [];
+const FALLBACK_CLIENTS = [
+  { id: 'c1', name: 'Acme Corp', tagline: 'Leading the future', status: 'active', campaigns: 3, platforms: ['facebook', 'instagram', 'linkedin'], health: 95, logoColor: '#4f46e5' },
+  { id: 'c2', name: 'Globex Inc', tagline: 'Global solutions', status: 'active', campaigns: 1, platforms: ['x', 'linkedin'], health: 75, logoColor: '#0ea5e9' },
+];
 const FALLBACK_TODAY_SCHEDULE = [];
 const FALLBACK_MKT_CAMPAIGNS = [];
 const FALLBACK_DRAFTS = [];
 const FALLBACK_QUEUE = [];
-const FALLBACK_WEEKLY_POSTS = [];
-const FALLBACK_MKT_PLATFORM_DIST = [];
-const FALLBACK_MKT_ENGAGEMENT = [];
+const FALLBACK_WEEKLY_POSTS = [
+  { label: 'Mon', value: 5 }, { label: 'Tue', value: 8 }, { label: 'Wed', value: 12 },
+  { label: 'Thu', value: 7 }, { label: 'Fri', value: 10 }, { label: 'Sat', value: 15 }, { label: 'Sun', value: 4 },
+];
+const FALLBACK_MKT_PLATFORM_DIST = [
+  { label: 'Instagram', value: 45, color: '#E1306C' },
+  { label: 'Facebook', value: 30, color: '#1877F2' },
+  { label: 'X', value: 15, color: '#000000' },
+  { label: 'LinkedIn', value: 10, color: '#0A66C2' },
+];
+const FALLBACK_MKT_ENGAGEMENT = [
+  { label: 'Week 1', value: 2000 },
+  { label: 'Week 2', value: 3500 },
+  { label: 'Week 3', value: 4100 },
+  { label: 'Week 4', value: 3800 },
+];
 
 import './MarketingDashboard.css';
 

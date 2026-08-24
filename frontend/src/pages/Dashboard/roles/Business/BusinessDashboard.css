@@ -12,15 +12,22 @@
 
 /* ── Section 1 · Welcome Banner ──────────────────────────────────────── */
 .bd-welcome {
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 28px 32px;
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.05) 0%, rgba(129, 140, 248, 0.1) 100%);
+  border: 1px solid rgba(79, 70, 229, 0.1);
+  border-radius: 20px;
+  padding: 32px 40px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 24px;
-  box-shadow: 0 1px 4px rgba(0,0,0,.05);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.bd-welcome:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
 }
 
 .bd-welcome__left { display: flex; flex-direction: column; gap: 6px; }
@@ -100,9 +107,14 @@
 .bd-section-card {
   background: var(--bg);
   border: 1px solid var(--border);
-  border-radius: 16px;
-  box-shadow: 0 1px 4px rgba(0,0,0,.05);
+  border-radius: 20px;
+  box-shadow: var(--shadow);
   overflow: hidden;
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+.bd-section-card:hover {
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-2px);
 }
 
 .bd-section-card__header {

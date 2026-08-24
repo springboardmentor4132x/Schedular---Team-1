@@ -32,12 +32,15 @@ async function registerUser({ fullName, email, phone, country, orgName, role, pa
       profileImage: data.user.avatarUrl ?? null,
     };
   } catch (error) {
-    if (error.response && error.response.status === 400) {
+    if (error.response?.data?.detail) {
       const detail = error.response.data.detail;
-      if (detail && detail.includes('Email')) {
-        throw new Error('EMAIL_EXISTS', { cause: error });
-      } else if (detail && detail.includes('Phone')) {
-        throw new Error('PHONE_EXISTS', { cause: error });
+      if (typeof detail === 'string') {
+        if (detail.includes('Email')) {
+          throw new Error('EMAIL_EXISTS', { cause: error });
+        } else if (detail.includes('Phone')) {
+          throw new Error('PHONE_EXISTS', { cause: error });
+        }
+        throw new Error(detail, { cause: error });
       }
     }
     throw new Error('REGISTRATION_FAILED', { cause: error });

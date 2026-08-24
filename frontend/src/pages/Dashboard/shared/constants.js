@@ -9,12 +9,14 @@ export const ROLES = {
   BUSINESS: 'business',
   MARKETING: 'marketing',
   CREATOR: 'creator',
+  ADMIN: 'admin',
 };
 
 export const ROLE_LABELS = {
   [ROLES.BUSINESS]: 'Business',
   [ROLES.MARKETING]: 'Marketing',
   [ROLES.CREATOR]: 'Creator',
+  [ROLES.ADMIN]: 'Administrator',
 };
 
 /**
@@ -31,6 +33,8 @@ export const ROLE_MAP = {
   creator: ROLES.CREATOR,
   content_creator: ROLES.CREATOR,
   'content creator': ROLES.CREATOR,
+  admin: ROLES.ADMIN,
+  administrator: ROLES.ADMIN,
 };
 
 /** Returns a canonical ROLES value from any backend-supplied role string. */

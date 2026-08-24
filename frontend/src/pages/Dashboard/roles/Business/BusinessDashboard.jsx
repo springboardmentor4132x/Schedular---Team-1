@@ -35,14 +35,44 @@ import PageContainer   from '../../components/PageContainer/PageContainer';
 import StatsCard       from '../../components/StatsCard/StatsCard';
 import Avatar          from '../../components/Avatar/Avatar';
 import SectionTitle    from '../../components/SectionTitle/SectionTitle';
-const FALLBACK_PLATFORMS = [];
-const FALLBACK_CAMPAIGN_PERF = [];
-const FALLBACK_PLATFORM_DIST = [];
-const FALLBACK_WEEKLY_ENG = [];
-const FALLBACK_FOLLOWERS = [];
-const FALLBACK_REPORTS = [];
-const FALLBACK_ACTIVITY = [];
-const FALLBACK_INSIGHTS = [];
+const FALLBACK_PLATFORMS = [
+  { id: 'instagram', label: 'Instagram', status: 'connected', color: '#E1306C', reach: '12.4K', lastSync: new Date().toISOString() },
+  { id: 'facebook', label: 'Facebook Page', status: 'connected', color: '#1877F2', reach: '8.2K', lastSync: new Date().toISOString() },
+  { id: 'linkedin', label: 'LinkedIn', status: 'disconnected', color: '#0A66C2' },
+  { id: 'x', label: 'X (Twitter)', status: 'connected', color: '#000000', reach: '3.1K', lastSync: new Date().toISOString() },
+  { id: 'pinterest', label: 'Pinterest', status: 'disconnected', color: '#E60023' },
+];
+const FALLBACK_CAMPAIGN_PERF = [
+  { label: 'Summer Sale', value: 85 },
+  { label: 'Brand Awareness', value: 62 },
+  { label: 'Product Launch', value: 94 },
+  { label: 'Retargeting', value: 45 },
+];
+const FALLBACK_PLATFORM_DIST = [
+  { label: 'Instagram', value: 45, color: '#E1306C' },
+  { label: 'Facebook', value: 30, color: '#1877F2' },
+  { label: 'X', value: 15, color: '#000000' },
+  { label: 'LinkedIn', value: 10, color: '#0A66C2' },
+];
+const FALLBACK_WEEKLY_ENG = [
+  { label: 'Mon', value: 120 }, { label: 'Tue', value: 180 }, { label: 'Wed', value: 250 },
+  { label: 'Thu', value: 190 }, { label: 'Fri', value: 310 }, { label: 'Sat', value: 450 }, { label: 'Sun', value: 420 },
+];
+const FALLBACK_FOLLOWERS = [
+  { label: 'Week 1', value: 1500 }, { label: 'Week 2', value: 1580 }, { label: 'Week 3', value: 1620 }, { label: 'Week 4', value: 1800 },
+];
+const FALLBACK_REPORTS = [
+  { id: 'r1', type: 'monthly', name: 'Monthly Performance', date: new Date(Date.now() - 86400000*5).toISOString(), size: '2.4 MB', icon: '📊' },
+  { id: 'r2', type: 'campaign', name: 'Summer Sale Analysis', date: new Date(Date.now() - 86400000*12).toISOString(), size: '1.8 MB', icon: '📈' },
+];
+const FALLBACK_ACTIVITY = [
+  { id: 'a1', text: 'Marketing Team published a post on Instagram', time: new Date(Date.now() - 3600000).toISOString(), icon: '✅' },
+  { id: 'a2', text: 'New campaign "Fall Collection" created', time: new Date(Date.now() - 86400000).toISOString(), icon: '🎉' },
+];
+const FALLBACK_INSIGHTS = [
+  { id: 'i1', type: 'positive', title: 'High Engagement Alert', body: 'Instagram posts performing 40% better than average.', icon: '💡' },
+  { id: 'i2', type: 'warning', title: 'Schedule Gap', body: 'No posts scheduled for LinkedIn this week.', icon: '⚠️' },
+];
 import './BusinessDashboard.css';
 
 // ── Icon registry for platform logos ─────────────────────────────────────────

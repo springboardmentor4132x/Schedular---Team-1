@@ -13,7 +13,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import {
   MdDashboard, MdCampaign, MdSchedule, MdCheckCircle, MdInsights,
   MdBarChart, MdLink, MdPerson, MdSettings, MdPeople, MdEditCalendar,
-  MdCalendarMonth, MdNotificationsNone, MdArticle, MdLogout,
+  MdCalendarMonth, MdNotificationsNone, MdArticle, MdLogout, MdHistory,
 } from 'react-icons/md';
 import { useApp } from '../../../../context/AppContext';
 import { getSidebarItems } from '../../shared/sidebarConfig';
@@ -38,6 +38,7 @@ const ICONS = {
   MdCalendarMonth:       <MdCalendarMonth />,
   MdNotificationsNone:   <MdNotificationsNone />,
   MdArticle:             <MdArticle />,
+  MdHistory:             <MdHistory />,
 };
 
 export default function Sidebar() {

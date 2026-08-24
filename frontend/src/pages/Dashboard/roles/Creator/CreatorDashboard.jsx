@@ -29,7 +29,15 @@ import StatsCard from '../../components/StatsCard/StatsCard';
 import Avatar from '../../components/Avatar/Avatar';
 import SectionTitle from '../../components/SectionTitle/SectionTitle';
 
-const FALLBACK_CALENDAR_PREVIEW = [];
+const FALLBACK_CALENDAR_PREVIEW = [
+  { date: 'Aug 21', dayName: 'Mon', postsCount: 2, isToday: false },
+  { date: 'Aug 22', dayName: 'Tue', postsCount: 0, isToday: false },
+  { date: 'Aug 23', dayName: 'Wed', postsCount: 3, isToday: true },
+  { date: 'Aug 24', dayName: 'Thu', postsCount: 1, isToday: false },
+  { date: 'Aug 25', dayName: 'Fri', postsCount: 4, isToday: false },
+  { date: 'Aug 26', dayName: 'Sat', postsCount: 0, isToday: false },
+  { date: 'Aug 27', dayName: 'Sun', postsCount: 2, isToday: false },
+];
 
 import postService from '../../../../services/postService';
 import campaignService from '../../../../services/campaignService';

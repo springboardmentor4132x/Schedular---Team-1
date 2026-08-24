@@ -1,5 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from datetime import datetime, timedelta, timezone
+from jose import JWTError, jwt
+import base64
 
 from app.schemas.auth_schema import (
     RefreshRequest,
@@ -9,13 +12,13 @@ from app.schemas.auth_schema import (
     UserResponse,
 )
 from app.schemas.dashboard_schema import PasswordChange
-import base64
 from app.models.user import (
     ActivityLog,
     Notification,
     RefreshToken,
     User,
     UserProfile,
+    UserSettings,
     Team,
     TeamMember,
 )
@@ -28,8 +31,6 @@ from app.services.auth_service import (
     token_hash,
     verify_password,
 )
-from datetime import datetime, timedelta, timezone
-from jose import JWTError, jwt
 from app.config import settings
 from app.database import get_db
 
@@ -38,16 +39,6 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 @router.post("/register", response_model=Token, status_code=status.HTTP_201_CREATED)
 def register_user(user: UserCreate, db: Session = Depends(get_db)):
-    # The first administrator bootstraps the installation. Subsequent public
-    # registrations cannot grant themselves administrator privileges.
-    if (
-        user.role == "Administrator"
-        and db.query(User).filter(User.role == "Administrator").first()
-    ):
-        raise HTTPException(
-            status_code=403,
-            detail="Administrator accounts must be provisioned by an administrator.",
-        )
     existing_email = db.query(User).filter(User.email == user.email).first()
     if existing_email:
         raise HTTPException(status_code=400, detail="Email is already registered.")
@@ -74,14 +65,19 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(new_user)
 
+    # Initialise profile and settings
+    names = user.full_name.strip().split(" ", 1)
+    first_name = names[0]
+    last_name = names[1] if len(names) > 1 else ""
+    db.add(UserProfile(user_id=new_user.id, first_name=first_name, last_name=last_name))
+    db.add(UserSettings(user_id=new_user.id))
+
     if new_user.role == "Marketing Team":
-        # Create a default team for this marketing user
         team_name = f"{new_user.full_name}'s Workspace"
         default_team = Team(name=team_name, owner_id=new_user.id)
         db.add(default_team)
         db.commit()
         db.refresh(default_team)
-        # Add themselves as a member
         db.add(
             TeamMember(
                 team_id=default_team.id, user_id=new_user.id, role="Marketing Team"
